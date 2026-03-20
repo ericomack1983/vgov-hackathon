@@ -7,8 +7,8 @@
 
 ### Foundation & Infrastructure
 
-- [ ] **FOUN-01**: Next.js 14 app scaffolded with App Router, TailwindCSS, and Framer Motion installed
-- [ ] **FOUN-02**: App shell renders with sidebar (nav links), header (role switcher), and main content area
+- [x] **FOUN-01**: Next.js 14 app scaffolded with App Router, TailwindCSS, and Framer Motion installed
+- [x] **FOUN-02**: App shell renders with sidebar (nav links), header (role switcher), and main content area
 - [ ] **FOUN-03**: Role switcher allows toggling between Gov Officer, Supplier, and Auditor views
 - [ ] **FOUN-04**: AppContext (3 slices: Procurement, Payment, UI) provides global state to all pages
 - [ ] **FOUN-05**: Mock data seeded: 8 suppliers with varied profiles, 5 RFPs in various states, historical transactions
@@ -102,8 +102,8 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FOUN-01 | Phase 1 | Pending |
-| FOUN-02 | Phase 1 | Pending |
+| FOUN-01 | Phase 1 | Complete |
+| FOUN-02 | Phase 1 | Complete |
 | FOUN-03 | Phase 1 | Pending |
 | FOUN-04 | Phase 1 | Pending |
 | FOUN-05 | Phase 1 | Pending |
