@@ -1,125 +1,154 @@
-# Requirements: GovPay Disruptors
+# Requirements: GovProcure AI
 
-**Defined:** 2026-03-18
-**Core Value:** AI agent autonomously manages procurement lifecycle with instant programmable payments
+**Defined:** 2026-03-20
+**Core Value:** AI ranks suppliers and recommends best value — then pays instantly via Visa or USDC — with a transparent, animated, auditable flow.
 
 ## v1 Requirements
 
-### Foundation (FOUN)
+### Foundation & Infrastructure
 
-- [ ] **FOUN-01**: Next.js project scaffolded with App Router and TailwindCSS
-- [ ] **FOUN-02**: Apple-style design system with Inter font, soft shadows, rounded cards
-- [ ] **FOUN-03**: Sidebar navigation with 5 sections (Dashboard, Requests, Suppliers, Transactions, AI Decisions)
-- [ ] **FOUN-04**: Sticky header with system status indicator
-- [ ] **FOUN-05**: Global state management via React Context
-- [ ] **FOUN-06**: Mock data layer with suppliers, requests, and transactions
+- [ ] **FOUN-01**: Next.js 14 app scaffolded with App Router, TailwindCSS, and Framer Motion installed
+- [ ] **FOUN-02**: App shell renders with sidebar (nav links), header (role switcher), and main content area
+- [ ] **FOUN-03**: Role switcher allows toggling between Gov Officer, Supplier, and Auditor views
+- [ ] **FOUN-04**: AppContext (3 slices: Procurement, Payment, UI) provides global state to all pages
+- [ ] **FOUN-05**: Mock data seeded: 8 suppliers with varied profiles, 5 RFPs in various states, historical transactions
 
-### Dashboard (DASH)
+### Supplier Management
 
-- [ ] **DASH-01**: Stat cards showing Total Requests, Active, Completed, Total Volume
-- [ ] **DASH-02**: Procurement pipeline visualization (9-stage flow)
-- [ ] **DASH-03**: Recent activity feed with status badges
-- [ ] **DASH-04**: Quick action buttons linking to key pages
+- [ ] **SUPP-01**: Supplier registry page lists all suppliers with name, rating, compliance status, and certifications
+- [ ] **SUPP-02**: Supplier profile page shows rating score, past performance, pricing history, wallet address, and compliance badge
+- [ ] **SUPP-03**: Supplier can submit a bid on an open RFP (bid amount, delivery days, notes)
+- [ ] **SUPP-04**: Mock suppliers have deliberately varied scores (spread ≥15 points composite) to ensure clear AI winner
 
-### Procurement Requests (REQT)
+### Procurement Requests (RFP)
 
-- [ ] **REQT-01**: Form to create new procurement request with category, urgency, budget, description
-- [ ] **REQT-02**: Display requests in grid with status, urgency badges, and progress bars
-- [ ] **REQT-03**: AI readiness score badge per request
+- [ ] **PROC-01**: Government user can create a new RFP with title, description, budget ceiling, deadline, and category
+- [ ] **PROC-02**: RFP list page shows all requests with status (Draft, Open, Evaluating, Awarded, Paid)
+- [ ] **PROC-03**: RFP detail page shows description, submitted bids, and status timeline
+- [ ] **PROC-04**: Gov officer can trigger AI evaluation on an RFP with submitted bids
 
-### Supplier Registry (SUPP)
+### AI Procurement Engine
 
-- [ ] **SUPP-01**: Display supplier cards with name, category, location
-- [ ] **SUPP-02**: Show compliance score (0-100), certifications, MCC code
-- [ ] **SUPP-03**: Show Polygon wallet address and star rating
-- [ ] **SUPP-04**: Registry summary stats (total, compliant, MCC)
+- [ ] **AIEN-01**: AI scoring engine computes weighted composite score per bid: Price (30%), Delivery (20%), Reliability (25%), Compliance (15%), Risk (10%)
+- [ ] **AIEN-02**: Decision dashboard shows ranked supplier list with individual dimension scores and composite score
+- [ ] **AIEN-03**: "Best Value" badge highlights the AI-recommended winner
+- [ ] **AIEN-04**: AI explainability panel shows natural language narrative citing specific data points
+- [ ] **AIEN-05**: Score radar/bar chart renders per supplier for visual comparison
+- [ ] **AIEN-06**: Gov officer can manually override AI recommendation with a written justification note
 
-### AI Agent (AIAG)
+### Payment & Checkout
 
-- [ ] **AIAG-01**: Simulated RFQ generation from procurement request
-- [ ] **AIAG-02**: Supplier scoring with weighted criteria (Price 40%, Delivery 25%, Compliance 35%)
-- [ ] **AIAG-03**: Best supplier selection and recommendation
-- [ ] **AIAG-04**: LLM-style audit narrative explanation of decision
-- [ ] **AIAG-05**: Quote comparison table with scoring breakdown
+- [ ] **PAYM-01**: Payment selector presents two options: "Pay with USD" and "Pay with USDC (Polygon)"
+- [ ] **PAYM-02**: Checkout summary shows supplier name, amount, payment method, and order ID
+- [ ] **PAYM-03**: Confirming payment triggers the settlement animation flow
+- [ ] **PAYM-04**: Completed transactions are added to AppContext transaction history
 
-### Visa Simulation (VISA)
+### Settlement Engine (Animated)
 
-- [ ] **VISA-01**: Generate virtual card number for payment
-- [ ] **VISA-02**: Enforce MCC restriction (5047 = Healthcare)
-- [ ] **VISA-03**: Simulate transaction approval/rejection based on MCC
-- [ ] **VISA-04**: Simulate transaction settlement
+- [ ] **SETL-01**: USD settlement flow animates: Government Bank → Visa Network → Supplier Bank with labeled nodes and moving funds indicator
+- [ ] **SETL-02**: USD settlement progresses through: Authorized → Processing → Settled (T+2) with real-time status updates (~6s total)
+- [ ] **SETL-03**: USDC settlement flow animates: Government Wallet → Polygon Network → Supplier Wallet with blockchain hash display
+- [ ] **SETL-04**: USDC settlement progresses through: Submitted → Confirmed → Settled Instantly (~3s total)
+- [ ] **SETL-05**: Settlement state machine resets cleanly on re-entry; no stuck states or double-fire notifications
+- [ ] **SETL-06**: Side-by-side comparison panel shows "Traditional Rail (T+2)" vs "Blockchain Rail (Instant)" after settlement
 
-### Blockchain Escrow (BLKC)
+### Notifications
 
-- [ ] **BLKC-01**: Simulate USDC deposit to escrow on Polygon
-- [ ] **BLKC-02**: Simulate delivery confirmation
-- [ ] **BLKC-03**: Simulate payment release from escrow
-- [ ] **BLKC-04**: Generate mock transaction hashes and block numbers
-- [ ] **BLKC-05**: Solidity smart contract reference (GovPayEscrow.sol)
+- [ ] **NOTF-01**: Toast notification fires on each settlement state change (initiated, authorized, settled)
+- [ ] **NOTF-02**: Each notification includes timestamp, payment method (USD/USDC), and transaction ID / blockchain hash
+- [ ] **NOTF-03**: Notification history page lists all past notifications in reverse chronological order
+- [ ] **NOTF-04**: Notification bell in header shows unread count badge
 
-### AI Decision Panel (AIDP)
+### Financial Dashboard
 
-- [ ] **AIDP-01**: 7-step guided demo flow with step indicator
-- [ ] **AIDP-02**: Step 1 — Select procurement request
-- [ ] **AIDP-03**: Step 2 — AI analysis simulation with progress
-- [ ] **AIDP-04**: Step 3 — Review decision (quotes, scores, narrative)
-- [ ] **AIDP-05**: Step 4 — Choose payment method (Visa or USDC)
-- [ ] **AIDP-06**: Step 5 — Lock funds (simulated Visa/blockchain transaction)
-- [ ] **AIDP-07**: Step 6 — Confirm delivery
-- [ ] **AIDP-08**: Step 7 — Instant settlement with visual confirmation
+- [ ] **DASH-01**: Dashboard shows USD balance, USDC balance, active orders count, completed orders count
+- [ ] **DASH-02**: Total spend metric and AI optimization savings (difference between highest bid and winning bid)
+- [ ] **DASH-03**: Payment breakdown pie/donut chart showing % paid via Visa vs % paid via USDC
+- [ ] **DASH-04**: Spend-over-time area chart
+- [ ] **DASH-05**: Recent transactions list with method badge, amount, supplier, and status
 
-### Transactions (TRAN)
+### Audit & Compliance
 
-- [ ] **TRAN-01**: List Visa transactions with MCC validation results
-- [ ] **TRAN-02**: List blockchain transactions with Tx hashes and status
-- [ ] **TRAN-03**: Volume summaries and status indicators
-
-### Documentation (DOCS)
-
-- [ ] **DOCS-01**: README with project overview, demo script, and technical details
-- [ ] **DOCS-02**: Smart contract documentation inline
+- [ ] **AUDT-01**: Audit trail page shows timestamped log of all procurement events
+- [ ] **AUDT-02**: Auditor role can view all transactions across all RFPs
+- [ ] **AUDT-03**: "Export PDF" button generates a procurement report (audit trail + transaction summary)
 
 ## v2 Requirements
 
-### Enhanced Features
+### Enhanced Features (Post-Hackathon)
 
-- **ENH-01**: Real Supabase authentication
-- **ENH-02**: Real blockchain deployment to Polygon testnet
-- **ENH-03**: Visa sandbox API integration
-- **ENH-04**: Multi-language support (EN/ES/PT)
-- **ENH-05**: Mobile responsive design
+- **ENH-01**: Real Visa API integration
+- **ENH-02**: Real Polygon/USDC transactions (Amoy testnet)
+- **ENH-03**: Supplier self-registration flow
+- **ENH-04**: Email notifications for payment events
+- **ENH-05**: Multi-currency support beyond USD/USDC
+- **ENH-06**: Mobile responsiveness
+- **ENH-07**: Real authentication (OAuth or JWT)
+- **ENH-08**: Database persistence (Postgres or Supabase)
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Real Visa API calls | Hackathon MVP — simulated only |
-| Real blockchain deployment | Mock interactions sufficient for demo |
-| User authentication | Prototype — no real auth needed |
-| Database backend | Client-side state with mock data |
-| Mobile responsiveness | Desktop-first for hackathon demo |
-| Real AI/LLM integration | Simulated narrative generation |
+| Real Visa API calls | External dependency; can fail during demo |
+| Real blockchain transactions | Gas fees, wallet setup; can fail during demo |
+| Real authentication | Role switcher sufficient for demo |
+| Database backend | Mock data sufficient; no persistence needed |
+| Mobile responsiveness | Desktop demo; judges won't test mobile |
+| Email notifications | Infrastructure overhead |
+| Supplier self-registration form | Pre-seed mock suppliers instead |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FOUN-01 to FOUN-06 | Phase 1 | Pending |
-| DASH-01 to DASH-04 | Phase 2 | Pending |
-| REQT-01 to REQT-03 | Phase 3 | Pending |
-| SUPP-01 to SUPP-04 | Phase 3 | Pending |
-| AIAG-01 to AIAG-05 | Phase 4 | Pending |
-| VISA-01 to VISA-04 | Phase 5 | Pending |
-| BLKC-01 to BLKC-05 | Phase 5 | Pending |
-| AIDP-01 to AIDP-08 | Phase 6 | Pending |
-| TRAN-01 to TRAN-03 | Phase 7 | Pending |
-| DOCS-01 to DOCS-02 | Phase 7 | Pending |
+| FOUN-01 | Phase 1 | Pending |
+| FOUN-02 | Phase 1 | Pending |
+| FOUN-03 | Phase 1 | Pending |
+| FOUN-04 | Phase 1 | Pending |
+| FOUN-05 | Phase 1 | Pending |
+| SUPP-04 | Phase 1 | Pending |
+| SUPP-01 | Phase 2 | Pending |
+| SUPP-02 | Phase 2 | Pending |
+| SUPP-03 | Phase 2 | Pending |
+| PROC-01 | Phase 2 | Pending |
+| PROC-02 | Phase 2 | Pending |
+| PROC-03 | Phase 2 | Pending |
+| PROC-04 | Phase 2 | Pending |
+| AIEN-01 | Phase 2 | Pending |
+| AIEN-02 | Phase 2 | Pending |
+| AIEN-03 | Phase 2 | Pending |
+| AIEN-04 | Phase 2 | Pending |
+| AIEN-05 | Phase 2 | Pending |
+| AIEN-06 | Phase 2 | Pending |
+| PAYM-01 | Phase 3 | Pending |
+| PAYM-02 | Phase 3 | Pending |
+| PAYM-03 | Phase 3 | Pending |
+| PAYM-04 | Phase 3 | Pending |
+| SETL-01 | Phase 3 | Pending |
+| SETL-02 | Phase 3 | Pending |
+| SETL-03 | Phase 3 | Pending |
+| SETL-04 | Phase 3 | Pending |
+| SETL-05 | Phase 3 | Pending |
+| SETL-06 | Phase 3 | Pending |
+| NOTF-01 | Phase 3 | Pending |
+| NOTF-02 | Phase 3 | Pending |
+| NOTF-03 | Phase 3 | Pending |
+| NOTF-04 | Phase 3 | Pending |
+| DASH-01 | Phase 3 | Pending |
+| DASH-02 | Phase 3 | Pending |
+| DASH-03 | Phase 3 | Pending |
+| DASH-04 | Phase 3 | Pending |
+| DASH-05 | Phase 3 | Pending |
+| AUDT-01 | Phase 3 | Pending |
+| AUDT-02 | Phase 3 | Pending |
+| AUDT-03 | Phase 3 | Pending |
 
 **Coverage:**
-- v1 requirements: 38 total
-- Mapped to phases: 38
+- v1 requirements: 41 total
+- Mapped to phases: 41
 - Unmapped: 0 ✓
 
 ---
-*Requirements defined: 2026-03-18*
-*Last updated: 2026-03-18 after initial definition*
+*Requirements defined: 2026-03-20*
+*Last updated: 2026-03-20 after initial definition*
