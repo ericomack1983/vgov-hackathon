@@ -28,11 +28,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Mock data is accessible in context: 8 suppliers with varied profiles (score spread >= 15 points), 5 RFPs in different states, and historical transactions
   4. Navigation between all placeholder pages works without errors or blank screens
   5. AppContext is split into 3 slices (Procurement, Payment, UI) and all pages can read from them
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
+- [ ] 01-01-PLAN.md -- Project scaffold, dependencies, layout shell, placeholder pages, shared components
+- [ ] 01-02-PLAN.md -- 3-slice AppContext, mock data seeding, role switcher, role-based navigation wiring
 
 ### Phase 2: Procurement & AI Engine
 **Goal**: Gov Officer can create an RFP, view supplier bids, trigger AI evaluation, see ranked results with transparent scoring and narrative explanation, and select a winner
