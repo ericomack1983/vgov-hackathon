@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { AppProviders } from "@/context/AppProviders";
 import { AppShell } from "@/components/layout/AppShell";
 import "./globals.css";
 
@@ -21,7 +22,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.className}>
       <body>
-        <AppShell>{children}</AppShell>
+        <AppProviders>
+          <AppShell>{children}</AppShell>
+        </AppProviders>
       </body>
     </html>
   );

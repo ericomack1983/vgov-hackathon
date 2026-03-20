@@ -11,6 +11,7 @@ import {
   Receipt,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useUI } from '@/context/UIContext';
 
 const NAV_ITEMS: Record<
   string,
@@ -41,11 +42,11 @@ const NAV_ITEMS: Record<
 };
 
 interface SidebarProps {
-  role: 'gov' | 'supplier' | 'auditor';
   currentPath: string;
 }
 
-export function Sidebar({ role, currentPath }: SidebarProps) {
+export function Sidebar({ currentPath }: SidebarProps) {
+  const { role } = useUI();
   const items = NAV_ITEMS[role] || NAV_ITEMS.gov;
 
   return (

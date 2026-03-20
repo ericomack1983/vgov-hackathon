@@ -1,6 +1,7 @@
 'use client';
 
 import { Bell } from 'lucide-react';
+import { RoleSwitcher } from '@/components/layout/RoleSwitcher';
 
 export function Header() {
   return (
@@ -10,7 +11,7 @@ export function Header() {
           GovProcure AI
         </span>
         <div className="flex items-center gap-4">
-          <div id="role-switcher-slot" />
+          <RoleSwitcher />
           <button
             aria-label="Notifications"
             className="text-slate-400 hover:text-slate-50 transition-colors"
