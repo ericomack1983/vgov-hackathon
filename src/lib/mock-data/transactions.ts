@@ -1,0 +1,41 @@
+import { Transaction } from './types';
+
+export const MOCK_TRANSACTIONS: Transaction[] = [
+  {
+    id: 'tx-001',
+    rfpId: 'rfp-005',
+    supplierId: 'sup-004',
+    supplierName: 'DataBridge Systems',
+    amount: 175000,
+    method: 'USD',
+    status: 'Settled',
+    orderId: 'ORD-2026-001',
+    createdAt: '2026-01-15T10:00:00.000Z',
+    settledAt: '2026-01-17T10:00:00.000Z',
+  },
+  {
+    id: 'tx-002',
+    rfpId: 'rfp-003',
+    supplierId: 'sup-002',
+    supplierName: 'BudgetGov Supplies',
+    amount: 98000,
+    method: 'USDC',
+    status: 'Settled',
+    txHash: '0xa1b2c3d4e5f67890a1b2c3d4e5f67890a1b2c3d4e5f67890a1b2c3d4e5f67890',
+    orderId: 'ORD-2026-002',
+    createdAt: '2026-02-20T14:00:00.000Z',
+    settledAt: '2026-02-20T14:01:00.000Z',
+  },
+  {
+    id: 'tx-003',
+    rfpId: 'rfp-003',
+    supplierId: 'sup-006',
+    supplierName: 'FiscalPoint Inc',
+    amount: 45000,
+    method: 'USD',
+    status: 'Settled',
+    orderId: 'ORD-2026-003',
+    createdAt: '2026-03-01T09:00:00.000Z',
+    settledAt: '2026-03-03T09:00:00.000Z',
+  },
+];
