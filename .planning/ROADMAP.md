@@ -1,82 +1,81 @@
-# Roadmap: GovPay Disruptors
+# Roadmap: GovProcure AI
 
-**Created:** 2026-03-18
-**Granularity:** Standard (7 phases)
-**Core Value:** AI agent autonomously manages procurement lifecycle with instant programmable payments
+## Overview
 
-## Milestone 1: Hackathon MVP
+GovProcure AI is built in three phases following the data dependency chain: foundation and mock data first (everything downstream depends on it), then core procurement workflow and AI scoring engine (the intellectual core), then payments, animated settlement visualization, dashboard, and audit (the demo "wow moment"). Each phase delivers a complete, verifiable capability that unblocks the next. The entire build targets a working hackathon demo completable in under 3 minutes.
 
-### Phase 1: Project Foundation & Design System
-**Goal:** Scaffold Next.js project, install dependencies, configure TailwindCSS, build the shared layout (sidebar, header), design system tokens, and global state management.
-**Requirements:** FOUN-01 through FOUN-06
-**UAT:**
-- [ ] `npm run dev` starts without errors
-- [ ] Sidebar with 5 nav items renders correctly
-- [ ] Inter font loads, Apple-style design tokens applied
-- [ ] AppContext provides global state to all pages
+## Phases
 
-### Phase 2: Dashboard Page
-**Goal:** Build the main dashboard with KPIs, procurement pipeline visualization, recent activity, and quick actions.
-**Requirements:** DASH-01 through DASH-04
-**UAT:**
-- [ ] 4 stat cards display correct data from app state
-- [ ] Pipeline shows 9 stages with counts
-- [ ] Recent activity feed shows request/transaction history
-- [ ] Quick action buttons navigate to correct pages
+**Phase Numbering:**
+- Integer phases (1, 2, 3): Planned milestone work
+- Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
-### Phase 3: Requests & Suppliers Pages
-**Goal:** Build the Procurement Requests page (create/view) and Supplier Registry page with compliance data.
-**Requirements:** REQT-01 through REQT-03, SUPP-01 through SUPP-04
-**UAT:**
-- [ ] New Request form creates a request and adds to state
-- [ ] Request cards show urgency, budget, status, progress
-- [ ] Supplier cards show compliance score, certs, MCC, wallet, rating
-- [ ] Registry summary shows total suppliers, compliant count, MCC
+Decimal phases appear between their surrounding integers in numeric order.
 
-### Phase 4: AI Procurement Agent Logic
-**Goal:** Implement the core AI agent — RFQ simulation, supplier scoring model, winner selection, and LLM-style audit narrative generation.
-**Requirements:** AIAG-01 through AIAG-05
-**UAT:**
-- [ ] Agent generates realistic quotes from mock suppliers
-- [ ] Scoring uses Price 40%, Delivery 25%, Compliance 35%
-- [ ] Winner selected correctly based on highest composite score
-- [ ] Narrative reads like an audit explanation with specific data points
-- [ ] API route `/api/ai-agent` returns valid response
+- [ ] **Phase 1: Foundation & App Shell** - Next.js scaffold, context architecture, role switcher, mock data seeding, and shared component library
+- [ ] **Phase 2: Procurement & AI Engine** - Supplier pages, RFP workflow, bid submission, AI scoring engine, decision dashboard with explainability
+- [ ] **Phase 3: Payments, Settlement & Polish** - Hybrid payment checkout, animated settlement visualization, notifications, financial dashboard, audit trail, PDF export
 
-### Phase 5: Payment Simulators (Visa + Blockchain)
-**Goal:** Build the Visa virtual card simulator (with MCC restrictions) and blockchain escrow simulator (Polygon/USDC).
-**Requirements:** VISA-01 through VISA-04, BLKC-01 through BLKC-05
-**UAT:**
-- [ ] Virtual card generated with masked PAN
-- [ ] MCC 5047 approved, non-5047 rejected
-- [ ] Transaction settles after approval
-- [ ] Escrow deposit generates Tx hash and block number
-- [ ] Delivery confirmation triggers release
-- [ ] Solidity contract exists as reference
+## Phase Details
 
-### Phase 6: AI Decision Panel (Full Demo Flow)
-**Goal:** Build the crown jewel — the 7-step guided demo page that walks through the entire procurement lifecycle.
-**Requirements:** AIDP-01 through AIDP-08
-**UAT:**
-- [ ] Step indicator shows current position in flow
-- [ ] Step 1: Select from active requests
-- [ ] Step 2: AI analysis runs with visual progress
-- [ ] Step 3: Quote comparison table + score breakdown + narrative
-- [ ] Step 4: Visa vs USDC payment method selector
-- [ ] Step 5: Fund locking with simulation feedback
-- [ ] Step 6: Delivery confirmation trigger
-- [ ] Step 7: Instant settlement with success animation
+### Phase 1: Foundation & App Shell
+**Goal**: A running application with navigable layout, role switching, seeded mock data, and shared components -- ready for feature development
+**Depends on**: Nothing (first phase)
+**Requirements**: FOUN-01, FOUN-02, FOUN-03, FOUN-04, FOUN-05, SUPP-04
+**Success Criteria** (what must be TRUE):
+  1. App loads in browser with sidebar navigation, header with role switcher, and main content area rendering placeholder pages
+  2. Clicking role switcher toggles between Gov Officer, Supplier, and Auditor views -- sidebar nav items update per role
+  3. Mock data is accessible in context: 8 suppliers with varied profiles (score spread >= 15 points), 5 RFPs in different states, and historical transactions
+  4. Navigation between all placeholder pages works without errors or blank screens
+  5. AppContext is split into 3 slices (Procurement, Payment, UI) and all pages can read from them
+**Plans**: TBD
 
-### Phase 7: Transactions Page, Polish & Documentation
-**Goal:** Build Transactions page, write README with demo script, final UI polish, build verification.
-**Requirements:** TRAN-01 through TRAN-03, DOCS-01 through DOCS-02
-**UAT:**
-- [ ] Visa transactions listed with MCC validation
-- [ ] Blockchain transactions listed with Tx hashes
-- [ ] README contains demo script, tech stack, architecture
-- [ ] `npm run build` succeeds without errors
-- [ ] All pages render correctly in browser
+Plans:
+- [ ] 01-01: TBD
+- [ ] 01-02: TBD
 
----
-*Roadmap created: 2026-03-18*
-*Last updated: 2026-03-18 after initial definition*
+### Phase 2: Procurement & AI Engine
+**Goal**: Gov Officer can create an RFP, view supplier bids, trigger AI evaluation, see ranked results with transparent scoring and narrative explanation, and select a winner
+**Depends on**: Phase 1
+**Requirements**: SUPP-01, SUPP-02, SUPP-03, PROC-01, PROC-02, PROC-03, PROC-04, AIEN-01, AIEN-02, AIEN-03, AIEN-04, AIEN-05, AIEN-06
+**Success Criteria** (what must be TRUE):
+  1. Supplier registry page lists all 8 mock suppliers with name, rating, compliance status, and certifications; clicking a supplier opens a profile page with full details
+  2. Gov Officer can create a new RFP with title, description, budget ceiling, deadline, and category -- it appears in the RFP list with correct status
+  3. Supplier can submit a bid on an open RFP with bid amount, delivery days, and notes -- bid appears on the RFP detail page
+  4. Triggering AI evaluation on an RFP produces a ranked supplier list with individual dimension scores (price, delivery, reliability, compliance, risk), composite score, "Best Value" badge on the winner, and a natural language explanation citing specific data points
+  5. Gov Officer can manually override the AI recommendation by selecting a different supplier and providing a written justification note
+**Plans**: TBD
+
+Plans:
+- [ ] 02-01: TBD
+- [ ] 02-02: TBD
+- [ ] 02-03: TBD
+
+### Phase 3: Payments, Settlement & Polish
+**Goal**: Full end-to-end demo flow from RFP to settled payment with animated fund-flow visualization, real-time notifications, financial dashboard, and auditable compliance trail
+**Depends on**: Phase 2
+**Requirements**: PAYM-01, PAYM-02, PAYM-03, PAYM-04, SETL-01, SETL-02, SETL-03, SETL-04, SETL-05, SETL-06, NOTF-01, NOTF-02, NOTF-03, NOTF-04, DASH-01, DASH-02, DASH-03, DASH-04, DASH-05, AUDT-01, AUDT-02, AUDT-03
+**Success Criteria** (what must be TRUE):
+  1. After selecting a winner, Gov Officer sees payment selector with "Pay with USD" and "Pay with USDC (Polygon)" options, checkout summary with supplier name, amount, method, and order ID
+  2. USD settlement plays animated flow: Government Bank to Visa Network to Supplier Bank with labeled nodes, progressing through Authorized, Processing, Settled (approximately 6 seconds total) with toast notifications at each state change
+  3. USDC settlement plays animated flow: Government Wallet to Polygon Network to Supplier Wallet with blockchain hash display, progressing through Submitted, Confirmed, Settled Instantly (approximately 3 seconds total) with toast notifications at each state change
+  4. Financial dashboard shows USD and USDC balances, active and completed order counts, total spend, AI optimization savings, payment breakdown chart (Visa vs USDC percentage), spend-over-time chart, and recent transactions list -- all updated after payment completion
+  5. Audit trail page shows timestamped log of all procurement events, Auditor role can view all transactions, and "Export PDF" generates a downloadable procurement report
+**Plans**: TBD
+
+Plans:
+- [ ] 03-01: TBD
+- [ ] 03-02: TBD
+- [ ] 03-03: TBD
+- [ ] 03-04: TBD
+
+## Progress
+
+**Execution Order:**
+Phases execute in numeric order: 1 → 2 → 3
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 1. Foundation & App Shell | 0/2 | Not started | - |
+| 2. Procurement & AI Engine | 0/3 | Not started | - |
+| 3. Payments, Settlement & Polish | 0/4 | Not started | - |
