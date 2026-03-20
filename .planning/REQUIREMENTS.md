@@ -9,16 +9,16 @@
 
 - [x] **FOUN-01**: Next.js 14 app scaffolded with App Router, TailwindCSS, and Framer Motion installed
 - [x] **FOUN-02**: App shell renders with sidebar (nav links), header (role switcher), and main content area
-- [ ] **FOUN-03**: Role switcher allows toggling between Gov Officer, Supplier, and Auditor views
-- [ ] **FOUN-04**: AppContext (3 slices: Procurement, Payment, UI) provides global state to all pages
-- [ ] **FOUN-05**: Mock data seeded: 8 suppliers with varied profiles, 5 RFPs in various states, historical transactions
+- [x] **FOUN-03**: Role switcher allows toggling between Gov Officer, Supplier, and Auditor views
+- [x] **FOUN-04**: AppContext (3 slices: Procurement, Payment, UI) provides global state to all pages
+- [x] **FOUN-05**: Mock data seeded: 8 suppliers with varied profiles, 5 RFPs in various states, historical transactions
 
 ### Supplier Management
 
 - [ ] **SUPP-01**: Supplier registry page lists all suppliers with name, rating, compliance status, and certifications
 - [ ] **SUPP-02**: Supplier profile page shows rating score, past performance, pricing history, wallet address, and compliance badge
 - [ ] **SUPP-03**: Supplier can submit a bid on an open RFP (bid amount, delivery days, notes)
-- [ ] **SUPP-04**: Mock suppliers have deliberately varied scores (spread ≥15 points composite) to ensure clear AI winner
+- [x] **SUPP-04**: Mock suppliers have deliberately varied scores (spread ≥15 points composite) to ensure clear AI winner
 
 ### Procurement Requests (RFP)
 
@@ -104,10 +104,10 @@
 |-------------|-------|--------|
 | FOUN-01 | Phase 1 | Complete |
 | FOUN-02 | Phase 1 | Complete |
-| FOUN-03 | Phase 1 | Pending |
-| FOUN-04 | Phase 1 | Pending |
-| FOUN-05 | Phase 1 | Pending |
-| SUPP-04 | Phase 1 | Pending |
+| FOUN-03 | Phase 1 | Complete |
+| FOUN-04 | Phase 1 | Complete |
+| FOUN-05 | Phase 1 | Complete |
+| SUPP-04 | Phase 1 | Complete |
 | SUPP-01 | Phase 2 | Pending |
 | SUPP-02 | Phase 2 | Pending |
 | SUPP-03 | Phase 2 | Pending |
