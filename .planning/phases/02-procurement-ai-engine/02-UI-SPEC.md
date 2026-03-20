@@ -50,7 +50,7 @@ Exceptions: Touch targets for form buttons minimum 40px height (py-2 + text + bo
 | Body | 14px (text-sm) | 400 (normal) | 1.5 |
 | Label | 12px (text-xs) | 600 (semibold) | 1.5 |
 | Heading | 20px (text-xl) | 600 (semibold) | 1.2 |
-| Display | 28px (text-2xl) | 700 (bold) | 1.2 |
+| Display | 28px (text-2xl) | 600 (semibold) | 1.2 |
 
 Note: Phase 1 established text-xl/font-semibold for page headings and text-sm/text-slate-500 for subtitles. Continue this pattern.
 
@@ -91,9 +91,9 @@ Accent reserved for: primary action buttons ("Create RFP", "Run AI Evaluation", 
 |-----------|-------------|-------------|
 | ScoreBar | Horizontal bar showing 0-100 score | Height 8px, rounded-full, bg-slate-200 track, colored fill (indigo-600 for winner, slate-400 for others) |
 | ScoreRadarChart | 5-axis radar for dimension scores | 280x280px SVG, slate-200 grid lines, indigo-500 fill at 20% opacity, indigo-600 stroke |
-| RankedSupplierRow | Table row in AI results | Left border-4 indigo-600 for winner, white bg, hover:bg-slate-50, composite score in text-2xl bold |
+| RankedSupplierRow | Table row in AI results | Left border-4 indigo-600 for winner, white bg, hover:bg-slate-50, composite score in text-2xl semibold |
 | BestValueBadge | Badge for AI winner | bg-indigo-600 text-white px-3 py-1 rounded-full text-xs font-semibold, with sparkle icon (Sparkles from lucide) |
-| DimensionScoreGrid | 5-column grid of individual scores | Grid cols-5 gap-4, each cell: label top (text-xs slate-500), score bottom (text-lg font-semibold) |
+| DimensionScoreGrid | 5-column grid of individual scores | Grid cols-5 gap-4, each cell: label top (text-xs slate-500), score bottom (text-xl font-semibold) |
 | ExplainabilityPanel | AI narrative explanation card | bg-indigo-50 border border-indigo-200 rounded-xl p-6, bot icon (Bot from lucide), text-sm text-slate-700 |
 | OverrideForm | Manual override with justification | Yellow warning bg-amber-50 border-amber-200 rounded-xl, textarea for justification, confirm button in amber-600 |
 | RFPStatusTimeline | Horizontal status steps | 5 steps (Draft > Open > Evaluating > Awarded > Paid), active step in indigo-600, completed in emerald-500, future in slate-300 |
