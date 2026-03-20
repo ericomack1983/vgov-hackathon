@@ -1,7 +1,7 @@
 ---
 phase: 1
 slug: foundation-app-shell
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-03-20
@@ -48,9 +48,9 @@ Exceptions: Sidebar width is 256px (16rem). Header height is 64px. Minimum touch
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
 | Body | 14px | 400 (regular) | 1.5 |
-| Label | 12px | 500 (medium) | 1.4 |
+| Label | 12px | 400 (regular) | 1.4 |
 | Heading | 20px | 600 (semibold) | 1.2 |
-| Display | 28px | 700 (bold) | 1.2 |
+| Display | 28px | 600 (semibold) | 1.2 |
 
 Font family: `Inter` loaded via `next/font/google` with `subsets: ['latin']`. Fallback stack: `Inter, system-ui, -apple-system, sans-serif`.
 
@@ -117,7 +117,7 @@ Accent reserved for: active sidebar nav item background, role switcher selected 
 ```
 +----------------------------------------------------------+
 | Header (h-16, bg-slate-900, fixed top, z-30)             |
-| [Logo: "GovProcure AI"]     [Role Switcher]  [Bell icon] |
+| [Logo: "GovProcure AI"]     [Role Switcher]  [Bell icon, aria-label="Notifications"] |
 +----------+-----------------------------------------------+
 | Sidebar  | Main Content                                   |
 | (w-64,   | (ml-64, mt-16, p-8, bg-slate-50,              |
@@ -135,9 +135,11 @@ Accent reserved for: active sidebar nav item background, role switcher selected 
 +----------+-----------------------------------------------+
 ```
 
-- Header: fixed, full width, height 64px (`h-16`), `bg-slate-900`, `border-b border-slate-700`
+- Header: fixed, full width, height 64px (`h-16`), `bg-slate-900`, `border-b border-slate-700` Bell icon button must have `aria-label="Notifications"`
 - Sidebar: fixed, left 0, top 64px, width 256px (`w-64`), full height minus header, `bg-slate-900`, `border-r border-slate-800`
 - Main content: `ml-64 mt-16 p-8 bg-slate-50 min-h-screen`
+
+**Visual Focal Point:** Active nav item in the sidebar (indigo-600 highlight) is the primary visual anchor; the page heading in the main content area is the secondary anchor.
 
 ### Sidebar Nav Items Per Role
 
@@ -164,7 +166,7 @@ Accent reserved for: active sidebar nav item background, role switcher selected 
 | State | Style |
 |-------|-------|
 | Default | `text-slate-400 hover:text-slate-50 hover:bg-slate-800 rounded-lg px-3 py-2` |
-| Active | `text-white bg-indigo-600 rounded-lg px-3 py-2 font-medium` |
+| Active | `text-white bg-indigo-600 rounded-lg px-3 py-2 font-semibold` |
 | Hover | `text-slate-50 bg-slate-800` transition 150ms ease |
 
 Icon size: 20px (`w-5 h-5`). Gap between icon and label: 12px (`gap-3`).
@@ -175,10 +177,10 @@ Icon size: 20px (`w-5 h-5`). Gap between icon and label: 12px (`gap-3`).
 
 - Location: Header, right-aligned before notification bell
 - Trigger: Button showing current role name + ChevronDown icon
-- Trigger style: `bg-slate-800 text-slate-200 px-3 py-1.5 rounded-lg text-sm font-medium`
+- Trigger style: `bg-slate-800 text-slate-200 px-3 py-2 rounded-lg text-sm font-semibold`
 - Dropdown: Absolutely positioned below trigger, `bg-slate-800 border border-slate-700 rounded-xl shadow-lg`
-- Dropdown items: `px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-700 hover:text-white`
-- Selected role: `text-indigo-400 font-medium` with a small indigo dot (6px, `rounded-full bg-indigo-500`) to the left
+- Dropdown items: `px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white`
+- Selected role: `text-indigo-400 font-semibold` with a small indigo dot (6px, `rounded-full bg-indigo-500`) to the left
 - Roles: "Gov Officer", "Supplier", "Auditor"
 - Animation: Framer Motion `AnimatePresence` with opacity + y-translate (from -4px to 0) over 150ms
 
@@ -264,11 +266,11 @@ Components to be built in this phase:
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: FLAG (non-blocking — 12px/14px close but semantically distinct)
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved — 2026-03-20
