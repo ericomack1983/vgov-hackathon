@@ -18,16 +18,19 @@ AI ranks suppliers and recommends the best value — then pays instantly via Vis
 - ✓ AppContext (3 slices: Procurement, Payment, UI) provides global state to all pages — Validated in Phase 1
 - ✓ Mock data seeded: 8 suppliers with varied profiles (32-pt score spread), 5 RFPs, historical transactions — Validated in Phase 1
 
+### Validated
+
+- ✓ Supplier registration with credentials, certifications, and pricing catalogs — Validated in Phase 2: Procurement & AI Engine
+- ✓ Supplier profiles with rating score, past performance, compliance status, and pricing history — Validated in Phase 2
+- ✓ Government users can create procurement requests (RFPs) — Validated in Phase 2
+- ✓ Suppliers can submit bids on RFPs — Validated in Phase 2
+- ✓ AI engine evaluates bids on price, delivery time, reliability score, historical performance, and risk — Validated in Phase 2
+- ✓ AI outputs ranked supplier list with "Best Value" recommendation and scoring breakdown — Validated in Phase 2
+- ✓ Decision dashboard with ranked suppliers, visual score breakdown, and AI explanation — Validated in Phase 2
+- ✓ Manual override by government officer — Validated in Phase 2
+
 ### Active
 
-- [ ] Supplier registration with credentials, certifications, and pricing catalogs
-- [ ] Supplier profiles with rating score, past performance, compliance status, and pricing history
-- [ ] Government users can create procurement requests (RFPs)
-- [ ] Suppliers can submit bids on RFPs
-- [ ] AI engine evaluates bids on price, delivery time, reliability score, historical performance, and risk
-- [ ] AI outputs ranked supplier list with "Best Value" recommendation and scoring breakdown
-- [ ] Decision dashboard with ranked suppliers, visual score breakdown, and AI explanation
-- [ ] Manual override by government officer
 - [ ] Hybrid checkout flow: "Pay with USD" or "Pay with USDC (Polygon)"
 - [ ] Visual animated settlement flow showing fund movement step-by-step
 - [ ] USD settlement: Government Bank → Visa Network → Supplier Bank (T+1/T+2)
@@ -76,4 +79,4 @@ AI ranks suppliers and recommends the best value — then pays instantly via Vis
 | Coarse phases (3-5) | Hackathon speed — fewer, broader delivery increments | — Pending |
 
 ---
-*Last updated: 2026-03-20 after Phase 1: Foundation & App Shell complete*
+*Last updated: 2026-03-21 after Phase 2: Procurement & AI Engine complete*
