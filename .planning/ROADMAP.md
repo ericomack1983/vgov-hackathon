@@ -62,13 +62,13 @@ Plans:
   3. USDC settlement plays animated flow: Government Wallet to Polygon Network to Supplier Wallet with blockchain hash display, progressing through Submitted, Confirmed, Settled Instantly (approximately 3 seconds total) with toast notifications at each state change
   4. Financial dashboard shows USD and USDC balances, active and completed order counts, total spend, AI optimization savings, payment breakdown chart (Visa vs USDC percentage), spend-over-time chart, and recent transactions list -- all updated after payment completion
   5. Audit trail page shows timestamped log of all procurement events, Auditor role can view all transactions, and "Export PDF" generates a downloadable procurement report
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 03-01: TBD
-- [ ] 03-02: TBD
-- [ ] 03-03: TBD
-- [ ] 03-04: TBD
+- [ ] 03-01-PLAN.md -- Settlement engine, payment checkout page, animated settlement flow with toast notifications
+- [ ] 03-02-PLAN.md -- Notification bell with unread badge in header, notification history page
+- [ ] 03-03-PLAN.md -- Financial dashboard with stat cards, donut chart, area chart, recent transactions
+- [ ] 03-04-PLAN.md -- Audit trail page with event timeline and PDF export
 
 ## Progress
 
