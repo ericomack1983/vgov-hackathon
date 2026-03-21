@@ -29,7 +29,7 @@
 
 ### AI Procurement Engine
 
-- [ ] **AIEN-01**: AI scoring engine computes weighted composite score per bid: Price (30%), Delivery (20%), Reliability (25%), Compliance (15%), Risk (10%)
+- [x] **AIEN-01**: AI scoring engine computes weighted composite score per bid: Price (30%), Delivery (20%), Reliability (25%), Compliance (15%), Risk (10%)
 - [ ] **AIEN-02**: Decision dashboard shows ranked supplier list with individual dimension scores and composite score
 - [ ] **AIEN-03**: "Best Value" badge highlights the AI-recommended winner
 - [ ] **AIEN-04**: AI explainability panel shows natural language narrative citing specific data points
@@ -115,7 +115,7 @@
 | PROC-02 | Phase 2 | Pending |
 | PROC-03 | Phase 2 | Pending |
 | PROC-04 | Phase 2 | Pending |
-| AIEN-01 | Phase 2 | Pending |
+| AIEN-01 | Phase 2 | Complete |
 | AIEN-02 | Phase 2 | Pending |
 | AIEN-03 | Phase 2 | Pending |
 | AIEN-04 | Phase 2 | Pending |
