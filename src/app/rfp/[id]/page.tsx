@@ -12,7 +12,7 @@ import { ExplainabilityPanel } from '@/components/ai/ExplainabilityPanel';
 import { OverrideForm } from '@/components/ai/OverrideForm';
 import { scoreBids, generateNarrative } from '@/lib/ai-engine';
 import Link from 'next/link';
-import { ArrowLeft, FileText, Bot, Loader2 } from 'lucide-react';
+import { ArrowLeft, FileText, Bot, Loader2, CreditCard } from 'lucide-react';
 import { format } from 'date-fns';
 import { RFPStatus, ScoredBid } from '@/lib/mock-data/types';
 import toast from 'react-hot-toast';
@@ -288,6 +288,17 @@ export default function RfpDetailPage({ params }: { params: Promise<{ id: string
                 >
                   Award Supplier
                 </button>
+              )}
+
+              {/* Proceed to Payment - shown when Awarded */}
+              {rfp.status === 'Awarded' && (
+                <Link
+                  href={`/payment/${rfp.id}`}
+                  className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-lg text-sm font-semibold transition-colors mt-4"
+                >
+                  <CreditCard size={16} />
+                  Proceed to Payment
+                </Link>
               )}
 
               {/* Override Form - shown when Evaluating and no override yet */}
