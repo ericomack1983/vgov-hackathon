@@ -78,5 +78,5 @@ Phases execute in numeric order: 1 → 2 → 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & App Shell | 2/2 | Complete    | 2026-03-20 |
-| 2. Procurement & AI Engine | 0/4 | Not started | - |
+| 2. Procurement & AI Engine | 2/4 | In Progress|  |
 | 3. Payments, Settlement & Polish | 0/4 | Not started | - |

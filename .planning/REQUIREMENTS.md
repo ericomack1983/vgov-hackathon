@@ -15,8 +15,8 @@
 
 ### Supplier Management
 
-- [ ] **SUPP-01**: Supplier registry page lists all suppliers with name, rating, compliance status, and certifications
-- [ ] **SUPP-02**: Supplier profile page shows rating score, past performance, pricing history, wallet address, and compliance badge
+- [x] **SUPP-01**: Supplier registry page lists all suppliers with name, rating, compliance status, and certifications
+- [x] **SUPP-02**: Supplier profile page shows rating score, past performance, pricing history, wallet address, and compliance badge
 - [ ] **SUPP-03**: Supplier can submit a bid on an open RFP (bid amount, delivery days, notes)
 - [x] **SUPP-04**: Mock suppliers have deliberately varied scores (spread ≥15 points composite) to ensure clear AI winner
 
@@ -108,8 +108,8 @@
 | FOUN-04 | Phase 1 | Complete |
 | FOUN-05 | Phase 1 | Complete |
 | SUPP-04 | Phase 1 | Complete |
-| SUPP-01 | Phase 2 | Pending |
-| SUPP-02 | Phase 2 | Pending |
+| SUPP-01 | Phase 2 | Complete |
+| SUPP-02 | Phase 2 | Complete |
 | SUPP-03 | Phase 2 | Pending |
 | PROC-01 | Phase 2 | Pending |
 | PROC-02 | Phase 2 | Pending |
