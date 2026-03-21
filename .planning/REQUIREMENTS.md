@@ -38,24 +38,24 @@
 
 ### Payment & Checkout
 
-- [ ] **PAYM-01**: Payment selector presents two options: "Pay with USD" and "Pay with USDC (Polygon)"
-- [ ] **PAYM-02**: Checkout summary shows supplier name, amount, payment method, and order ID
-- [ ] **PAYM-03**: Confirming payment triggers the settlement animation flow
-- [ ] **PAYM-04**: Completed transactions are added to AppContext transaction history
+- [x] **PAYM-01**: Payment selector presents two options: "Pay with USD" and "Pay with USDC (Polygon)"
+- [x] **PAYM-02**: Checkout summary shows supplier name, amount, payment method, and order ID
+- [x] **PAYM-03**: Confirming payment triggers the settlement animation flow
+- [x] **PAYM-04**: Completed transactions are added to AppContext transaction history
 
 ### Settlement Engine (Animated)
 
-- [ ] **SETL-01**: USD settlement flow animates: Government Bank → Visa Network → Supplier Bank with labeled nodes and moving funds indicator
-- [ ] **SETL-02**: USD settlement progresses through: Authorized → Processing → Settled (T+2) with real-time status updates (~6s total)
-- [ ] **SETL-03**: USDC settlement flow animates: Government Wallet → Polygon Network → Supplier Wallet with blockchain hash display
-- [ ] **SETL-04**: USDC settlement progresses through: Submitted → Confirmed → Settled Instantly (~3s total)
-- [ ] **SETL-05**: Settlement state machine resets cleanly on re-entry; no stuck states or double-fire notifications
-- [ ] **SETL-06**: Side-by-side comparison panel shows "Traditional Rail (T+2)" vs "Blockchain Rail (Instant)" after settlement
+- [x] **SETL-01**: USD settlement flow animates: Government Bank → Visa Network → Supplier Bank with labeled nodes and moving funds indicator
+- [x] **SETL-02**: USD settlement progresses through: Authorized → Processing → Settled (T+2) with real-time status updates (~6s total)
+- [x] **SETL-03**: USDC settlement flow animates: Government Wallet → Polygon Network → Supplier Wallet with blockchain hash display
+- [x] **SETL-04**: USDC settlement progresses through: Submitted → Confirmed → Settled Instantly (~3s total)
+- [x] **SETL-05**: Settlement state machine resets cleanly on re-entry; no stuck states or double-fire notifications
+- [x] **SETL-06**: Side-by-side comparison panel shows "Traditional Rail (T+2)" vs "Blockchain Rail (Instant)" after settlement
 
 ### Notifications
 
-- [ ] **NOTF-01**: Toast notification fires on each settlement state change (initiated, authorized, settled)
-- [ ] **NOTF-02**: Each notification includes timestamp, payment method (USD/USDC), and transaction ID / blockchain hash
+- [x] **NOTF-01**: Toast notification fires on each settlement state change (initiated, authorized, settled)
+- [x] **NOTF-02**: Each notification includes timestamp, payment method (USD/USDC), and transaction ID / blockchain hash
 - [ ] **NOTF-03**: Notification history page lists all past notifications in reverse chronological order
 - [ ] **NOTF-04**: Notification bell in header shows unread count badge
 
@@ -121,18 +121,18 @@
 | AIEN-04 | Phase 2 | Complete |
 | AIEN-05 | Phase 2 | Complete |
 | AIEN-06 | Phase 2 | Complete |
-| PAYM-01 | Phase 3 | Pending |
-| PAYM-02 | Phase 3 | Pending |
-| PAYM-03 | Phase 3 | Pending |
-| PAYM-04 | Phase 3 | Pending |
-| SETL-01 | Phase 3 | Pending |
-| SETL-02 | Phase 3 | Pending |
-| SETL-03 | Phase 3 | Pending |
-| SETL-04 | Phase 3 | Pending |
-| SETL-05 | Phase 3 | Pending |
-| SETL-06 | Phase 3 | Pending |
-| NOTF-01 | Phase 3 | Pending |
-| NOTF-02 | Phase 3 | Pending |
+| PAYM-01 | Phase 3 | Complete |
+| PAYM-02 | Phase 3 | Complete |
+| PAYM-03 | Phase 3 | Complete |
+| PAYM-04 | Phase 3 | Complete |
+| SETL-01 | Phase 3 | Complete |
+| SETL-02 | Phase 3 | Complete |
+| SETL-03 | Phase 3 | Complete |
+| SETL-04 | Phase 3 | Complete |
+| SETL-05 | Phase 3 | Complete |
+| SETL-06 | Phase 3 | Complete |
+| NOTF-01 | Phase 3 | Complete |
+| NOTF-02 | Phase 3 | Complete |
 | NOTF-03 | Phase 3 | Pending |
 | NOTF-04 | Phase 3 | Pending |
 | DASH-01 | Phase 3 | Pending |
