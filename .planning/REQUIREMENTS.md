@@ -61,11 +61,11 @@
 
 ### Financial Dashboard
 
-- [ ] **DASH-01**: Dashboard shows USD balance, USDC balance, active orders count, completed orders count
-- [ ] **DASH-02**: Total spend metric and AI optimization savings (difference between highest bid and winning bid)
-- [ ] **DASH-03**: Payment breakdown pie/donut chart showing % paid via Visa vs % paid via USDC
-- [ ] **DASH-04**: Spend-over-time area chart
-- [ ] **DASH-05**: Recent transactions list with method badge, amount, supplier, and status
+- [x] **DASH-01**: Dashboard shows USD balance, USDC balance, active orders count, completed orders count
+- [x] **DASH-02**: Total spend metric and AI optimization savings (difference between highest bid and winning bid)
+- [x] **DASH-03**: Payment breakdown pie/donut chart showing % paid via Visa vs % paid via USDC
+- [x] **DASH-04**: Spend-over-time area chart
+- [x] **DASH-05**: Recent transactions list with method badge, amount, supplier, and status
 
 ### Audit & Compliance
 
@@ -135,11 +135,11 @@
 | NOTF-02 | Phase 3 | Complete |
 | NOTF-03 | Phase 3 | Pending |
 | NOTF-04 | Phase 3 | Pending |
-| DASH-01 | Phase 3 | Pending |
-| DASH-02 | Phase 3 | Pending |
-| DASH-03 | Phase 3 | Pending |
-| DASH-04 | Phase 3 | Pending |
-| DASH-05 | Phase 3 | Pending |
+| DASH-01 | Phase 3 | Complete |
+| DASH-02 | Phase 3 | Complete |
+| DASH-03 | Phase 3 | Complete |
+| DASH-04 | Phase 3 | Complete |
+| DASH-05 | Phase 3 | Complete |
 | AUDT-01 | Phase 3 | Complete |
 | AUDT-02 | Phase 3 | Complete |
 | AUDT-03 | Phase 3 | Complete |
