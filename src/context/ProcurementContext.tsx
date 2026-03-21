@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useReducer, useMemo, ReactNode, useCallback } from 'react';
-import { Supplier, RFP, Bid } from '@/lib/mock-data/types';
+import { Supplier, RFP, Bid, ScoredBid } from '@/lib/mock-data/types';
 import { MOCK_SUPPLIERS } from '@/lib/mock-data/suppliers';
 import { MOCK_RFPS } from '@/lib/mock-data/rfps';
 
@@ -13,7 +13,9 @@ interface ProcurementState {
 type ProcurementAction =
   | { type: 'ADD_RFP'; payload: RFP }
   | { type: 'UPDATE_RFP'; payload: { id: string; updates: Partial<RFP> } }
-  | { type: 'ADD_BID'; payload: { rfpId: string; bid: Bid } };
+  | { type: 'ADD_BID'; payload: { rfpId: string; bid: Bid } }
+  | { type: 'SET_EVALUATION'; payload: { rfpId: string; results: ScoredBid[] } }
+  | { type: 'SET_OVERRIDE'; payload: { rfpId: string; winnerId: string; justification: string } };
 
 function procurementReducer(state: ProcurementState, action: ProcurementAction): ProcurementState {
   switch (action.type) {
@@ -35,6 +37,29 @@ function procurementReducer(state: ProcurementState, action: ProcurementAction):
             : rfp
         ),
       };
+    case 'SET_EVALUATION':
+      return {
+        ...state,
+        rfps: state.rfps.map((rfp) =>
+          rfp.id === action.payload.rfpId
+            ? { ...rfp, evaluationResults: action.payload.results, status: 'Evaluating' as const }
+            : rfp
+        ),
+      };
+    case 'SET_OVERRIDE':
+      return {
+        ...state,
+        rfps: state.rfps.map((rfp) =>
+          rfp.id === action.payload.rfpId
+            ? {
+                ...rfp,
+                overrideWinnerId: action.payload.winnerId,
+                overrideJustification: action.payload.justification,
+                selectedWinnerId: action.payload.winnerId,
+              }
+            : rfp
+        ),
+      };
     default:
       return state;
   }
@@ -46,6 +71,8 @@ interface ProcurementContextValue {
   addRFP: (rfp: RFP) => void;
   updateRFP: (id: string, updates: Partial<RFP>) => void;
   addBid: (rfpId: string, bid: Bid) => void;
+  setEvaluation: (rfpId: string, results: ScoredBid[]) => void;
+  setOverride: (rfpId: string, winnerId: string, justification: string) => void;
 }
 
 const ProcurementContext = createContext<ProcurementContextValue | undefined>(undefined);
@@ -68,13 +95,23 @@ export function ProcurementProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'ADD_BID', payload: { rfpId, bid } });
   }, []);
 
+  const setEvaluation = useCallback((rfpId: string, results: ScoredBid[]) => {
+    dispatch({ type: 'SET_EVALUATION', payload: { rfpId, results } });
+  }, []);
+
+  const setOverride = useCallback((rfpId: string, winnerId: string, justification: string) => {
+    dispatch({ type: 'SET_OVERRIDE', payload: { rfpId, winnerId, justification } });
+  }, []);
+
   const value = useMemo(() => ({
     suppliers: state.suppliers,
     rfps: state.rfps,
     addRFP,
     updateRFP,
     addBid,
-  }), [state.suppliers, state.rfps, addRFP, updateRFP, addBid]);
+    setEvaluation,
+    setOverride,
+  }), [state.suppliers, state.rfps, addRFP, updateRFP, addBid, setEvaluation, setOverride]);
 
   return (
     <ProcurementContext.Provider value={value}>
