@@ -17,14 +17,14 @@
 
 - [x] **SUPP-01**: Supplier registry page lists all suppliers with name, rating, compliance status, and certifications
 - [x] **SUPP-02**: Supplier profile page shows rating score, past performance, pricing history, wallet address, and compliance badge
-- [ ] **SUPP-03**: Supplier can submit a bid on an open RFP (bid amount, delivery days, notes)
+- [x] **SUPP-03**: Supplier can submit a bid on an open RFP (bid amount, delivery days, notes)
 - [x] **SUPP-04**: Mock suppliers have deliberately varied scores (spread ≥15 points composite) to ensure clear AI winner
 
 ### Procurement Requests (RFP)
 
-- [ ] **PROC-01**: Government user can create a new RFP with title, description, budget ceiling, deadline, and category
-- [ ] **PROC-02**: RFP list page shows all requests with status (Draft, Open, Evaluating, Awarded, Paid)
-- [ ] **PROC-03**: RFP detail page shows description, submitted bids, and status timeline
+- [x] **PROC-01**: Government user can create a new RFP with title, description, budget ceiling, deadline, and category
+- [x] **PROC-02**: RFP list page shows all requests with status (Draft, Open, Evaluating, Awarded, Paid)
+- [x] **PROC-03**: RFP detail page shows description, submitted bids, and status timeline
 - [ ] **PROC-04**: Gov officer can trigger AI evaluation on an RFP with submitted bids
 
 ### AI Procurement Engine
@@ -110,10 +110,10 @@
 | SUPP-04 | Phase 1 | Complete |
 | SUPP-01 | Phase 2 | Complete |
 | SUPP-02 | Phase 2 | Complete |
-| SUPP-03 | Phase 2 | Pending |
-| PROC-01 | Phase 2 | Pending |
-| PROC-02 | Phase 2 | Pending |
-| PROC-03 | Phase 2 | Pending |
+| SUPP-03 | Phase 2 | Complete |
+| PROC-01 | Phase 2 | Complete |
+| PROC-02 | Phase 2 | Complete |
+| PROC-03 | Phase 2 | Complete |
 | PROC-04 | Phase 2 | Pending |
 | AIEN-01 | Phase 2 | Complete |
 | AIEN-02 | Phase 2 | Pending |
