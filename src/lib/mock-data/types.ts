@@ -30,6 +30,23 @@ export interface Bid {
   submittedAt: string;
 }
 
+export interface DimensionScores {
+  price: number;       // 0-100
+  delivery: number;    // 0-100
+  reliability: number; // 0-100
+  compliance: number;  // 0-100
+  risk: number;        // 0-100
+}
+
+export interface ScoredBid {
+  bid: Bid;
+  supplier: Supplier;
+  dimensions: DimensionScores;
+  composite: number;
+  rank: number;
+  isWinner: boolean;
+}
+
 export interface RFP {
   id: string;
   title: string;
@@ -41,6 +58,9 @@ export interface RFP {
   createdAt: string;
   bids: Bid[];
   selectedWinnerId?: string;
+  evaluationResults?: ScoredBid[];
+  overrideWinnerId?: string;
+  overrideJustification?: string;
 }
 
 export interface Transaction {
