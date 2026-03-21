@@ -44,12 +44,13 @@ Plans:
   3. Supplier can submit a bid on an open RFP with bid amount, delivery days, and notes -- bid appears on the RFP detail page
   4. Triggering AI evaluation on an RFP produces a ranked supplier list with individual dimension scores (price, delivery, reliability, compliance, risk), composite score, "Best Value" badge on the winner, and a natural language explanation citing specific data points
   5. Gov Officer can manually override the AI recommendation by selecting a different supplier and providing a written justification note
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
-- [ ] 02-03: TBD
+- [ ] 02-01-PLAN.md -- AI scoring engine types, pure scoring function, narrative generator, context extension
+- [ ] 02-02-PLAN.md -- Supplier registry grid page and supplier profile detail page
+- [ ] 02-03-PLAN.md -- RFP list, create, detail pages and bid submission workflow
+- [ ] 02-04-PLAN.md -- AI evaluation dashboard components wired into RFP detail with override
 
 ### Phase 3: Payments, Settlement & Polish
 **Goal**: Full end-to-end demo flow from RFP to settled payment with animated fund-flow visualization, real-time notifications, financial dashboard, and auditable compliance trail
@@ -76,6 +77,6 @@ Phases execute in numeric order: 1 → 2 → 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & App Shell | 1/2 | Complete    | 2026-03-20 |
-| 2. Procurement & AI Engine | 0/3 | Not started | - |
+| 1. Foundation & App Shell | 2/2 | Complete    | 2026-03-20 |
+| 2. Procurement & AI Engine | 0/4 | Not started | - |
 | 3. Payments, Settlement & Polish | 0/4 | Not started | - |
