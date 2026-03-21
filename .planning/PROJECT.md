@@ -29,19 +29,19 @@ AI ranks suppliers and recommends the best value — then pays instantly via Vis
 - ✓ Decision dashboard with ranked suppliers, visual score breakdown, and AI explanation — Validated in Phase 2
 - ✓ Manual override by government officer — Validated in Phase 2
 
-### Active
+### Validated
 
-- [ ] Hybrid checkout flow: "Pay with USD" or "Pay with USDC (Polygon)"
-- [ ] Visual animated settlement flow showing fund movement step-by-step
-- [ ] USD settlement: Government Bank → Visa Network → Supplier Bank (T+1/T+2)
-- [ ] USDC settlement: Government Wallet → Polygon Network → Supplier Wallet (instant)
-- [ ] Real-time notifications: payment initiated, authorized, settled — with timestamps and tx IDs
-- [ ] Financial dashboard: USD/USDC balances, active/completed orders, total spend, savings
-- [ ] Payment breakdown chart: % via Visa vs % via USDC
-- [ ] AI explainability panel ("Why this supplier was selected")
-- [ ] Role-based access (Gov, Supplier, Auditor)
-- [ ] Audit trail for compliance
-- [ ] Export reports (PDF)
+- ✓ Hybrid checkout flow: "Pay with USD" or "Pay with USDC (Polygon)" — Validated in Phase 3: Payments, Settlement & Polish
+- ✓ Visual animated settlement flow showing fund movement step-by-step — Validated in Phase 3
+- ✓ USD settlement: Government Bank → Visa Network → Supplier Bank (~6s animated) — Validated in Phase 3
+- ✓ USDC settlement: Government Wallet → Polygon Network → Supplier Wallet (~3s, instant, blockchain hash) — Validated in Phase 3
+- ✓ Real-time notifications: payment initiated, authorized, settled — with timestamps and tx IDs — Validated in Phase 3
+- ✓ Financial dashboard: USD/USDC balances, active/completed orders, total spend, savings — Validated in Phase 3
+- ✓ Payment breakdown chart: % via Visa vs % via USDC (SVG donut) — Validated in Phase 3
+- ✓ AI explainability panel ("Why this supplier was selected") — Validated in Phase 2
+- ✓ Role-based access (Gov, Supplier, Auditor) — Validated in Phase 1
+- ✓ Audit trail for compliance — Validated in Phase 3
+- ✓ Export reports (PDF) — Validated in Phase 3
 
 ### Out of Scope
 
@@ -79,4 +79,4 @@ AI ranks suppliers and recommends the best value — then pays instantly via Vis
 | Coarse phases (3-5) | Hackathon speed — fewer, broader delivery increments | — Pending |
 
 ---
-*Last updated: 2026-03-21 after Phase 2: Procurement & AI Engine complete*
+*Last updated: 2026-03-21 after Phase 3: Payments, Settlement & Polish complete — all 3 phases done, v1.0 milestone complete*
