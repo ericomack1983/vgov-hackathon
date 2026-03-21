@@ -1,7 +1,7 @@
 'use client';
 
-import { Bell } from 'lucide-react';
 import { RoleSwitcher } from '@/components/layout/RoleSwitcher';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 export function Header() {
   return (
@@ -12,12 +12,7 @@ export function Header() {
         </span>
         <div className="flex items-center gap-4">
           <RoleSwitcher />
-          <button
-            aria-label="Notifications"
-            className="text-slate-400 hover:text-slate-50 transition-colors"
-          >
-            <Bell className="w-5 h-5" />
-          </button>
+          <NotificationBell />
         </div>
       </div>
     </header>
