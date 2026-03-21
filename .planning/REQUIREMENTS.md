@@ -25,16 +25,16 @@
 - [x] **PROC-01**: Government user can create a new RFP with title, description, budget ceiling, deadline, and category
 - [x] **PROC-02**: RFP list page shows all requests with status (Draft, Open, Evaluating, Awarded, Paid)
 - [x] **PROC-03**: RFP detail page shows description, submitted bids, and status timeline
-- [ ] **PROC-04**: Gov officer can trigger AI evaluation on an RFP with submitted bids
+- [x] **PROC-04**: Gov officer can trigger AI evaluation on an RFP with submitted bids
 
 ### AI Procurement Engine
 
 - [x] **AIEN-01**: AI scoring engine computes weighted composite score per bid: Price (30%), Delivery (20%), Reliability (25%), Compliance (15%), Risk (10%)
-- [ ] **AIEN-02**: Decision dashboard shows ranked supplier list with individual dimension scores and composite score
-- [ ] **AIEN-03**: "Best Value" badge highlights the AI-recommended winner
-- [ ] **AIEN-04**: AI explainability panel shows natural language narrative citing specific data points
-- [ ] **AIEN-05**: Score radar/bar chart renders per supplier for visual comparison
-- [ ] **AIEN-06**: Gov officer can manually override AI recommendation with a written justification note
+- [x] **AIEN-02**: Decision dashboard shows ranked supplier list with individual dimension scores and composite score
+- [x] **AIEN-03**: "Best Value" badge highlights the AI-recommended winner
+- [x] **AIEN-04**: AI explainability panel shows natural language narrative citing specific data points
+- [x] **AIEN-05**: Score radar/bar chart renders per supplier for visual comparison
+- [x] **AIEN-06**: Gov officer can manually override AI recommendation with a written justification note
 
 ### Payment & Checkout
 
@@ -114,13 +114,13 @@
 | PROC-01 | Phase 2 | Complete |
 | PROC-02 | Phase 2 | Complete |
 | PROC-03 | Phase 2 | Complete |
-| PROC-04 | Phase 2 | Pending |
+| PROC-04 | Phase 2 | Complete |
 | AIEN-01 | Phase 2 | Complete |
-| AIEN-02 | Phase 2 | Pending |
-| AIEN-03 | Phase 2 | Pending |
-| AIEN-04 | Phase 2 | Pending |
-| AIEN-05 | Phase 2 | Pending |
-| AIEN-06 | Phase 2 | Pending |
+| AIEN-02 | Phase 2 | Complete |
+| AIEN-03 | Phase 2 | Complete |
+| AIEN-04 | Phase 2 | Complete |
+| AIEN-05 | Phase 2 | Complete |
+| AIEN-06 | Phase 2 | Complete |
 | PAYM-01 | Phase 3 | Pending |
 | PAYM-02 | Phase 3 | Pending |
 | PAYM-03 | Phase 3 | Pending |
