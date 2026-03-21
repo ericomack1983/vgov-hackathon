@@ -69,9 +69,9 @@
 
 ### Audit & Compliance
 
-- [ ] **AUDT-01**: Audit trail page shows timestamped log of all procurement events
-- [ ] **AUDT-02**: Auditor role can view all transactions across all RFPs
-- [ ] **AUDT-03**: "Export PDF" button generates a procurement report (audit trail + transaction summary)
+- [x] **AUDT-01**: Audit trail page shows timestamped log of all procurement events
+- [x] **AUDT-02**: Auditor role can view all transactions across all RFPs
+- [x] **AUDT-03**: "Export PDF" button generates a procurement report (audit trail + transaction summary)
 
 ## v2 Requirements
 
@@ -140,9 +140,9 @@
 | DASH-03 | Phase 3 | Pending |
 | DASH-04 | Phase 3 | Pending |
 | DASH-05 | Phase 3 | Pending |
-| AUDT-01 | Phase 3 | Pending |
-| AUDT-02 | Phase 3 | Pending |
-| AUDT-03 | Phase 3 | Pending |
+| AUDT-01 | Phase 3 | Complete |
+| AUDT-02 | Phase 3 | Complete |
+| AUDT-03 | Phase 3 | Complete |
 
 **Coverage:**
 - v1 requirements: 41 total
