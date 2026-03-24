@@ -2,16 +2,17 @@ export type USDSettlementStep = 'idle' | 'authorized' | 'processing' | 'settled'
 export type USDCSettlementStep = 'idle' | 'submitted' | 'confirmed' | 'settled';
 
 export interface SettlementState {
-  method: 'USD' | 'USDC';
+  method: 'USD' | 'USDC' | 'Card';
   currentStep: USDSettlementStep | USDCSettlementStep;
   progress: number; // 0, 33, 66, 100
   txHash?: string;
   orderId: string;
   startedAt?: string;
+  paymentMode?: 'cnp' | 'card-present';
 }
 
 export type SettlementAction =
-  | { type: 'START'; payload: { method: 'USD' | 'USDC'; orderId: string } }
+  | { type: 'START'; payload: { method: 'USD' | 'USDC' | 'Card'; orderId: string; paymentMode?: 'cnp' | 'card-present' } }
   | { type: 'ADVANCE' }
   | { type: 'RESET' };
 
@@ -37,11 +38,13 @@ export function settlementReducer(
 ): SettlementState {
   switch (action.type) {
     case 'START': {
-      const { method, orderId } = action.payload;
+      const { method, orderId, paymentMode } = action.payload;
+      const isUSDLike = method === 'USD' || method === 'Card';
       return {
         method,
         orderId,
-        currentStep: method === 'USD' ? 'authorized' : 'submitted',
+        paymentMode,
+        currentStep: isUSDLike ? 'authorized' : 'submitted',
         progress: 33,
         txHash: method === 'USDC' ? generateTxHash() : undefined,
         startedAt: new Date().toISOString(),
@@ -50,7 +53,7 @@ export function settlementReducer(
     case 'ADVANCE': {
       if (state.currentStep === 'settled') return state;
 
-      if (state.method === 'USD') {
+      if (state.method === 'USD' || state.method === 'Card') {
         if (state.currentStep === 'authorized') {
           return { ...state, currentStep: 'processing', progress: 66 };
         }
@@ -80,30 +83,37 @@ export const USD_NODES = [
   { label: 'Supplier Bank', icon: 'Building' },
 ] as const;
 
+export const CARD_NODES = [
+  { label: 'Gov Office', icon: 'Building' },
+  { label: 'Secure Channel', icon: 'Shield' },
+  { label: 'Supplier POS', icon: 'POS' },
+] as const;
+
 export const USDC_NODES = [
   { label: 'Government Wallet', icon: 'Wallet' },
-  { label: 'Polygon Network', icon: 'Globe' },
+  { label: 'Visa Network', icon: 'CreditCard' },
   { label: 'Supplier Wallet', icon: 'Wallet' },
 ] as const;
 
 export const USD_STEP_DELAY = 2000; // 2s per step, ~6s total
 export const USDC_STEP_DELAY = 1500; // 1.5s per step, ~3s total
 
-export function getStepLabel(step: string): string {
+export function getStepLabel(step: string, paymentMode?: 'cnp' | 'card-present'): string {
+  if (paymentMode === 'cnp') {
+    switch (step) {
+      case 'authorized': return 'Initiating Straight-Through Processing…';
+      case 'processing': return 'Executing payment via Visa STP…';
+      case 'settled':    return 'Payment Executed — funds transferred instantly';
+      default: break;
+    }
+  }
   switch (step) {
-    case 'authorized':
-      return 'Authorized';
-    case 'processing':
-      return 'Processing (T+2)';
-    case 'settled':
-      return 'Settled';
-    case 'submitted':
-      return 'Submitted to Polygon';
-    case 'confirmed':
-      return 'Confirmed on Chain';
-    case 'idle':
-      return 'Ready';
-    default:
-      return step;
+    case 'authorized': return 'Sending card number to supplier…';
+    case 'processing': return 'Supplier receiving via secure channel…';
+    case 'settled':    return 'Supplier entered card at POS — funds credited';
+    case 'submitted':  return 'Submitted to Visa Network';
+    case 'confirmed':  return 'Confirmed on Chain';
+    case 'idle':       return 'Ready';
+    default:           return step;
   }
 }

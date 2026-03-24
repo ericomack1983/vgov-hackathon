@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useMemo, ReactNode } from 'react';
+import { createContext, useContext, useState, useMemo, useCallback, ReactNode } from 'react';
 import { Role } from '@/lib/mock-data/types';
 
 interface UIState {
@@ -8,17 +8,27 @@ interface UIState {
   setRole: (role: Role) => void;
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
+  isSwitchingRole: boolean;
+  clearSwitching: () => void;
 }
 
 const UIContext = createContext<UIState | undefined>(undefined);
 
 export function UIProvider({ children }: { children: ReactNode }) {
-  const [role, setRole] = useState<Role>('gov');
+  const [role, setRoleRaw] = useState<Role>('gov');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isSwitchingRole, setIsSwitchingRole] = useState(false);
+
+  const setRole = useCallback((newRole: Role) => {
+    setIsSwitchingRole(true);
+    setRoleRaw(newRole);
+  }, []);
+
+  const clearSwitching = useCallback(() => setIsSwitchingRole(false), []);
 
   const value = useMemo(() => ({
-    role, setRole, sidebarOpen, setSidebarOpen
-  }), [role, sidebarOpen]);
+    role, setRole, sidebarOpen, setSidebarOpen, isSwitchingRole, clearSwitching,
+  }), [role, setRole, sidebarOpen, isSwitchingRole, clearSwitching]);
 
   return <UIContext.Provider value={value}>{children}</UIContext.Provider>;
 }

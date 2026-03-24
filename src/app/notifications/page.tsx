@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Bell } from 'lucide-react';
 import { usePayment } from '@/context/PaymentContext';
 import { NotificationItem } from '@/components/notifications/NotificationItem';
+import { MailInboxItem } from '@/components/notifications/MailInboxItem';
 
 export default function NotificationsPage() {
   const { notifications, markNotificationRead, unreadCount } = usePayment();
@@ -47,13 +48,11 @@ export default function NotificationsPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {notifications.map((notification) => (
-            <NotificationItem
-              key={notification.id}
-              notification={notification}
-              onMarkRead={markNotificationRead}
-            />
-          ))}
+          {notifications.map((notification) =>
+            notification.type === 'payment' && notification.amount && notification.paymentMode !== 'cnp'
+              ? <MailInboxItem key={notification.id} notification={notification} onMarkRead={markNotificationRead} />
+              : <NotificationItem key={notification.id} notification={notification} onMarkRead={markNotificationRead} />
+          )}
         </div>
       )}
     </motion.div>

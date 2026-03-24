@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useUI } from '@/context/UIContext';
 import { Role } from '@/lib/mock-data/types';
 
@@ -17,6 +18,7 @@ const ROLES: Role[] = ['gov', 'supplier', 'auditor'];
 export function RoleSwitcher() {
   const { role, setRole } = useUI();
   const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -55,6 +57,8 @@ export function RoleSwitcher() {
                 onClick={() => {
                   setRole(r);
                   setIsOpen(false);
+                  const landingPage = r === 'gov' ? '/dashboard' : r === 'supplier' ? '/bids' : '/audit';
+                  router.push(landingPage);
                 }}
                 className={`w-full px-4 py-2 text-sm text-left flex items-center gap-2 hover:bg-slate-700 hover:text-white transition-colors ${
                   r === role

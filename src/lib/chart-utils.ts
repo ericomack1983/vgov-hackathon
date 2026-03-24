@@ -13,7 +13,7 @@ export function computeDonutSegments(
   if (total === 0) return [];
   return [
     { color: '#4f46e5', percentage: usdTotal / total, label: 'Visa (USD)', value: usdTotal },
-    { color: '#8b5cf6', percentage: usdcTotal / total, label: 'USDC (Polygon)', value: usdcTotal },
+    { color: '#8b5cf6', percentage: usdcTotal / total, label: 'USDC (Visa Network)', value: usdcTotal },
   ];
 }
 
@@ -64,4 +64,25 @@ export function transactionsToChartPoints(
     label: new Date(p.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     value: p.total,
   }));
+}
+
+export function computeCategorySpend(
+  transactions: Array<{ amount: number; status: string; rfpId: string }>,
+  rfps: Array<{ id: string; category: string }>
+): { category: string; amount: number }[] {
+  const rfpCategories = new Map(rfps.map((r) => [r.id, r.category]));
+  const totals: Record<string, number> = {};
+
+  transactions
+    .filter((t) => t.status === 'Settled')
+    .forEach((t) => {
+      // Create a snake_case key to match the user's expected 'food_services', 'technology' format from the image.
+      const rawCategory = rfpCategories.get(t.rfpId) || 'Uncategorized';
+      const snakeCategory = rawCategory.toLowerCase().replace(/\s+/g, '_');
+      totals[snakeCategory] = (totals[snakeCategory] || 0) + t.amount;
+    });
+
+  return Object.entries(totals)
+    .map(([category, amount]) => ({ category, amount }))
+    .sort((a, b) => b.amount - a.amount);
 }

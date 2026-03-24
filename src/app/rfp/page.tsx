@@ -1,11 +1,13 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useProcurement } from '@/context/ProcurementContext';
 import { useUI } from '@/context/UIContext';
 import { StatusBadge } from '@/components/shared/StatusBadge';
+import { CreateRFPForm } from '@/components/procurement/CreateRFPForm';
 import Link from 'next/link';
-import { Plus } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { RFPStatus } from '@/lib/mock-data/types';
 
@@ -20,6 +22,7 @@ const statusVariant: Record<RFPStatus, 'default' | 'success' | 'warning' | 'erro
 export default function RfpPage() {
   const { rfps } = useProcurement();
   const { role } = useUI();
+  const [showModal, setShowModal] = useState(false);
 
   return (
     <motion.div
@@ -33,15 +36,55 @@ export default function RfpPage() {
           <p className="mt-1 text-sm text-slate-500">Create and track RFPs across all stages.</p>
         </div>
         {role === 'gov' && (
-          <Link
-            href="/rfp/new"
+          <button
+            onClick={() => setShowModal(true)}
             className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-semibold inline-flex items-center gap-2 transition-colors"
           >
             <Plus size={16} />
             Create RFP
-          </Link>
+          </button>
         )}
       </div>
+
+      {/* Create RFP Modal */}
+      <AnimatePresence>
+        {showModal && (
+          <>
+            <motion.div
+              key="backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+              onClick={() => setShowModal(false)}
+            />
+            <motion.div
+              key="modal"
+              initial={{ opacity: 0, scale: 0.96, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 8 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-6 pointer-events-none"
+            >
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col pointer-events-auto">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+                  <h2 className="text-base font-semibold text-slate-900">Create New RFP</h2>
+                  <button
+                    onClick={() => setShowModal(false)}
+                    className="text-slate-400 hover:text-slate-600 transition-colors"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+                <div className="overflow-y-auto flex-1 px-6 py-5">
+                  <CreateRFPForm onClose={() => setShowModal(false)} />
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {rfps.length === 0 ? (
         <div className="mt-8 bg-white rounded-xl shadow-sm border border-slate-200 p-8 text-center">

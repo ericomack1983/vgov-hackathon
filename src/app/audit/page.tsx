@@ -8,7 +8,13 @@ import { usePayment } from '@/context/PaymentContext';
 import { useUI } from '@/context/UIContext';
 import { buildAuditTrail } from '@/lib/audit-utils';
 import { AuditEventRow } from '@/components/audit/AuditEventRow';
-import { ExportPDFButton } from '@/components/audit/ExportPDFButton';
+import { ProcurementCard } from '@/components/procurement/ProcurementCard';
+import dynamic from 'next/dynamic';
+
+const ExportPDFButton = dynamic(
+  () => import('@/components/audit/ExportPDFButton').then((m) => m.ExportPDFButton),
+  { ssr: false }
+);
 
 export default function AuditPage() {
   const { rfps } = useProcurement();
@@ -45,13 +51,25 @@ export default function AuditPage() {
       )}
 
       {/* Event count */}
-      <p className="text-sm text-slate-500">{events.length} events recorded</p>
+      <div className="flex items-center justify-between mt-6">
+        <h2 className="text-sm font-semibold text-slate-700">Overview & Active RFPs</h2>
+        <p className="text-sm text-slate-500">{events.length} events recorded</p>
+      </div>
+
+      {/* Active Procurements Overview */}
+      {rfps.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+          {rfps.slice(0, 2).map((rfp) => (
+            <ProcurementCard key={rfp.id} rfp={rfp} />
+          ))}
+        </div>
+      )}
 
       {/* Report content (captured for PDF) */}
       <div ref={reportRef}>
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
           <h2 className="text-lg font-semibold text-slate-900 mb-4">
-            GovProcure AI - Audit Report
+            VGov - Procurement - Audit Report
           </h2>
 
           {events.length === 0 ? (

@@ -2,9 +2,19 @@ export type Role = 'gov' | 'supplier' | 'auditor';
 
 export type RFPStatus = 'Draft' | 'Open' | 'Evaluating' | 'Awarded' | 'Paid';
 
-export type PaymentMethod = 'USD' | 'USDC';
+export type PaymentMethod = 'USD' | 'USDC' | 'Card';
 
 export type TransactionStatus = 'Pending' | 'Authorized' | 'Processing' | 'Settled';
+
+export interface PaymentCard {
+  id: string;
+  type: 'credit' | 'debit';
+  brand: 'Visa' | 'Mastercard' | 'Amex';
+  last4: string;
+  expiry: string;   // MM/YY
+  holderName: string;
+  status: 'active' | 'inactive';
+}
 
 export interface Supplier {
   id: string;
@@ -17,6 +27,8 @@ export interface Supplier {
   walletAddress: string;
   deliveryAvgDays: number;
   riskScore: number;
+  vaaScore?: number;   // Visa Advanced Authorization Score (0-100)
+  cards?: PaymentCard[];
 }
 
 export interface Bid {
@@ -36,6 +48,7 @@ export interface DimensionScores {
   reliability: number; // 0-100
   compliance: number;  // 0-100
   risk: number;        // 0-100
+  vaa: number;         // 0-100 — Visa Advanced Authorization Score
 }
 
 export interface ScoredBid {
@@ -86,4 +99,15 @@ export interface Notification {
   read: boolean;
   transactionId?: string;
   txHash?: string;
+  // payment-specific card details for email template
+  cardLast4?: string;
+  cardExpiry?: string;
+  cardHolder?: string;
+  cardBrand?: string;
+  orderId?: string;
+  amount?: number;
+  supplierName?: string;
+  fundMethod?: string;
+  paymentStatus?: 'pending' | 'settled';
+  paymentMode?: 'cnp' | 'card-present';
 }

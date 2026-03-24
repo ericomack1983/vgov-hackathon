@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { CreditCard, Coins } from 'lucide-react';
 import { usePayment } from '@/context/PaymentContext';
 
 export default function TransactionsPage() {
@@ -9,6 +10,8 @@ export default function TransactionsPage() {
   const sorted = [...transactions].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
+
+  const latestId = sorted[0]?.id;
 
   return (
     <motion.div
@@ -43,21 +46,48 @@ export default function TransactionsPage() {
                 </tr>
               </thead>
               <tbody>
-                {sorted.map((tx) => (
-                  <tr key={tx.id} className="border-b border-slate-50 hover:bg-slate-50/50">
+                {sorted.map((tx) => {
+                  const isLatest = tx.id === latestId;
+                  return (
+                  <motion.tr
+                    key={tx.id}
+                    initial={isLatest ? { backgroundColor: '#eef2ff' } : false}
+                    animate={isLatest ? { backgroundColor: '#ffffff' } : {}}
+                    transition={{ duration: 2.5, ease: 'easeOut' }}
+                    className="border-b border-slate-50 hover:bg-slate-50/50"
+                  >
                     <td className="px-4 py-3">
-                      {tx.method === 'USD' ? (
-                        <span className="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-xs font-semibold">
-                          USD
-                        </span>
-                      ) : (
-                        <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-semibold">
-                          USDC
-                        </span>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {tx.method === 'USD' ? (
+                          <>
+                            <div className="w-6 h-6 rounded-md bg-[#1434CB]/10 flex items-center justify-center">
+                              <CreditCard size={12} className="text-[#1434CB]" />
+                            </div>
+                            <span className="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-xs font-semibold">
+                              USD
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <div className="w-6 h-6 rounded-md bg-purple-50 flex items-center justify-center">
+                              <Coins size={12} className="text-purple-500" />
+                            </div>
+                            <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-semibold">
+                              USDC
+                            </span>
+                          </>
+                        )}
+                      </div>
                     </td>
-                    <td className="px-4 py-3 text-sm font-medium text-slate-900">
-                      ${tx.amount.toLocaleString()}
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-slate-900">${tx.amount.toLocaleString()}</span>
+                        {isLatest && (
+                          <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full">
+                            Latest
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-sm text-slate-600">{tx.supplierName}</td>
                     <td className="px-4 py-3">
@@ -81,8 +111,9 @@ export default function TransactionsPage() {
                         year: 'numeric',
                       })}
                     </td>
-                  </tr>
-                ))}
+                  </motion.tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

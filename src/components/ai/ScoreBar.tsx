@@ -30,7 +30,9 @@ export function ScoreBar({ score, isWinner, label }: ScoreBarProps) {
           style={{ width: `${score}%` }}
         />
       </div>
-      <span className="text-xs font-semibold text-slate-700 w-8">{score}</span>
+      <span className="text-xs font-semibold text-slate-700 min-w-[2rem] text-right">
+        {Number(score.toFixed(2))}
+      </span>
     </div>
   );
 }

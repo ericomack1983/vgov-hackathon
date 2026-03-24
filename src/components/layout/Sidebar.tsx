@@ -3,12 +3,14 @@
 import Link from 'next/link';
 import {
   LayoutDashboard,
+  CreditCard,
   Users,
   FileText,
-  CreditCard,
+  Wallet,
   Bell,
   Shield,
   Receipt,
+  FileCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUI } from '@/context/UIContext';
@@ -22,19 +24,21 @@ const NAV_ITEMS: Record<
   }>
 > = {
   gov: [
-    { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { label: 'Suppliers', href: '/suppliers', icon: Users },
-    { label: 'Procurement', href: '/rfp', icon: FileText },
-    { label: 'Payments', href: '/payment', icon: CreditCard },
-    { label: 'Notifications', href: '/notifications', icon: Bell },
+    { label: 'Dashboard',     href: '/dashboard',      icon: LayoutDashboard },
+    { label: 'Cards',         href: '/cards',          icon: CreditCard       },
+    { label: 'Suppliers',     href: '/suppliers',      icon: Users            },
+    { label: 'Procurement',   href: '/rfp',            icon: FileText         },
+    { label: 'Payments',      href: '/payment',        icon: Wallet           },
+    { label: 'Reconciliation',href: '/reconciliation', icon: FileCheck        },
+    { label: 'Transactions',  href: '/transactions',   icon: Receipt          },
+    { label: 'Audit Trail',   href: '/audit',          icon: Shield           },
+    { label: 'Notifications', href: '/notifications',  icon: Bell             },
   ],
   supplier: [
-    { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { label: 'My Bids', href: '/bids', icon: FileText },
     { label: 'Notifications', href: '/notifications', icon: Bell },
   ],
   auditor: [
-    { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { label: 'Audit Trail', href: '/audit', icon: Shield },
     { label: 'Transactions', href: '/transactions', icon: Receipt },
     { label: 'Notifications', href: '/notifications', icon: Bell },

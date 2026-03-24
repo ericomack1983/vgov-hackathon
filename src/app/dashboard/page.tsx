@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { DollarSign, Wallet, ShoppingCart, CheckCircle, TrendingUp, Sparkles } from 'lucide-react';
+import { useUI } from '@/context/UIContext';
 import { usePayment } from '@/context/PaymentContext';
 import { useProcurement } from '@/context/ProcurementContext';
 import { StatCard } from '@/components/dashboard/StatCard';
@@ -12,8 +13,13 @@ import { RecentTransactions } from '@/components/dashboard/RecentTransactions';
 import { computeDonutSegments } from '@/lib/chart-utils';
 
 export default function DashboardPage() {
+  const { role } = useUI();
   const { transactions } = usePayment();
   const { rfps } = useProcurement();
+
+  if (role !== 'gov') {
+    return null;
+  }
 
   const metrics = useMemo(() => {
     const settled = transactions.filter((t) => t.status === 'Settled');
@@ -105,11 +111,11 @@ export default function DashboardPage() {
 
       {/* Row 3: Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 lg:col-span-1">
           <h2 className="text-sm font-semibold text-slate-700 mb-4">Payment Breakdown</h2>
           <DonutChart segments={donutSegments} />
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 lg:col-span-1">
           <h2 className="text-sm font-semibold text-slate-700 mb-4">Cumulative Spend</h2>
           <AreaChart transactions={transactions} />
         </div>

@@ -1,12 +1,18 @@
 'use client';
 
 import { use } from 'react';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useProcurement } from '@/context/ProcurementContext';
 import { StatusBadge } from '@/components/shared/StatusBadge';
-import { ArrowLeft, Shield, Wallet, TrendingUp, Clock } from 'lucide-react';
-import Link from 'next/link';
-import type { Supplier } from '@/lib/mock-data/types';
+import { ArrowLeft, Shield, Wallet, TrendingUp, Clock, CreditCard } from 'lucide-react';
+import type { Supplier, PaymentCard } from '@/lib/mock-data/types';
+
+const BRAND_COLORS: Record<PaymentCard['brand'], { bg: string; text: string; label: string }> = {
+  Visa:       { bg: 'bg-[#1434CB]',  text: 'text-white', label: 'VISA' },
+  Mastercard: { bg: 'bg-[#EB001B]',  text: 'text-white', label: 'MC'   },
+  Amex:       { bg: 'bg-[#007BC1]',  text: 'text-white', label: 'AMEX' },
+};
 
 const complianceVariant: Record<Supplier['complianceStatus'], 'success' | 'warning' | 'error'> = {
   Compliant: 'success',
@@ -155,6 +161,74 @@ export default function SupplierProfilePage({
           </p>
         </div>
       </div>
+
+      {/* Registered Payment Cards */}
+      {supplier.cards && supplier.cards.length > 0 && (
+        <div className="mt-6 bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <CreditCard size={18} className="text-slate-500" />
+            <h2 className="text-lg font-semibold text-slate-900">Registered Cards</h2>
+            <span className="ml-auto text-xs text-slate-400">{supplier.cards.length} card{supplier.cards.length !== 1 ? 's' : ''}</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {supplier.cards.map((card) => {
+              const brand = BRAND_COLORS[card.brand];
+              return (
+                <div
+                  key={card.id}
+                  className={`relative rounded-2xl p-5 flex flex-col gap-4 overflow-hidden ${brand.bg} ${
+                    card.status === 'inactive' ? 'opacity-50' : ''
+                  }`}
+                >
+                  {/* Decorative circles */}
+                  <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/10" />
+                  <div className="absolute -bottom-8 -right-2 w-32 h-32 rounded-full bg-white/5" />
+
+                  {/* Top row: brand + status */}
+                  <div className="flex items-center justify-between relative z-10">
+                    <span className={`text-xs font-black tracking-widest ${brand.text}`}>
+                      {brand.label}
+                    </span>
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                      card.status === 'active'
+                        ? 'bg-white/20 text-white'
+                        : 'bg-white/10 text-white/60'
+                    }`}>
+                      {card.status === 'active' ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+
+                  {/* Card number */}
+                  <p className={`font-mono text-base tracking-[0.2em] relative z-10 ${brand.text}`}>
+                    •••• •••• •••• {card.last4}
+                  </p>
+
+                  {/* Bottom row: holder + expiry + type */}
+                  <div className="flex items-end justify-between relative z-10">
+                    <div>
+                      <p className="text-[10px] text-white/60 uppercase tracking-wider">Card Holder</p>
+                      <p className={`text-xs font-semibold truncate max-w-[120px] ${brand.text}`}>
+                        {card.holderName}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[10px] text-white/60 uppercase tracking-wider">Expires</p>
+                      <p className={`text-xs font-semibold ${brand.text}`}>{card.expiry}</p>
+                    </div>
+                  </div>
+
+                  {/* Type badge */}
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-white/40">
+                      {card.type}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }

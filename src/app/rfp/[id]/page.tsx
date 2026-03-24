@@ -12,7 +12,9 @@ import { ExplainabilityPanel } from '@/components/ai/ExplainabilityPanel';
 import { OverrideForm } from '@/components/ai/OverrideForm';
 import { scoreBids, generateNarrative } from '@/lib/ai-engine';
 import Link from 'next/link';
-import { ArrowLeft, FileText, Bot, Loader2, CreditCard } from 'lucide-react';
+import { ArrowLeft, FileText, Bot, CreditCard } from 'lucide-react';
+import { EvaluationOverlay } from '@/components/ai/EvaluationOverlay';
+import { AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { RFPStatus, ScoredBid } from '@/lib/mock-data/types';
 import toast from 'react-hot-toast';
@@ -63,13 +65,14 @@ export default function RfpDetailPage({ params }: { params: Promise<{ id: string
 
   function handleEvaluate() {
     setIsEvaluating(true);
-    setTimeout(() => {
-      const results = scoreBids(rfp!.bids, suppliers, rfp!);
-      setEvaluation(rfp!.id, results);
-      updateRFP(rfp!.id, { status: 'Evaluating' });
-      setIsEvaluating(false);
-      toast.success('AI evaluation complete');
-    }, 1500);
+  }
+
+  function handleOverlayDone() {
+    const results = scoreBids(rfp!.bids, suppliers, rfp!);
+    setEvaluation(rfp!.id, results);
+    updateRFP(rfp!.id, { status: 'Evaluating' });
+    setIsEvaluating(false);
+    toast.success('AI evaluation complete');
   }
 
   // Determine effective winner for display
@@ -95,6 +98,10 @@ export default function RfpDetailPage({ params }: { params: Promise<{ id: string
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
     >
+      <AnimatePresence>
+        {isEvaluating && <EvaluationOverlay onDone={handleOverlayDone} />}
+      </AnimatePresence>
+
       <Link
         href="/rfp"
         className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 mb-4 transition-colors"
@@ -219,12 +226,8 @@ export default function RfpDetailPage({ params }: { params: Promise<{ id: string
                   disabled={rfp.bids.length < 2 || isEvaluating}
                   className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-lg text-sm font-semibold inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {isEvaluating ? (
-                    <Loader2 size={16} className="animate-spin" />
-                  ) : (
-                    <Bot size={16} />
-                  )}
-                  {isEvaluating ? 'Analyzing bids...' : 'Run AI Evaluation'}
+                  <Bot size={16} />
+                  Run AI Evaluation
                 </button>
               )}
             </>

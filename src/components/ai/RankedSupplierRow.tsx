@@ -11,7 +11,7 @@ interface RankedSupplierRowProps {
   onSelect?: () => void;
 }
 
-const DIMENSIONS = ['price', 'delivery', 'reliability', 'compliance', 'risk'] as const;
+const DIMENSIONS = ['price', 'delivery', 'reliability', 'compliance', 'risk', 'vaa'] as const;
 
 export function RankedSupplierRow({ scoredBid, onSelect }: RankedSupplierRowProps) {
   return (
@@ -34,7 +34,9 @@ export function RankedSupplierRow({ scoredBid, onSelect }: RankedSupplierRowProp
           {scoredBid.isWinner && <BestValueBadge />}
         </div>
         <div className="text-right">
-          <span className="text-3xl font-bold text-slate-900">{scoredBid.composite}</span>
+          <span className="text-3xl font-bold text-slate-900">
+            {Number(scoredBid.composite.toFixed(2))}
+          </span>
           <span className="text-sm text-slate-400">/100</span>
         </div>
       </div>

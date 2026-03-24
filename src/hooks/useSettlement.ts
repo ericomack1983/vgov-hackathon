@@ -13,7 +13,7 @@ import toast from 'react-hot-toast';
 export interface SettlementCompleteData {
   txHash?: string;
   startedAt?: string;
-  method: 'USD' | 'USDC';
+  method: 'USD' | 'USDC' | 'Card';
 }
 
 export function useSettlement(onComplete: (data: SettlementCompleteData) => void) {
@@ -21,9 +21,9 @@ export function useSettlement(onComplete: (data: SettlementCompleteData) => void
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasCompletedRef = useRef(false);
 
-  const start = useCallback((method: 'USD' | 'USDC', orderId: string) => {
+  const start = useCallback((method: 'USD' | 'USDC' | 'Card', orderId: string, paymentMode?: 'cnp' | 'card-present') => {
     hasCompletedRef.current = false;
-    dispatch({ type: 'START', payload: { method, orderId } });
+    dispatch({ type: 'START', payload: { method, orderId, paymentMode } });
   }, []);
 
   const reset = useCallback(() => {
@@ -39,10 +39,10 @@ export function useSettlement(onComplete: (data: SettlementCompleteData) => void
     if (state.currentStep === 'idle') return;
 
     if (state.currentStep !== 'settled') {
-      const delay = state.method === 'USD' ? USD_STEP_DELAY : USDC_STEP_DELAY;
+      const delay = state.method === 'USDC' ? USDC_STEP_DELAY : USD_STEP_DELAY;
       const icon = state.method === 'USDC' ? '\u26D3' : '\uD83C\uDFE6';
 
-      toast.success(`${state.method} Payment: ${getStepLabel(state.currentStep)}`, {
+      toast.success(`${state.method} Payment: ${getStepLabel(state.currentStep, state.paymentMode)}`, {
         icon,
       });
 
@@ -61,7 +61,7 @@ export function useSettlement(onComplete: (data: SettlementCompleteData) => void
     if (state.currentStep === 'settled' && !hasCompletedRef.current) {
       hasCompletedRef.current = true;
       const icon = state.method === 'USDC' ? '\u26D3' : '\uD83C\uDFE6';
-      toast.success(`${state.method} Payment: Settled`, { icon });
+      toast.success(state.paymentMode === 'cnp' ? 'Payment Executed' : `${state.method} Payment: Settled`, { icon });
 
       onComplete({
         txHash: state.txHash,

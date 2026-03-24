@@ -10,7 +10,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "GovProcure AI",
+  title: "VGov - Procurement",
   description: "AI-Powered Government Procurement Platform",
 };
 
@@ -21,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={inter.className}>
-      <body>
+      <body suppressHydrationWarning>
         <AppProviders>
           <AppShell>{children}</AppShell>
         </AppProviders>
