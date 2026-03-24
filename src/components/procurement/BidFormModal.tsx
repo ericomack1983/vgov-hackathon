@@ -149,7 +149,7 @@ export function BidFormModal({ rfpId, rfpTitle, isOpen, onClose }: BidFormModalP
                   setErrors((prev) => { const n = { ...prev }; delete n.deliveryDays; return n; });
                 }
               }}
-              placeholder="1"
+              placeholder="e.g. 30"
             />
             {errors.deliveryDays && <p className="mt-1 text-xs text-red-500">{errors.deliveryDays}</p>}
           </div>
@@ -178,7 +178,8 @@ export function BidFormModal({ rfpId, rfpTitle, isOpen, onClose }: BidFormModalP
             </button>
             <button
               type="submit"
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg text-sm font-semibold transition-colors"
+              disabled={Object.keys(errors).length > 0}
+              className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg text-sm font-semibold transition-colors"
             >
               Submit Bid
             </button>
