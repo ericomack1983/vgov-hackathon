@@ -111,8 +111,8 @@ export function AreaChart({ transactions }: AreaChartProps) {
         >
           <defs>
             <linearGradient id="ag-base" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%"   stopColor="#4f46e5" stopOpacity="0.10" />
-              <stop offset="100%" stopColor="#4f46e5" stopOpacity="0.01" />
+              <stop offset="0%"   stopColor="#1434CB" stopOpacity="0.10" />
+              <stop offset="100%" stopColor="#1434CB" stopOpacity="0.01" />
             </linearGradient>
           </defs>
 
@@ -149,7 +149,7 @@ export function AreaChart({ transactions }: AreaChartProps) {
           <path
             d={lineD}
             fill="none"
-            stroke="#4f46e5"
+            stroke="#1434CB"
             strokeWidth={activeMcg ? 1 : 2}
             strokeLinejoin="round"
             opacity={activeMcg ? 0.25 : 0.9}
@@ -205,7 +205,7 @@ export function AreaChart({ transactions }: AreaChartProps) {
               <motion.circle
                 key={i}
                 cx={p.x} cy={p.y}
-                fill="#4f46e5"
+                fill="#1434CB"
                 stroke="white"
                 strokeWidth={2}
                 animate={{
@@ -224,7 +224,7 @@ export function AreaChart({ transactions }: AreaChartProps) {
               key={i}
               x={p.x} y={PAD_T + PLOT_H + PAD_B * 0.65}
               textAnchor="middle" dominantBaseline="middle"
-              fontSize="10" fill={nearestToMouse === p ? '#4f46e5' : '#64748b'}
+              fontSize="10" fill={nearestToMouse === p ? '#1434CB' : '#64748b'}
               fontWeight={nearestToMouse === p ? '700' : '400'}
             >
               {p.label}
@@ -286,7 +286,7 @@ export function AreaChart({ transactions }: AreaChartProps) {
           className="flex items-center gap-1.5 group/leg"
           onMouseEnter={() => setActiveMcg(null)}
         >
-          <div className="w-3 h-0.5 bg-indigo-500 rounded-full" />
+          <div className="w-3 h-0.5 bg-[#1434CB] rounded-full" />
           <span className="text-[11px] text-slate-500 group-hover/leg:text-slate-700 transition-colors">Total</span>
         </button>
         {MCG_SERIES.map((s) => (

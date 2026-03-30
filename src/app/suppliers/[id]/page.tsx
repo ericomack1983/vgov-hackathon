@@ -43,7 +43,7 @@ export default function SupplierProfilePage({
           </p>
           <Link
             href="/suppliers"
-            className="mt-4 inline-flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-700"
+            className="mt-4 inline-flex items-center gap-1 text-sm text-[#1434CB] hover:text-indigo-700"
           >
             <ArrowLeft size={16} />
             Back to Suppliers
@@ -106,7 +106,7 @@ export default function SupplierProfilePage({
           <p className="text-xl font-semibold text-slate-900">{supplier.pastPerformance}/100</p>
         </div>
         <div className="bg-white rounded-xl border border-slate-200 p-4">
-          <Clock size={20} className="text-indigo-500" />
+          <Clock size={20} className="text-[#1434CB]" />
           <p className="mt-2 text-xs text-slate-500">Avg Delivery</p>
           <p className="text-xl font-semibold text-slate-900">{supplier.deliveryAvgDays} days</p>
         </div>
@@ -135,7 +135,7 @@ export default function SupplierProfilePage({
             {supplier.certifications.map((cert) => (
               <span
                 key={cert}
-                className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-indigo-50 text-indigo-700"
+                className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-[#EEF1FD] text-indigo-700"
               >
                 {cert}
               </span>

@@ -25,7 +25,7 @@ export function ScoreBar({ score, isWinner, label }: ScoreBarProps) {
         <div
           className={cn(
             'h-2 rounded-full transition-all duration-500',
-            isWinner ? 'bg-indigo-600' : 'bg-slate-400'
+            isWinner ? 'bg-[#1434CB]' : 'bg-slate-400'
           )}
           style={{ width: `${score}%` }}
         />

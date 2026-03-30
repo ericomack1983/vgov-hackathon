@@ -14,6 +14,7 @@ export interface PaymentCard {
   expiry: string;   // MM/YY
   holderName: string;
   status: 'active' | 'inactive';
+  usageType?: 'single-use' | 'multi-use';
 }
 
 export interface Supplier {

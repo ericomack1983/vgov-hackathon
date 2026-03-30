@@ -27,7 +27,7 @@ export function RFPStatusTimeline({ currentStatus }: RFPStatusTimelineProps) {
                 className={cn(
                   'w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold',
                   isCompleted && 'bg-emerald-500 text-white',
-                  isActive && 'bg-indigo-600 text-white',
+                  isActive && 'bg-[#1434CB] text-white',
                   isFuture && 'bg-slate-200 text-slate-400'
                 )}
               >
@@ -37,7 +37,7 @@ export function RFPStatusTimeline({ currentStatus }: RFPStatusTimelineProps) {
                 className={cn(
                   'text-xs mt-1',
                   isCompleted && 'text-emerald-600',
-                  isActive && 'text-indigo-600 font-semibold',
+                  isActive && 'text-[#1434CB] font-semibold',
                   isFuture && 'text-slate-400'
                 )}
               >

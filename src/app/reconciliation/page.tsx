@@ -124,10 +124,10 @@ function UploadModal({ orderId, supplierName, onClose, onConfirm }: UploadModalP
                   onDrop={onDrop}
                   className={`relative flex flex-col items-center justify-center gap-3 border-2 border-dashed rounded-xl p-8 cursor-pointer transition-all ${
                     dragging
-                      ? 'border-indigo-400 bg-indigo-50'
+                      ? 'border-[#1434CB] bg-[#EEF1FD]'
                       : staged
                       ? 'border-emerald-300 bg-emerald-50'
-                      : 'border-slate-200 hover:border-indigo-300 hover:bg-slate-50'
+                      : 'border-slate-200 hover:border-[#6B8EE8] hover:bg-slate-50'
                   }`}
                 >
                   <input
@@ -187,7 +187,7 @@ function UploadModal({ orderId, supplierName, onClose, onConfirm }: UploadModalP
                   <button
                     onClick={handleSubmit}
                     disabled={!staged || uploading}
-                    className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                    className="flex-1 py-2.5 rounded-xl bg-[#1434CB] text-sm font-semibold text-white hover:bg-[#0F27B0] disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                   >
                     {uploading ? (
                       <>
@@ -384,7 +384,7 @@ export default function ReconciliationPage() {
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
                                 onClick={() => setModalTx({ id: tx.id, orderId: tx.orderId, supplierName: tx.supplierName })}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors border border-indigo-100"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#EEF1FD] text-indigo-700 hover:bg-[#D6DFFA] transition-colors border border-[#D6DFFA]"
                               >
                                 <Upload size={11} />
                                 Upload Slip

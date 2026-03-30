@@ -229,8 +229,8 @@ export function BeforePortal({ onInstall }: Props) {
           </div>
           <button
             onClick={onInstall}
-            className={`shrink-0 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold tracking-wide rounded-sm cursor-pointer transition-all
-              ${pulse ? 'shadow-lg shadow-indigo-300 scale-[1.02]' : 'shadow-md shadow-indigo-200'}`}
+            className={`shrink-0 px-5 py-2.5 bg-[#1434CB] hover:bg-[#0F27B0] text-white text-xs font-bold tracking-wide rounded-sm cursor-pointer transition-all
+              ${pulse ? 'shadow-lg shadow-#6B8EE8 scale-[1.02]' : 'shadow-md shadow-#A5B8F3'}`}
           >
             Install GovPay SDK 🚀
           </button>

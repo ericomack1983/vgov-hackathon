@@ -23,7 +23,7 @@ export default function NewRfpPage() {
           </p>
           <Link
             href="/rfp"
-            className="mt-4 inline-block text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+            className="mt-4 inline-block text-sm text-[#1434CB] hover:text-[#0B1E8A] font-medium"
           >
             Back to RFPs
           </Link>

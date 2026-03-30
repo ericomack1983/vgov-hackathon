@@ -18,7 +18,7 @@ function PendingAuthEmail({ n }: { n: Notification }) {
       <div className="bg-slate-50 border-b border-slate-200 px-5 py-3 space-y-1.5">
         <div className="flex items-center gap-2 text-xs text-slate-500">
           <span className="font-semibold text-slate-600 w-10">From</span>
-          <span className="bg-indigo-50 text-indigo-700 font-medium px-2 py-0.5 rounded-full border border-indigo-100">
+          <span className="bg-[#EEF1FD] text-indigo-700 font-medium px-2 py-0.5 rounded-full border border-[#D6DFFA]">
             payments@vgov.gov
           </span>
         </div>
@@ -153,7 +153,7 @@ function PendingAuthEmail({ n }: { n: Notification }) {
 
         <p className="text-sm text-slate-600 leading-relaxed">
           For questions, contact{' '}
-          <span className="text-indigo-600 font-medium">support@vgov.gov</span> referencing Order{' '}
+          <span className="text-[#1434CB] font-medium">support@vgov.gov</span> referencing Order{' '}
           <span className="font-mono font-semibold text-slate-800">{n.orderId ?? 'N/A'}</span>.
         </p>
         <p className="text-sm text-slate-600">
@@ -333,17 +333,17 @@ export function MailInboxItem({ notification: n, onMarkRead }: Props) {
 
   const unreadBorderClass = isPending
     ? 'border-amber-200 bg-amber-50/30'
-    : 'border-indigo-200 bg-indigo-50/30';
+    : 'border-[#A5B8F3] bg-[#EEF1FD]/30';
 
   const iconBgClass = n.read
     ? 'bg-slate-100'
-    : isPending ? 'bg-amber-500' : 'bg-indigo-600';
+    : isPending ? 'bg-amber-500' : 'bg-[#1434CB]';
 
   const senderColorClass = n.read
     ? 'text-slate-400'
-    : isPending ? 'text-amber-600' : 'text-indigo-600';
+    : isPending ? 'text-amber-600' : 'text-[#1434CB]';
 
-  const dotColorClass = isPending ? 'bg-amber-500' : 'bg-indigo-500';
+  const dotColorClass = isPending ? 'bg-amber-500' : 'bg-[#1434CB]';
 
   const amountColorClass = isPending ? 'text-amber-600' : 'text-emerald-600';
 

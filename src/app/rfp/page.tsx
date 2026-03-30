@@ -38,7 +38,7 @@ export default function RfpPage() {
         {role === 'gov' && (
           <button
             onClick={() => setShowModal(true)}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-semibold inline-flex items-center gap-2 transition-colors"
+            className="bg-[#1434CB] hover:bg-[#0F27B0] text-white px-4 py-2 rounded-lg text-sm font-semibold inline-flex items-center gap-2 transition-colors"
           >
             <Plus size={16} />
             Create RFP
@@ -112,7 +112,7 @@ export default function RfpPage() {
                   <td className="px-4 py-3">
                     <Link
                       href={`/rfp/${rfp.id}`}
-                      className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
+                      className="text-sm font-medium text-[#1434CB] hover:text-[#0B1E8A]"
                     >
                       {rfp.title}
                     </Link>

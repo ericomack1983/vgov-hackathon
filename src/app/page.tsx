@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/lib/supabase';
 import { BeforePortal } from '@/components/BeforePortal';
 import { InstallAnimation } from '@/components/InstallAnimation';
 
@@ -10,16 +10,8 @@ type Mode = 'before' | 'installing' | 'after';
 
 export default function DemoController() {
   const router = useRouter();
-  const { user, loading } = useAuth();
   const [mode, setMode] = useState<Mode>('before');
   const [visible, setVisible] = useState(true);
-
-  // If already authenticated, go straight to the app
-  useEffect(() => {
-    if (!loading && user) {
-      router.replace('/dashboard');
-    }
-  }, [loading, user, router]);
 
   function transition(next: Mode) {
     setVisible(false);
@@ -31,14 +23,9 @@ export default function DemoController() {
 
   useEffect(() => {
     if (mode === 'after') {
-      router.push('/login');
+      supabase.auth.signOut().then(() => router.push('/login'));
     }
   }, [mode, router]);
-
-  // Wait for auth to resolve before rendering anything
-  if (loading) return null;
-  // Already logged in — suppress render while redirect fires
-  if (user) return null;
 
   return (
     <div

@@ -32,7 +32,7 @@ export function ProcurementCard({ rfp, onClick }: ProcurementCardProps) {
       onClick={onClick}
       className={`relative overflow-hidden rounded-2xl bg-white p-6 shadow-sm border border-slate-200 transition-all duration-300 hover:shadow-md cursor-pointer group`}
     >
-      <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-blue-500 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-blue-500 to-[#1434CB] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       
       <div className="flex items-start justify-between mb-4">
         <div>
@@ -75,7 +75,7 @@ export function ProcurementCard({ rfp, onClick }: ProcurementCardProps) {
           </div>
           
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+            <div className="p-2 bg-[#EEF1FD] rounded-lg text-[#1434CB]">
               <Calendar className="w-4 h-4" />
             </div>
             <div>

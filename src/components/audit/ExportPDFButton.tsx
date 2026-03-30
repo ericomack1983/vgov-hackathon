@@ -40,7 +40,7 @@ export function ExportPDFButton({ reportRef }: { reportRef: RefObject<HTMLDivEle
     <button
       onClick={handleExport}
       disabled={isExporting}
-      className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-semibold inline-flex items-center gap-2 disabled:opacity-50 transition-colors"
+      className="bg-[#1434CB] hover:bg-[#0F27B0] text-white px-4 py-2 rounded-lg text-sm font-semibold inline-flex items-center gap-2 disabled:opacity-50 transition-colors"
     >
       {isExporting ? (
         <Loader2 size={16} className="animate-spin" />

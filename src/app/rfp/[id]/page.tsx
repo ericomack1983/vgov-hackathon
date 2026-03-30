@@ -7,10 +7,9 @@ import { useUI } from '@/context/UIContext';
 import { RFPStatusTimeline } from '@/components/procurement/RFPStatusTimeline';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { RankedSupplierRow } from '@/components/ai/RankedSupplierRow';
-import { ScoreRadarChart } from '@/components/ai/ScoreRadarChart';
 import { ExplainabilityPanel } from '@/components/ai/ExplainabilityPanel';
 import { OverrideForm } from '@/components/ai/OverrideForm';
-import { scoreBids, generateNarrative } from '@/lib/ai-engine';
+import { scoreBids, generateNarrative, generateOverrideNarrative } from '@/lib/ai-engine';
 import Link from 'next/link';
 import { ArrowLeft, FileText, Bot, CreditCard } from 'lucide-react';
 import { EvaluationOverlay } from '@/components/ai/EvaluationOverlay';
@@ -151,7 +150,7 @@ export default function RfpDetailPage({ params }: { params: Promise<{ id: string
         <div className="mt-4">
           <button
             onClick={handlePublish}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+            className="bg-[#1434CB] hover:bg-[#0F27B0] text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
           >
             Publish RFP
           </button>
@@ -224,7 +223,7 @@ export default function RfpDetailPage({ params }: { params: Promise<{ id: string
                 <button
                   onClick={handleEvaluate}
                   disabled={rfp.bids.length < 2 || isEvaluating}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-lg text-sm font-semibold inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="bg-[#1434CB] hover:bg-[#0F27B0] text-white px-6 py-2.5 rounded-lg text-sm font-semibold inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <Bot size={16} />
                   Run AI Evaluation
@@ -237,42 +236,61 @@ export default function RfpDetailPage({ params }: { params: Promise<{ id: string
           {evaluationResults && evaluationResults.length > 0 && winnerScoredBid && (
             <div className="space-y-6">
               <div className="flex items-center gap-2">
-                <Bot size={20} className="text-indigo-600" />
+                <Bot size={20} className="text-[#1434CB]" />
                 <h2 className="text-xl font-semibold text-slate-900">AI Evaluation Results</h2>
               </div>
 
               {/* Ranked supplier list */}
+              {rfp.status === 'Evaluating' && (
+                <p className="text-xs text-slate-400">
+                  Click a supplier to select them as the award recipient. The AI best value is pre-selected.
+                </p>
+              )}
               <div className="space-y-4">
                 {evaluationResults.map((scoredBid) => {
-                  // Handle override display: swap winner visual treatment
-                  const displayBid = rfp.overrideWinnerId
-                    ? {
-                        ...scoredBid,
-                        isWinner: scoredBid.supplier.id === rfp.overrideWinnerId,
-                      }
-                    : scoredBid;
+                  const aiBestId = evaluationResults[0].supplier.id;
+                  const isAiBest = scoredBid.supplier.id === aiBestId;
+                  const isSelected = scoredBid.supplier.id === effectiveWinnerId;
+                  const canSelect = rfp.status === 'Evaluating';
 
                   return (
                     <div key={scoredBid.bid.id} className="relative">
-                      <RankedSupplierRow scoredBid={displayBid} />
-                      {rfp.overrideWinnerId &&
-                        scoredBid.supplier.id === rfp.overrideWinnerId && (
-                          <span className="absolute top-4 right-24 inline-flex items-center gap-1 bg-amber-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
-                            Manually Selected
-                          </span>
-                        )}
+                      <RankedSupplierRow
+                        scoredBid={scoredBid}
+                        isSelected={isSelected}
+                        isAiBest={isAiBest}
+                        onSelect={canSelect ? () => {
+                          if (isAiBest) {
+                            // Clicking AI best clears any manual override
+                            updateRFP(rfp.id, { overrideWinnerId: undefined, overrideJustification: undefined });
+                          } else {
+                            updateRFP(rfp.id, { overrideWinnerId: scoredBid.supplier.id });
+                          }
+                        } : undefined}
+                      />
+                      {rfp.overrideWinnerId && scoredBid.supplier.id === rfp.overrideWinnerId && (
+                        <span className="absolute top-4 right-24 inline-flex items-center gap-1 bg-amber-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                          Manually Selected
+                        </span>
+                      )}
                     </div>
                   );
                 })}
               </div>
 
-              {/* Radar chart for winner */}
-              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 inline-block">
-                <h3 className="text-sm font-semibold text-slate-700 mb-4">
-                  {winnerScoredBid.supplier.name} - Score Profile
-                </h3>
-                <ScoreRadarChart dimensions={winnerScoredBid.dimensions} />
-              </div>
+              {/* Override warning panel — shown in real-time when a non-best supplier is manually selected */}
+              {rfp.overrideWinnerId && (() => {
+                const overrideSelected = evaluationResults.find(sb => sb.supplier.id === rfp.overrideWinnerId);
+                const aiBest = evaluationResults[0];
+                if (!overrideSelected || overrideSelected.supplier.id === aiBest.supplier.id) return null;
+                return (
+                  <ExplainabilityPanel
+                    key={rfp.overrideWinnerId}
+                    narrative={generateOverrideNarrative(overrideSelected, aiBest)}
+                    isOverride
+                  />
+                );
+              })()}
 
               {/* Explainability Panel */}
               <ExplainabilityPanel narrative={generateNarrative(evaluationResults)} />
@@ -287,7 +305,7 @@ export default function RfpDetailPage({ params }: { params: Promise<{ id: string
                     });
                     toast.success('Supplier awarded');
                   }}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+                  className="bg-[#1434CB] hover:bg-[#0F27B0] text-white px-6 py-2.5 rounded-lg text-sm font-semibold transition-colors"
                 >
                   Award Supplier
                 </button>
@@ -297,7 +315,7 @@ export default function RfpDetailPage({ params }: { params: Promise<{ id: string
               {rfp.status === 'Awarded' && (
                 <Link
                   href={`/payment/${rfp.id}`}
-                  className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-lg text-sm font-semibold transition-colors mt-4"
+                  className="inline-flex items-center gap-2 bg-[#1434CB] hover:bg-[#0F27B0] text-white px-6 py-2.5 rounded-lg text-sm font-semibold transition-colors mt-4"
                 >
                   <CreditCard size={16} />
                   Proceed to Payment

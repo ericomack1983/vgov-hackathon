@@ -72,17 +72,17 @@ export function PaymentMethodSelector({
               {label}
             </span>
             {method === 'USD' && usdBalance !== undefined && (
-              <span className={`text-xs ${selected === 'USD' ? 'text-indigo-400' : 'text-slate-400'}`}>
+              <span className={`text-xs ${selected === 'USD' ? 'text-[#1434CB]' : 'text-slate-400'}`}>
                 ${usdBalance.toLocaleString()}
               </span>
             )}
             {method === 'USDC' && usdcBalance !== undefined && (
-              <span className={`text-xs ${selected === 'USDC' ? 'text-indigo-400' : 'text-slate-400'}`}>
+              <span className={`text-xs ${selected === 'USDC' ? 'text-[#1434CB]' : 'text-slate-400'}`}>
                 ${usdcBalance.toLocaleString()}
               </span>
             )}
             {method === 'Card' && (
-              <span className={`text-xs ${selected === 'Card' ? 'text-indigo-400' : 'text-slate-400'}`}>
+              <span className={`text-xs ${selected === 'Card' ? 'text-[#1434CB]' : 'text-slate-400'}`}>
                 {activeCards.length} available
               </span>
             )}
@@ -119,8 +119,8 @@ export function PaymentMethodSelector({
                       whileTap={{ scale: 0.98 }}
                       className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl border transition-all text-left ${
                         isSelected
-                          ? 'border-indigo-400 bg-indigo-50 shadow-sm'
-                          : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-slate-50'
+                          ? 'border-[#1434CB] bg-[#EEF1FD] shadow-sm'
+                          : 'border-slate-200 bg-white hover:border-[#A5B8F3] hover:bg-slate-50'
                       }`}
                     >
                       {/* Brand dot */}
@@ -150,7 +150,7 @@ export function PaymentMethodSelector({
                           animate={{ scale: 1 }}
                           transition={{ type: 'spring', stiffness: 400, damping: 20 }}
                         >
-                          <CheckCircle2 size={18} className="text-indigo-500 shrink-0" />
+                          <CheckCircle2 size={18} className="text-[#1434CB] shrink-0" />
                         </motion.div>
                       )}
                     </motion.button>

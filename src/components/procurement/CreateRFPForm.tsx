@@ -161,7 +161,7 @@ export function CreateRFPForm({ onClose }: Props) {
   }, [files]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const inputClass =
-    'w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500';
+    'w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1434CB] focus:border-[#1434CB]';
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
@@ -262,13 +262,13 @@ export function CreateRFPForm({ onClose }: Props) {
           onClick={() => fileInputRef.current?.click()}
           className={`relative border-2 border-dashed rounded-xl px-6 py-8 flex flex-col items-center gap-2 cursor-pointer transition-colors ${
             isDragging
-              ? 'border-indigo-400 bg-indigo-50'
-              : 'border-slate-200 hover:border-indigo-300 hover:bg-slate-50'
+              ? 'border-[#1434CB] bg-[#EEF1FD]'
+              : 'border-slate-200 hover:border-[#6B8EE8] hover:bg-slate-50'
           }`}
         >
-          <Upload size={22} className={isDragging ? 'text-indigo-500' : 'text-slate-400'} />
+          <Upload size={22} className={isDragging ? 'text-[#1434CB]' : 'text-slate-400'} />
           <p className="text-sm text-slate-500 text-center">
-            <span className="font-medium text-indigo-600">Click to upload</span> or drag and drop
+            <span className="font-medium text-[#1434CB]">Click to upload</span> or drag and drop
           </p>
           <p className="text-xs text-slate-400">Max 10 MB per file</p>
           <input
@@ -313,7 +313,7 @@ export function CreateRFPForm({ onClose }: Props) {
         )}
         <button
           type="submit"
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg text-sm font-semibold transition-colors"
+          className="bg-[#1434CB] hover:bg-[#0F27B0] text-white px-6 py-2 rounded-lg text-sm font-semibold transition-colors"
         >
           Create RFP
         </button>

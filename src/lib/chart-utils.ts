@@ -12,7 +12,7 @@ export function computeDonutSegments(
   const total = usdTotal + usdcTotal;
   if (total === 0) return [];
   return [
-    { color: '#4f46e5', percentage: usdTotal / total, label: 'Visa (USD)', value: usdTotal },
+    { color: '#1434CB', percentage: usdTotal / total, label: 'Visa (USD)', value: usdTotal },
     { color: '#8b5cf6', percentage: usdcTotal / total, label: 'USDC (Visa Network)', value: usdcTotal },
   ];
 }

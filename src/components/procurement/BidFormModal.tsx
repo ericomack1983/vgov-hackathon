@@ -85,7 +85,7 @@ export function BidFormModal({ rfpId, rfpTitle, isOpen, onClose }: BidFormModalP
   }
 
   const inputClass =
-    'w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500';
+    'w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1434CB] focus:border-[#1434CB]';
 
   return (
     <div
@@ -179,7 +179,7 @@ export function BidFormModal({ rfpId, rfpTitle, isOpen, onClose }: BidFormModalP
             <button
               type="submit"
               disabled={Object.keys(errors).length > 0}
-              className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg text-sm font-semibold transition-colors"
+              className="bg-[#1434CB] hover:bg-[#0F27B0] disabled:bg-[#6B8EE8] disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg text-sm font-semibold transition-colors"
             >
               Submit Bid
             </button>

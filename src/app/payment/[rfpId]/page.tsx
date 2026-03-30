@@ -19,7 +19,7 @@ import type { PaymentMethod, PaymentCard } from '@/lib/mock-data/types';
 type Step = 'card-select' | 'card-confirm' | 'fund-select' | 'auth' | 'processing' | 'done';
 type FundMethod = 'USD' | 'USDC';
 
-interface SelectableCard extends Pick<PaymentCard, 'id' | 'brand' | 'last4' | 'type' | 'holderName' | 'status' | 'expiry'> {
+interface SelectableCard extends Pick<PaymentCard, 'id' | 'brand' | 'last4' | 'type' | 'holderName' | 'status' | 'expiry' | 'usageType'> {
   supplierName: string;
 }
 
@@ -46,8 +46,8 @@ function StepDots({ current }: { current: Step }) {
     <div className="flex items-center justify-center gap-2 mb-8">
       {visible.map((s, i) => (
         <div key={s} className={`rounded-full transition-all duration-300 ${
-          i < idx  ? 'w-2 h-2 bg-indigo-400' :
-          i === idx ? 'w-6 h-2 bg-indigo-600' :
+          i < idx  ? 'w-2 h-2 bg-[#1434CB]' :
+          i === idx ? 'w-6 h-2 bg-[#1434CB]' :
                      'w-2 h-2 bg-slate-200'
         }`} />
       ))}
@@ -122,7 +122,7 @@ function PushAuthStep({ amount, supplier, onApprove, onDeny }: {
                     className="w-full bg-white/95 backdrop-blur rounded-2xl p-3 shadow-lg"
                   >
                     <div className="flex items-center gap-2 mb-2">
-                      <div className="w-6 h-6 rounded-md bg-indigo-600 flex items-center justify-center">
+                      <div className="w-6 h-6 rounded-md bg-[#1434CB] flex items-center justify-center">
                         <Bell size={12} className="text-white" />
                       </div>
                       <div>
@@ -143,7 +143,7 @@ function PushAuthStep({ amount, supplier, onApprove, onDeny }: {
                       </button>
                       <button
                         onClick={onApprove}
-                        className="flex-1 py-1.5 rounded-lg text-[10px] font-bold bg-indigo-600 text-white"
+                        className="flex-1 py-1.5 rounded-lg text-[10px] font-bold bg-[#1434CB] text-white"
                       >
                         Approve
                       </button>
@@ -159,7 +159,7 @@ function PushAuthStep({ amount, supplier, onApprove, onDeny }: {
       </div>
 
       <div className="flex items-center gap-1.5 text-xs text-slate-400">
-        <ShieldCheck size={13} className="text-indigo-400" />
+        <ShieldCheck size={13} className="text-[#1434CB]" />
         Secured by VGov Authentication
       </div>
     </div>
@@ -234,14 +234,14 @@ function DoneStep({ bidAmount, fundMethod, selectedCard, winner, orderId, isCnp 
             transition={{ type: 'spring', stiffness: 320, damping: 26 }}
             className="w-full max-w-xs bg-slate-900 rounded-2xl p-4 flex items-start gap-3 shadow-2xl border border-slate-700"
           >
-            <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-[#1434CB] flex items-center justify-center shrink-0">
               <Bell size={16} className="text-white" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-bold text-white">VGov · Payments</p>
-              <p className="text-xs text-slate-300 mt-0.5 leading-snug">Payment slip received. Check your <span className="text-indigo-400 font-semibold">Inbox</span> for the supplier payment receipt.</p>
+              <p className="text-xs text-slate-300 mt-0.5 leading-snug">Payment slip received. Check your <span className="text-[#1434CB] font-semibold">Inbox</span> for the supplier payment receipt.</p>
             </div>
-            <motion.div className="w-2 h-2 rounded-full bg-indigo-400 shrink-0 mt-1" animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1, repeat: Infinity }} />
+            <motion.div className="w-2 h-2 rounded-full bg-[#1434CB] shrink-0 mt-1" animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1, repeat: Infinity }} />
           </motion.div>
         )}
       </AnimatePresence>
@@ -264,7 +264,7 @@ function DoneStep({ bidAmount, fundMethod, selectedCard, winner, orderId, isCnp 
       </motion.div>
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.75 }} className="flex gap-3">
-        <Link href="/dashboard" className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors">
+        <Link href="/dashboard" className="px-5 py-2.5 bg-[#1434CB] hover:bg-[#0F27B0] text-white text-sm font-semibold rounded-xl transition-colors">
           Dashboard
         </Link>
         {!isCnp && (
@@ -417,7 +417,7 @@ export default function PaymentCheckoutPage({ params }: { params: Promise<{ rfpI
               <div className="bg-slate-50 rounded-xl border border-slate-200 p-8 text-center">
                 <CreditCard size={28} className="text-slate-300 mx-auto mb-2" />
                 <p className="text-sm text-slate-500">No registered cards available.</p>
-                <Link href="/cards" className="text-xs text-indigo-600 font-medium mt-2 inline-block">Issue a card →</Link>
+                <Link href="/cards" className="text-xs text-[#1434CB] font-medium mt-2 inline-block">Issue a card →</Link>
               </div>
             ) : (
               <div className="space-y-2">
@@ -430,20 +430,27 @@ export default function PaymentCheckoutPage({ params }: { params: Promise<{ rfpI
                       whileTap={{ scale: 0.98 }}
                       onClick={() => setSelectedCardId(card.id)}
                       className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl border text-left transition-all ${
-                        sel ? 'border-indigo-400 bg-indigo-50 shadow-sm' : 'border-slate-200 bg-white hover:border-indigo-200'
+                        sel ? 'border-[#1434CB] bg-[#EEF1FD] shadow-sm' : 'border-slate-200 bg-white hover:border-[#A5B8F3]'
                       }`}
                     >
                       <div className={`w-9 h-9 rounded-lg shrink-0 flex items-center justify-center ${BRAND_DOT[card.brand]}`}>
                         <span className="text-[9px] font-black text-white">{BRAND_LABEL[card.brand]}</span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-slate-800">{card.brand} •••• {card.last4}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-semibold text-slate-800">{card.brand} •••• {card.last4}</p>
+                          {card.usageType && (
+                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${card.usageType === 'single-use' ? 'bg-[#EEF1FD] text-[#1434CB]' : 'bg-violet-50 text-violet-600'}`}>
+                              {card.usageType === 'single-use' ? 'Single-Use VCN' : 'Multi-Use VCN'}
+                            </span>
+                          )}
+                        </div>
                         <p className="text-xs text-slate-400">{card.type.charAt(0).toUpperCase() + card.type.slice(1)} · {card.supplierName}</p>
                       </div>
-                      <p className="text-xs text-slate-500 hidden sm:block">{card.holderName}</p>
+                      <p className="text-xs text-slate-500 hidden sm:block">{card.supplierName}</p>
                       {sel && (
                         <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 400 }}>
-                          <CheckCircle2 size={18} className="text-indigo-500" />
+                          <CheckCircle2 size={18} className="text-[#1434CB]" />
                         </motion.div>
                       )}
                     </motion.button>
@@ -455,7 +462,7 @@ export default function PaymentCheckoutPage({ params }: { params: Promise<{ rfpI
               <button
                 onClick={() => setStep('card-confirm')}
                 disabled={!selectedCardId}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#1434CB] hover:bg-[#0F27B0] text-white text-sm font-semibold rounded-xl disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 Continue <ArrowRight size={15} />
               </button>
@@ -470,6 +477,7 @@ export default function PaymentCheckoutPage({ params }: { params: Promise<{ rfpI
             <CardVisual card={selectedCard} />
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 space-y-2.5">
               {[
+                ...(selectedCard.usageType ? [{ label: 'VCN Type', value: selectedCard.usageType === 'single-use' ? 'Single-Use VCN' : 'Multi-Use VCN' }] : []),
                 { label: 'Network',     value: selectedCard.brand },
                 { label: 'Card Number', value: `•••• •••• •••• ${selectedCard.last4}` },
                 { label: 'Card Holder', value: selectedCard.holderName },
@@ -486,7 +494,7 @@ export default function PaymentCheckoutPage({ params }: { params: Promise<{ rfpI
               <button onClick={() => setStep('card-select')} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
                 Change Card
               </button>
-              <button onClick={() => setStep('fund-select')} className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors inline-flex items-center justify-center gap-2">
+              <button onClick={() => setStep('fund-select')} className="flex-1 py-2.5 rounded-xl bg-[#1434CB] hover:bg-[#0F27B0] text-white text-sm font-semibold transition-colors inline-flex items-center justify-center gap-2">
                 Use This Card <ArrowRight size={15} />
               </button>
             </div>
@@ -569,18 +577,18 @@ export default function PaymentCheckoutPage({ params }: { params: Promise<{ rfpI
                           onClick={() => setUsdSubMethod(id)}
                           className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl border text-left transition-all ${
                             sel
-                              ? 'border-indigo-400 bg-indigo-50 shadow-sm'
-                              : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-slate-50'
+                              ? 'border-[#1434CB] bg-[#EEF1FD] shadow-sm'
+                              : 'border-slate-200 bg-white hover:border-[#A5B8F3] hover:bg-slate-50'
                           }`}
                         >
                           <span className="text-xl shrink-0">{icon}</span>
                           <div className="flex-1 min-w-0">
                             <p className={`text-sm font-bold ${sel ? 'text-indigo-900' : 'text-slate-800'}`}>{label}</p>
-                            <p className={`text-xs mt-0.5 ${sel ? 'text-indigo-500' : 'text-slate-400'}`}>{sub}</p>
+                            <p className={`text-xs mt-0.5 ${sel ? 'text-[#1434CB]' : 'text-slate-400'}`}>{sub}</p>
                           </div>
                           {sel && (
                             <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 400 }}>
-                              <CheckCircle2 size={18} className="text-indigo-500 shrink-0" />
+                              <CheckCircle2 size={18} className="text-[#1434CB] shrink-0" />
                             </motion.div>
                           )}
                         </motion.button>
@@ -606,7 +614,7 @@ export default function PaymentCheckoutPage({ params }: { params: Promise<{ rfpI
               <button
                 onClick={() => setStep('auth')}
                 disabled={!fundMethod || (fundMethod === 'USD' && !usdSubMethod)}
-                className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-colors inline-flex items-center justify-center gap-2"
+                className="flex-1 py-2.5 rounded-xl bg-[#1434CB] hover:bg-[#0F27B0] text-white text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-colors inline-flex items-center justify-center gap-2"
               >
                 Authenticate <ArrowRight size={15} />
               </button>
@@ -632,7 +640,7 @@ export default function PaymentCheckoutPage({ params }: { params: Promise<{ rfpI
             <SettlementAnimation state={state} method={paymentMethod} />
             {!state.currentStep.includes('settled') && (
               <div className="flex items-center justify-center gap-2">
-                <motion.div className="w-2 h-2 rounded-full bg-indigo-600" animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1.2, repeat: Infinity }} />
+                <motion.div className="w-2 h-2 rounded-full bg-[#1434CB]" animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1.2, repeat: Infinity }} />
                 <span className="text-sm text-slate-500">Processing payment…</span>
               </div>
             )}

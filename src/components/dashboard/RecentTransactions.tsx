@@ -44,7 +44,7 @@ export function RecentTransactions({ transactions, limit = 5 }: RecentTransactio
               <tr key={tx.id} className="border-b border-slate-50">
                 <td className="px-4 py-3">
                   {tx.method === 'USD' ? (
-                    <span className="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-xs font-semibold">
+                    <span className="bg-[#D6DFFA] text-indigo-700 px-2 py-0.5 rounded text-xs font-semibold">
                       USD
                     </span>
                   ) : (

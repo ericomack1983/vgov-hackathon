@@ -27,7 +27,7 @@ export function AccountDestinationCard({ method, supplierName, walletAddress, se
         transition={{ duration: 0.2 }}
         className="w-full bg-slate-900 rounded-xl p-5 text-white shadow-lg border border-slate-800 relative overflow-hidden"
       >
-        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 opacity-50" />
+        <div className="absolute top-0 right-0 w-32 h-32 bg-[#1434CB]/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 opacity-50" />
 
         <div className="flex items-start justify-between relative z-10">
           <div>
@@ -36,7 +36,7 @@ export function AccountDestinationCard({ method, supplierName, walletAddress, se
             </span>
             <span className="text-lg font-bold text-white tracking-tight">{supplierName}</span>
           </div>
-          <div className="p-2 bg-slate-800 rounded-lg text-indigo-400">{iconEl}</div>
+          <div className="p-2 bg-slate-800 rounded-lg text-[#1434CB]">{iconEl}</div>
         </div>
 
         <div className="mt-6 space-y-3 relative z-10">

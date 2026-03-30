@@ -34,7 +34,7 @@ export default function AuditPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Shield size={20} className="text-indigo-600" />
+          <Shield size={20} className="text-[#1434CB]" />
           <div>
             <h1 className="text-xl font-semibold text-slate-900">Audit Trail</h1>
             <p className="text-sm text-slate-500">Compliance log of all procurement events</p>

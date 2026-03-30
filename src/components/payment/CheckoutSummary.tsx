@@ -12,7 +12,7 @@ interface CheckoutSummaryProps {
 }
 
 const METHOD_BADGE: Record<PaymentMethod, string> = {
-  USD:  'bg-indigo-100 text-indigo-700',
+  USD:  'bg-[#D6DFFA] text-indigo-700',
   USDC: 'bg-purple-100 text-purple-700',
   Card: 'bg-emerald-100 text-emerald-700',
 };

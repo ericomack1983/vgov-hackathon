@@ -158,12 +158,12 @@ export function getEventIcon(type: AuditEvent['type']): string {
 export function getEventColor(type: AuditEvent['type']): string {
   const map: Record<AuditEvent['type'], string> = {
     rfp_created: 'text-slate-500',
-    rfp_published: 'text-indigo-500',
+    rfp_published: 'text-[#1434CB]',
     bid_submitted: 'text-blue-500',
     evaluation_run: 'text-purple-500',
     supplier_awarded: 'text-emerald-500',
     override_applied: 'text-amber-500',
-    payment_initiated: 'text-indigo-500',
+    payment_initiated: 'text-[#1434CB]',
     payment_settled: 'text-emerald-500',
   };
   return map[type];

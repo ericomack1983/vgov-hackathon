@@ -15,15 +15,6 @@ export const MOCK_SUPPLIERS: Supplier[] = [
     vaaScore: 94,
     cards: [
       {
-        id: 'card-sup001-001',
-        type: 'credit',
-        brand: 'Visa',
-        last4: '2291',
-        expiry: '06/27',
-        holderName: 'Apex Federal Solutions',
-        status: 'active',
-      },
-      {
         id: 'card-sup001-002',
         type: 'debit',
         brand: 'Mastercard',
@@ -136,15 +127,6 @@ export const MOCK_SUPPLIERS: Supplier[] = [
     riskScore: 45,
     vaaScore: 41,
     cards: [
-      {
-        id: 'card-001',
-        type: 'credit',
-        brand: 'Visa',
-        last4: '4821',
-        expiry: '09/26',
-        holderName: 'Harbor Defense Co',
-        status: 'active',
-      },
       {
         id: 'card-002',
         type: 'debit',

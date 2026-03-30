@@ -35,7 +35,7 @@ export function RoleSwitcher() {
     <div ref={wrapperRef} className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="bg-slate-800 text-slate-200 px-3 py-2 rounded-lg text-sm font-semibold flex items-center gap-2"
+        className="bg-white/10 text-white px-3 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 hover:bg-white/20 transition-colors"
       >
         <span className="sr-only">Switch Role</span>
         {ROLE_DISPLAY_NAMES[role]}
@@ -62,12 +62,12 @@ export function RoleSwitcher() {
                 }}
                 className={`w-full px-4 py-2 text-sm text-left flex items-center gap-2 hover:bg-slate-700 hover:text-white transition-colors ${
                   r === role
-                    ? 'text-indigo-400 font-semibold'
+                    ? 'text-[#1434CB] font-semibold'
                     : 'text-slate-300'
                 }`}
               >
                 {r === role && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#1434CB]" />
                 )}
                 {ROLE_DISPLAY_NAMES[r]}
               </button>

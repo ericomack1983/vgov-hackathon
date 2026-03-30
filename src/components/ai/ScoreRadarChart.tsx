@@ -83,14 +83,14 @@ export function ScoreRadarChart({ dimensions, size = 280 }: ScoreRadarChartProps
         <polygon
           points={dataPoints}
           fill="rgba(79, 70, 229, 0.2)"
-          stroke="#4f46e5"
+          stroke="#1434CB"
           strokeWidth="2"
         />
 
         {/* Data point dots */}
         {AXES.map((key, i) => {
           const p = getPoint(dimensions[key], i, RADIUS, CENTER);
-          return <circle key={key} cx={p.x} cy={p.y} r="3" fill="#4f46e5" />;
+          return <circle key={key} cx={p.x} cy={p.y} r="3" fill="#1434CB" />;
         })}
       </svg>
 

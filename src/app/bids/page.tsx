@@ -57,7 +57,7 @@ export default function BidsPage() {
                 </div>
                 <button
                   onClick={() => setSelectedRfp({ id: rfp.id, title: rfp.title })}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors ml-4 shrink-0"
+                  className="bg-[#1434CB] hover:bg-[#0F27B0] text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors ml-4 shrink-0"
                 >
                   Submit Bid
                 </button>

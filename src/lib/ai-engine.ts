@@ -50,6 +50,37 @@ export function scoreBids(bids: Bid[], suppliers: Supplier[], rfp: RFP): ScoredB
   return scored;
 }
 
+export function generateOverrideNarrative(selected: ScoredBid, best: ScoredBid): string {
+  const dims = ['price', 'delivery', 'reliability', 'compliance', 'risk', 'vaa'] as (keyof DimensionScores)[];
+  const gap = best.composite - selected.composite;
+
+  // Find the dimension where selected is furthest behind best
+  let weakDim = dims[0];
+  let worstGap = -Infinity;
+  for (const d of dims) {
+    const diff = best.dimensions[d] - selected.dimensions[d];
+    if (diff > worstGap) { worstGap = diff; weakDim = d; }
+  }
+
+  // Find the dimension where selected actually beats best (if any)
+  let edgeDim: string | null = null;
+  let edgeGap = 0;
+  for (const d of dims) {
+    const diff = selected.dimensions[d] - best.dimensions[d];
+    if (diff > edgeGap) { edgeGap = diff; edgeDim = d; }
+  }
+
+  const vaaLine = best.dimensions.vaa > selected.dimensions.vaa
+    ? ` Visa VAA score confirms ${best.supplier.name} carries lower payment risk (${best.dimensions.vaa} vs ${selected.dimensions.vaa.toFixed(0)}).`
+    : '';
+
+  const edgeLine = edgeDim && edgeGap > 2
+    ? ` Note: ${selected.supplier.name} does edge ahead on ${edgeDim} (+${edgeGap.toFixed(0)} pts), but this dimension carries less weight in the composite model.`
+    : '';
+
+  return `⚠ Manual override detected. You selected ${selected.supplier.name} (rank #${selected.rank}, ${selected.composite}/100), bypassing the AI recommendation.\n\n${best.supplier.name} scores ${gap} points higher at ${best.composite}/100. The largest gap is in ${weakDim}: ${best.supplier.name} scores ${best.dimensions[weakDim].toFixed(0)} vs ${selected.dimensions[weakDim].toFixed(0)} for ${selected.supplier.name}.${vaaLine}${edgeLine}\n\nThis override will be logged for audit and compliance review.`;
+}
+
 export function generateNarrative(ranked: ScoredBid[]): string {
   if (ranked.length === 0) return 'No bids to evaluate.';
   if (ranked.length === 1) {

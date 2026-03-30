@@ -63,7 +63,7 @@ export default function TransactionsPage() {
                             <div className="w-6 h-6 rounded-md bg-[#1434CB]/10 flex items-center justify-center">
                               <CreditCard size={12} className="text-[#1434CB]" />
                             </div>
-                            <span className="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-xs font-semibold">
+                            <span className="bg-[#D6DFFA] text-indigo-700 px-2 py-0.5 rounded text-xs font-semibold">
                               USD
                             </span>
                           </>

@@ -92,7 +92,7 @@ export default function LoginPage() {
         >
           {/* Mobile logo */}
           <div className="flex items-center gap-3 mb-10 lg:hidden">
-            <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-[#1434CB] flex items-center justify-center">
               <Building2 size={18} className="text-white" />
             </div>
             <span className="text-white font-bold text-lg">VGov Procurement</span>
@@ -119,7 +119,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); setError(null); }}
                   placeholder="you@agency.gov"
-                  className="w-full bg-slate-900 border border-slate-700 text-white placeholder:text-slate-600 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                  className="w-full bg-slate-900 border border-slate-700 text-white placeholder:text-slate-600 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1434CB] focus:border-[#1434CB] transition"
                 />
               </div>
             </div>
@@ -138,7 +138,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => { setPassword(e.target.value); setError(null); }}
                   placeholder="••••••••••••"
-                  className="w-full bg-slate-900 border border-slate-700 text-white placeholder:text-slate-600 rounded-xl pl-10 pr-11 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                  className="w-full bg-slate-900 border border-slate-700 text-white placeholder:text-slate-600 rounded-xl pl-10 pr-11 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1434CB] focus:border-[#1434CB] transition"
                 />
                 <button
                   type="button"
@@ -169,7 +169,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={submitting || !email || !password}
-              className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-indigo-900/40"
+              className="w-full py-3 rounded-xl bg-[#1434CB] hover:bg-[#1434CB] text-white text-sm font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-indigo-900/40"
             >
               {submitting ? (
                 <>

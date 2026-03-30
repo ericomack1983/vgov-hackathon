@@ -23,7 +23,7 @@ export function NotificationItem({ notification, onMarkRead }: NotificationItemP
     <div
       className={cn(
         'bg-white rounded-xl border p-4 transition-colors',
-        notification.read ? 'border-slate-200' : 'border-indigo-200 bg-indigo-50/30'
+        notification.read ? 'border-slate-200' : 'border-[#A5B8F3] bg-[#EEF1FD]/30'
       )}
     >
       <div className="flex items-start justify-between">
@@ -44,7 +44,7 @@ export function NotificationItem({ notification, onMarkRead }: NotificationItemP
       {!notification.read && (
         <button
           onClick={() => onMarkRead(notification.id)}
-          className="text-xs text-indigo-600 hover:text-indigo-700 mt-2"
+          className="text-xs text-[#1434CB] hover:text-indigo-700 mt-2"
         >
           Mark as read
         </button>
