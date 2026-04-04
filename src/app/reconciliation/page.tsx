@@ -1,216 +1,101 @@
 'use client';
 
-import { useMemo, useState, useRef, useCallback } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePayment } from '@/context/PaymentContext';
 import {
   FileCheck, Search, Filter, DollarSign, Wallet, FileText,
-  Upload, X, CheckCircle2, AlertCircle, ImageIcon, FileIcon,
-  CloudUpload,
+  CheckCircle2, AlertCircle, Loader2, ShieldCheck, Activity,
 } from 'lucide-react';
 import { StatCard } from '@/components/dashboard/StatCard';
+import { vpcService, type VPCReconciliationResult } from '@/lib/visa-sdk';
 
-// ── Slip states ───────────────────────────────────────────────────────────────
-type SlipStatus = 'none' | 'uploaded';
+// ── Reconciliation state per transaction ──────────────────────────────────────
 
-interface UploadedSlip {
-  name: string;
-  size: number;
-  type: string;
+type ReconcileStatus = 'idle' | 'loading' | 'matched' | 'partial_match' | 'unmatched';
+
+interface ReconcileState {
+  status: ReconcileStatus;
+  result?: VPCReconciliationResult;
 }
 
-// ── Upload modal ──────────────────────────────────────────────────────────────
-interface UploadModalProps {
-  orderId: string;
+// ── VPC Match Cell ─────────────────────────────────────────────────────────────
+
+function VPCMatchCell({
+  txId,
+  amount,
+  supplierName,
+  state,
+  onReconcile,
+}: {
+  txId: string;
+  amount: number;
   supplierName: string;
-  onClose: () => void;
-  onConfirm: (file: UploadedSlip) => void;
-}
-
-function UploadModal({ orderId, supplierName, onClose, onConfirm }: UploadModalProps) {
-  const [dragging, setDragging] = useState(false);
-  const [staged, setStaged] = useState<UploadedSlip | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [done, setDone] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const handleFile = useCallback((file: File) => {
-    const allowed = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'];
-    if (!allowed.includes(file.type)) return;
-    setStaged({ name: file.name, size: file.size, type: file.type });
-  }, []);
-
-  const onDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragging(false);
-    const file = e.dataTransfer.files[0];
-    if (file) handleFile(file);
-  };
-
-  const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) handleFile(file);
-  };
-
-  const handleSubmit = () => {
-    if (!staged) return;
-    setUploading(true);
-    setTimeout(() => {
-      setUploading(false);
-      setDone(true);
-      setTimeout(() => onConfirm(staged), 900);
-    }, 1600);
-  };
-
-  const fileIcon = staged?.type === 'application/pdf'
-    ? <FileIcon size={20} className="text-red-500" />
-    : <ImageIcon size={20} className="text-blue-500" />;
-
-  return (
-    <motion.div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-    >
-      {/* Backdrop */}
-      <motion.div
-        className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
-        onClick={onClose}
-      />
-
-      {/* Panel */}
-      <motion.div
-        className="relative z-10 w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden"
-        initial={{ scale: 0.94, y: 16, opacity: 0 }}
-        animate={{ scale: 1, y: 0, opacity: 1 }}
-        exit={{ scale: 0.94, y: 16, opacity: 0 }}
-        transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+  state: ReconcileState;
+  onReconcile: (txId: string) => void;
+}) {
+  if (state.status === 'idle') {
+    return (
+      <button
+        onClick={() => onReconcile(txId)}
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#EEF1FD] text-indigo-700 hover:bg-[#D6DFFA] transition-colors border border-[#D6DFFA]"
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-          <div>
-            <p className="text-sm font-semibold text-slate-900">Upload Payment Slip</p>
-            <p className="text-xs text-slate-400 mt-0.5">{orderId} · {supplierName}</p>
-          </div>
-          <button onClick={onClose} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
-            <X size={16} className="text-slate-500" />
-          </button>
+        <Activity size={11} />
+        Reconcile via VPC
+      </button>
+    );
+  }
+
+  if (state.status === 'loading') {
+    return (
+      <div className="inline-flex items-center gap-1.5 text-xs text-slate-400 font-mono">
+        <Loader2 size={11} className="animate-spin" />
+        <span>Calling VPC API…</span>
+      </div>
+    );
+  }
+
+  if (state.status === 'matched' && state.result?.matchedTransaction) {
+    const t = state.result.matchedTransaction;
+    return (
+      <motion.div
+        initial={{ opacity: 0, x: -4 }}
+        animate={{ opacity: 1, x: 0 }}
+        className="space-y-1"
+      >
+        <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700">
+          <CheckCircle2 size={10} />
+          {state.result.confidence}% match
         </div>
-
-        <div className="p-5 space-y-4">
-          <AnimatePresence mode="wait">
-            {done ? (
-              <motion.div
-                key="done"
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: 'spring', stiffness: 400 }}
-                className="flex flex-col items-center gap-3 py-8"
-              >
-                <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center">
-                  <CheckCircle2 size={28} className="text-emerald-500" />
-                </div>
-                <p className="text-sm font-semibold text-slate-800">Slip uploaded successfully</p>
-                <p className="text-xs text-slate-400">Reconciliation entry closed out.</p>
-              </motion.div>
-            ) : (
-              <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                {/* Drop zone */}
-                <div
-                  onClick={() => inputRef.current?.click()}
-                  onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-                  onDragLeave={() => setDragging(false)}
-                  onDrop={onDrop}
-                  className={`relative flex flex-col items-center justify-center gap-3 border-2 border-dashed rounded-xl p-8 cursor-pointer transition-all ${
-                    dragging
-                      ? 'border-[#1434CB] bg-[#EEF1FD]'
-                      : staged
-                      ? 'border-emerald-300 bg-emerald-50'
-                      : 'border-slate-200 hover:border-[#6B8EE8] hover:bg-slate-50'
-                  }`}
-                >
-                  <input
-                    ref={inputRef}
-                    type="file"
-                    accept=".pdf,.png,.jpg,.jpeg,.webp"
-                    className="hidden"
-                    onChange={onInputChange}
-                  />
-                  {staged ? (
-                    <>
-                      <div className="w-10 h-10 rounded-xl bg-white shadow-sm border border-slate-100 flex items-center justify-center">
-                        {fileIcon}
-                      </div>
-                      <div className="text-center">
-                        <p className="text-sm font-medium text-slate-800 truncate max-w-[220px]">{staged.name}</p>
-                        <p className="text-xs text-slate-400 mt-0.5">{(staged.size / 1024).toFixed(1)} KB</p>
-                      </div>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setStaged(null); }}
-                        className="text-xs text-slate-400 hover:text-slate-600 underline"
-                      >
-                        Replace
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
-                        <CloudUpload size={20} className="text-slate-400" />
-                      </div>
-                      <div className="text-center">
-                        <p className="text-sm font-medium text-slate-700">
-                          {dragging ? 'Drop file here' : 'Click or drag to upload'}
-                        </p>
-                        <p className="text-xs text-slate-400 mt-0.5">PDF, PNG, JPG, WEBP</p>
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                {/* Info note */}
-                <div className="flex gap-2 items-start bg-amber-50 border border-amber-100 rounded-lg px-3 py-2.5 mt-3">
-                  <AlertCircle size={14} className="text-amber-500 mt-0.5 shrink-0" />
-                  <p className="text-xs text-amber-700">
-                    The supplier must share this slip to confirm receipt of funds. Uploading will close out this reconciliation entry.
-                  </p>
-                </div>
-
-                {/* Actions */}
-                <div className="flex gap-3 mt-4">
-                  <button
-                    onClick={onClose}
-                    className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSubmit}
-                    disabled={!staged || uploading}
-                    className="flex-1 py-2.5 rounded-xl bg-[#1434CB] text-sm font-semibold text-white hover:bg-[#0F27B0] disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-                  >
-                    {uploading ? (
-                      <>
-                        <motion.div
-                          className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
-                          animate={{ rotate: 360 }}
-                          transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
-                        />
-                        Uploading…
-                      </>
-                    ) : (
-                      <>
-                        <Upload size={14} />
-                        Confirm Upload
-                      </>
-                    )}
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+        <div className="text-[10px] font-mono text-slate-400 leading-snug">
+          <span className="text-slate-600 font-semibold">{t.transactionId}</span>
+          <br />
+          {t.merchantName} · ${t.amount.toLocaleString()}
         </div>
       </motion.div>
+    );
+  }
+
+  if (state.status === 'partial_match' && state.result?.matchedTransaction) {
+    const t = state.result.matchedTransaction;
+    return (
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-1">
+        <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700">
+          <AlertCircle size={10} />
+          Partial · {state.result.confidence}%
+        </div>
+        <div className="text-[10px] font-mono text-slate-400">
+          <span className="text-slate-600">{t.transactionId}</span> · ${t.amount.toLocaleString()}
+        </div>
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+      className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[11px] font-bold bg-red-50 text-red-600">
+      <AlertCircle size={10} />
+      No match
     </motion.div>
   );
 }
@@ -218,32 +103,84 @@ function UploadModal({ orderId, supplierName, onClose, onConfirm }: UploadModalP
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function ReconciliationPage() {
   const { transactions } = usePayment();
-  const [slips, setSlips] = useState<Record<string, SlipStatus>>({});
-  const [modalTx, setModalTx] = useState<{ id: string; orderId: string; supplierName: string } | null>(null);
+  const [reconcileStates, setReconcileStates] = useState<Record<string, ReconcileState>>({});
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const getState = (txId: string): ReconcileState =>
+    reconcileStates[txId] ?? { status: 'idle' };
+
+  const handleReconcile = useCallback(async (txId: string) => {
+    const tx = transactions.find(t => t.id === txId);
+    if (!tx) return;
+
+    setReconcileStates(prev => ({ ...prev, [txId]: { status: 'loading' } }));
+
+    try {
+      // Derive a deterministic sandbox VPC account ID per transaction.
+      // In production this would come from the VCN issuance step.
+      const vpcAccountId = `VPC-ACCT-${txId.slice(-8).toUpperCase()}`;
+
+      const result = await vpcService.Reporting.reconcilePayment({
+        accountId: vpcAccountId,
+        invoiceAmount: tx.amount,
+        supplierName: tx.supplierName,
+        invoiceNumber: tx.orderId,
+      });
+
+      setReconcileStates(prev => ({
+        ...prev,
+        [txId]: { status: result.matchStatus, result },
+      }));
+    } catch {
+      setReconcileStates(prev => ({
+        ...prev,
+        [txId]: { status: 'unmatched' },
+      }));
+    }
+  }, [transactions]);
+
+  const handleReconcileAll = useCallback(async () => {
+    const pending = transactions.filter(tx => {
+      const s = getState(tx.id).status;
+      return s === 'idle' || s === 'unmatched';
+    });
+    for (const tx of pending) {
+      await handleReconcile(tx.id);
+    }
+  }, [transactions, reconcileStates, handleReconcile]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const metrics = useMemo(() => {
     let usdTotal = 0;
     let usdcTotal = 0;
-    let pendingCount = 0;
+    let matchedCount = 0;
 
     transactions.forEach(tx => {
       if (tx.status === 'Settled') {
         if (tx.method === 'USD') usdTotal += tx.amount;
         else usdcTotal += tx.amount;
-      } else {
-        pendingCount++;
       }
+      const s = getState(tx.id).status;
+      if (s === 'matched' || s === 'partial_match') matchedCount++;
     });
 
-    return { usdTotal, usdcTotal, totalCount: transactions.length, pendingCount };
-  }, [transactions]);
+    return { usdTotal, usdcTotal, totalCount: transactions.length, matchedCount };
+  }, [transactions, reconcileStates]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const slipsUploaded = Object.values(slips).filter(s => s === 'uploaded').length;
+  const pendingCount = transactions.length - metrics.matchedCount;
 
-  const handleSlipConfirmed = (txId: string) => {
-    setSlips(prev => ({ ...prev, [txId]: 'uploaded' }));
-    setModalTx(null);
-  };
+  const filtered = useMemo(() => {
+    if (!searchQuery) return transactions;
+    const q = searchQuery.toLowerCase();
+    return transactions.filter(tx =>
+      tx.supplierName.toLowerCase().includes(q) ||
+      tx.orderId.toLowerCase().includes(q) ||
+      tx.method.toLowerCase().includes(q),
+    );
+  }, [transactions, searchQuery]);
+
+  const sorted = [...filtered].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
 
   return (
     <motion.div
@@ -252,11 +189,22 @@ export default function ReconciliationPage() {
       transition={{ duration: 0.3 }}
       className="space-y-6"
     >
-      <div>
-        <h1 className="text-xl font-semibold text-slate-900">Reconciliation</h1>
-        <p className="text-sm text-slate-500">
-          Verify and audit structured settlements across networks.
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-slate-900">Reconciliation</h1>
+          <p className="text-sm text-slate-500">
+            Match VCN charges against Visa Payment Controls transaction records via VPC Reporting API.
+          </p>
+        </div>
+        {transactions.length > 0 && pendingCount > 0 && (
+          <button
+            onClick={handleReconcileAll}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#1434CB] hover:bg-[#0F27B0] text-white text-sm font-semibold transition-colors"
+          >
+            <ShieldCheck size={14} />
+            Reconcile All
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -266,173 +214,163 @@ export default function ReconciliationPage() {
           icon={<FileText size={18} />}
         />
         <StatCard
-          label="Pending Clearance"
-          value={`${metrics.pendingCount}`}
-          icon={<FileCheck size={18} />}
+          label="VPC Matched"
+          value={`${metrics.matchedCount}`}
+          icon={<CheckCircle2 size={18} />}
         />
         <StatCard
-          label="Settled Value (USD)"
+          label="Settled (USD)"
           value={`$${metrics.usdTotal.toLocaleString()}`}
           icon={<DollarSign size={18} />}
         />
         <StatCard
-          label="Settled Value (USDC)"
+          label="Settled (USDC)"
           value={`$${metrics.usdcTotal.toLocaleString()}`}
           icon={<Wallet size={18} />}
         />
       </div>
 
-      {/* Slip upload progress banner */}
+      {/* Status banner */}
       {transactions.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: -6 }}
           animate={{ opacity: 1, y: 0 }}
           className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm ${
-            slipsUploaded === transactions.length
+            pendingCount === 0
               ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
               : 'bg-amber-50 border-amber-200 text-amber-700'
           }`}
         >
-          {slipsUploaded === transactions.length
+          {pendingCount === 0
             ? <CheckCircle2 size={16} className="shrink-0" />
             : <AlertCircle size={16} className="shrink-0" />
           }
           <span>
-            {slipsUploaded === transactions.length
-              ? 'All payment slips received — reconciliation complete.'
-              : `${transactions.length - slipsUploaded} transaction${transactions.length - slipsUploaded !== 1 ? 's' : ''} awaiting payment slip from supplier.`
+            {pendingCount === 0
+              ? 'All transactions reconciled via Visa VPC Reporting API.'
+              : `${pendingCount} transaction${pendingCount !== 1 ? 's' : ''} pending VPC reconciliation — click Reconcile to match against VCN charges.`
             }
           </span>
         </motion.div>
       )}
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-slate-900">Transaction Ledger</h2>
-          <div className="flex gap-2 text-slate-400">
-            <button className="p-1.5 hover:bg-slate-50 hover:text-slate-600 rounded transition-colors" title="Search">
-              <Search size={16} />
+        <div className="p-4 border-b border-slate-100 flex items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold text-slate-900 shrink-0">Transaction Ledger</h2>
+          <div className="flex gap-2 items-center flex-1 max-w-xs">
+            <div className="relative flex-1">
+              <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Search supplier or order…"
+                className="w-full pl-7 pr-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#1434CB] focus:border-[#1434CB]"
+              />
+            </div>
+            <button className="p-1.5 hover:bg-slate-50 hover:text-slate-600 rounded transition-colors text-slate-400" title="Filter">
+              <Filter size={14} />
             </button>
-            <button className="p-1.5 hover:bg-slate-50 hover:text-slate-600 rounded transition-colors" title="Filter">
-              <Filter size={16} />
-            </button>
+          </div>
+          {/* VPC API badge */}
+          <div className="hidden sm:inline-flex items-center gap-1.5 px-2 py-1 rounded text-[9px] font-bold shrink-0"
+            style={{ color: '#60a5fa', background: 'rgba(20,52,203,0.08)', border: '1px solid rgba(74,123,255,0.2)' }}>
+            <svg viewBox="0 0 72 24" style={{ height: 9, width: 'auto' }}>
+              <path fill="currentColor" d="M27.5 1.2l-4.7 21.6h-5L22.4 1.2h5.1zm19.4 14l2.6-7.2 1.5 7.2h-4.1zm5.6 7.6h4.6L53 1.2h-4.2c-.9 0-1.7.5-2.1 1.3L39.3 22.8h5l1-2.7h6.1l.6 2.7zm-12.5-7c0-4.9-6.8-5.2-6.7-7.4 0-.7.6-1.4 2-1.5 1.3-.1 2.7.1 3.9.7l.7-3.3C38.7 3.8 37.2 3.5 35.7 3.5c-4.7 0-8 2.5-8 6 0 2.6 2.3 4.1 4.1 4.9 1.8.9 2.4 1.5 2.4 2.3 0 1.2-1.4 1.8-2.8 1.8-2.3 0-3.6-.6-4.7-1.1l-.8 3.5c1.1.5 3 .9 5.1.9 4.8 0 8-2.4 8-6.1zm-17.2-14.6L16.4 22.8h-5.1L8.4 4.9C8.2 4 7.7 3.2 6.8 2.8 5.3 2.1 3.5 1.6 1.9 1.3L2 1.2h8.1c1.1 0 2 .7 2.3 1.8l2.1 11.1 5.3-12.9h5.1z"/>
+            </svg>
+            VPC Reporting API
           </div>
         </div>
 
         {transactions.length === 0 ? (
           <div className="text-sm text-slate-500 p-8 text-center bg-slate-50">
-            No transactions correspond to this period.
+            No transactions to reconcile. Complete a payment to populate this ledger.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100">
-                  <th className="px-6 py-3 text-xs font-semibold text-slate-500 w-[160px]">Order ID</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-slate-500 w-[120px]">Method</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-slate-500 w-[140px]">Amount</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-slate-500">Supplier</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-slate-500 text-center">Payment Slip</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-slate-500 text-right">Status</th>
+                  <th className="px-5 py-3 text-xs font-semibold text-slate-500 w-[150px]">Order ID</th>
+                  <th className="px-5 py-3 text-xs font-semibold text-slate-500 w-[90px]">Method</th>
+                  <th className="px-5 py-3 text-xs font-semibold text-slate-500 w-[130px]">Amount</th>
+                  <th className="px-5 py-3 text-xs font-semibold text-slate-500">Supplier</th>
+                  <th className="px-5 py-3 text-xs font-semibold text-slate-500 w-[220px]">VPC Match</th>
+                  <th className="px-5 py-3 text-xs font-semibold text-slate-500 text-right w-[120px]">Status</th>
                 </tr>
               </thead>
               <tbody>
-                {[...transactions]
-                  .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                  .map((tx) => {
-                    const slipStatus = slips[tx.id] ?? 'none';
-                    const isReconciled = slipStatus === 'uploaded';
-                    return (
-                      <motion.tr
-                        key={tx.id}
-                        layout
-                        className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors"
-                      >
-                        <td className="px-6 py-4 text-[13px] font-mono text-slate-500">
-                          {tx.orderId}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-slate-600 px-2.5 py-1 text-xs font-semibold">
-                            {tx.method}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-sm font-bold text-slate-900">
-                          ${tx.amount.toLocaleString()}
-                        </td>
-                        <td className="px-6 py-4 text-sm font-medium text-slate-600">
-                          {tx.supplierName}
-                        </td>
-
-                        {/* Payment slip column */}
-                        <td className="px-6 py-4 text-center">
-                          <AnimatePresence mode="wait">
-                            {isReconciled ? (
-                              <motion.span
-                                key="done"
-                                initial={{ scale: 0.7, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                transition={{ type: 'spring', stiffness: 400 }}
-                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700"
-                              >
-                                <CheckCircle2 size={11} />
-                                Slip Received
-                              </motion.span>
-                            ) : (
-                              <motion.button
-                                key="upload"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                onClick={() => setModalTx({ id: tx.id, orderId: tx.orderId, supplierName: tx.supplierName })}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#EEF1FD] text-indigo-700 hover:bg-[#D6DFFA] transition-colors border border-[#D6DFFA]"
-                              >
-                                <Upload size={11} />
-                                Upload Slip
-                              </motion.button>
-                            )}
-                          </AnimatePresence>
-                        </td>
-
-                        {/* Status column */}
-                        <td className="px-6 py-4 text-right">
-                          <AnimatePresence mode="wait">
-                            <motion.span
-                              key={isReconciled ? 'reconciled' : 'incomplete'}
-                              initial={{ opacity: 0, scale: 0.9 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              exit={{ opacity: 0 }}
-                              transition={{ duration: 0.2 }}
-                              className={`inline-flex px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider ${
-                                isReconciled
-                                  ? 'bg-teal-50 text-teal-700'
-                                  : 'bg-red-50 text-red-500'
-                              }`}
-                            >
-                              {isReconciled ? 'Reconciled' : 'Incomplete'}
-                            </motion.span>
-                          </AnimatePresence>
-                        </td>
-                      </motion.tr>
-                    );
-                  })}
+                {sorted.map((tx) => {
+                  const rs = getState(tx.id);
+                  const isReconciled = rs.status === 'matched' || rs.status === 'partial_match';
+                  return (
+                    <motion.tr
+                      key={tx.id}
+                      layout
+                      className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors"
+                    >
+                      <td className="px-5 py-4 text-[12px] font-mono text-slate-500">
+                        {tx.orderId}
+                      </td>
+                      <td className="px-5 py-4">
+                        <span className="text-xs font-semibold text-slate-600">{tx.method}</span>
+                      </td>
+                      <td className="px-5 py-4 text-sm font-bold text-slate-900">
+                        ${tx.amount.toLocaleString()}
+                      </td>
+                      <td className="px-5 py-4 text-sm font-medium text-slate-600">
+                        {tx.supplierName}
+                      </td>
+                      <td className="px-5 py-4">
+                        <AnimatePresence mode="wait">
+                          <VPCMatchCell
+                            key={rs.status}
+                            txId={tx.id}
+                            amount={tx.amount}
+                            supplierName={tx.supplierName}
+                            state={rs}
+                            onReconcile={handleReconcile}
+                          />
+                        </AnimatePresence>
+                      </td>
+                      <td className="px-5 py-4 text-right">
+                        <AnimatePresence mode="wait">
+                          <motion.span
+                            key={isReconciled ? 'reconciled' : rs.status}
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className={`inline-flex px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider ${
+                              isReconciled
+                                ? 'bg-teal-50 text-teal-700'
+                                : rs.status === 'unmatched'
+                                ? 'bg-red-50 text-red-500'
+                                : 'bg-slate-100 text-slate-500'
+                            }`}
+                          >
+                            {isReconciled ? 'Reconciled' : rs.status === 'unmatched' ? 'No Match' : 'Pending'}
+                          </motion.span>
+                        </AnimatePresence>
+                      </td>
+                    </motion.tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         )}
       </div>
 
-      {/* Upload modal */}
-      <AnimatePresence>
-        {modalTx && (
-          <UploadModal
-            key={modalTx.id}
-            orderId={modalTx.orderId}
-            supplierName={modalTx.supplierName}
-            onClose={() => setModalTx(null)}
-            onConfirm={() => handleSlipConfirmed(modalTx.id)}
-          />
-        )}
-      </AnimatePresence>
+      {/* API note */}
+      {transactions.length > 0 && (
+        <div className="flex items-start gap-2 text-xs text-slate-400">
+          <FileCheck size={13} className="mt-0.5 shrink-0" />
+          <span>
+            Reconciliation calls <span className="font-mono text-slate-500">POST /vpc/v1/accounts/&#123;id&#125;/reconcile</span> — matches VCN charges by amount against the Visa VPC Reporting API. All calls are logged in{' '}
+            <a href="/sdk-logs" className="text-[#1434CB] hover:underline font-medium">SDK Logs</a>.
+          </span>
+        </div>
+      )}
     </motion.div>
   );
 }

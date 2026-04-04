@@ -9,8 +9,8 @@ interface DonutChartProps {
 }
 
 const RADIUS       = 70;
-const STROKE       = 28;
-const STROKE_HOVER = 36;
+const STROKE       = 26;
+const STROKE_HOVER = 44;
 const CIRC         = 2 * Math.PI * RADIUS;
 
 export function DonutChart({ segments }: DonutChartProps) {
@@ -47,10 +47,10 @@ export function DonutChart({ segments }: DonutChartProps) {
                 transform="rotate(-90 100 100)"
                 animate={{
                   strokeWidth: isHov ? STROKE_HOVER : STROKE,
-                  filter: isHov ? `drop-shadow(0 0 8px ${seg.color}88)` : 'none',
-                  opacity: hovered !== null && !isHov ? 0.35 : 1,
+                  filter: isHov ? `drop-shadow(0 0 22px ${seg.color}cc)` : 'none',
+                  opacity: hovered !== null && !isHov ? 0.14 : 1,
                 }}
-                transition={{ duration: 0.2, ease: 'easeOut' }}
+                transition={{ duration: 0.22, ease: 'easeOut' }}
                 style={{ cursor: 'pointer' }}
                 onMouseEnter={() => setHovered(i)}
                 onMouseLeave={() => setHovered(null)}
@@ -68,14 +68,15 @@ export function DonutChart({ segments }: DonutChartProps) {
               transition={{ duration: 0.18 }}
               style={{ transformOrigin: '100px 100px' }}
             >
-              <text x={100} y={90} textAnchor="middle" fontSize="18" fontWeight="700" fill="#1e293b">
+              <text x={100} y={92} textAnchor="middle" fontSize={hovered !== null ? "22" : "18"} fontWeight="800" fill="#1e293b">
                 {active ? `${Math.round(active.percentage * 100)}%` : '0%'}
               </text>
-              <text x={100} y={108} textAnchor="middle" fontSize="10" fill="#64748b">
+              <text x={100} y={109} textAnchor="middle" fontSize="10" fill="#64748b">
                 {active?.label ?? 'No data'}
               </text>
               {active && (
-                <text x={100} y={122} textAnchor="middle" fontSize="9" fontWeight="600" fill="#94a3b8">
+                <text x={100} y={122} textAnchor="middle" fontSize="9" fontWeight="600"
+                  fill={hovered !== null ? active.color : '#94a3b8'}>
                   ${active.value.toLocaleString()}
                 </text>
               )}

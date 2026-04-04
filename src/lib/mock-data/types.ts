@@ -28,7 +28,7 @@ export interface Supplier {
   walletAddress: string;
   deliveryAvgDays: number;
   riskScore: number;
-  vaaScore?: number;   // Visa Advanced Authorization Score (0-100)
+  vsmsScore?: number;  // Visa Supplier Matching Service Score (0-100)
   cards?: PaymentCard[];
 }
 
@@ -49,7 +49,7 @@ export interface DimensionScores {
   reliability: number; // 0-100
   compliance: number;  // 0-100
   risk: number;        // 0-100
-  vaa: number;         // 0-100 — Visa Advanced Authorization Score
+  vsms: number;        // 0-100 — Visa Supplier Matching Service Score
 }
 
 export interface ScoredBid {
@@ -75,6 +75,28 @@ export interface RFP {
   evaluationResults?: ScoredBid[];
   overrideWinnerId?: string;
   overrideJustification?: string;
+  recurring?: RecurringSchedule;
+}
+
+export type RecurringInterval = 'monthly' | 'quarterly' | 'biannual' | 'annual';
+
+export interface RecurringInstallment {
+  id: string;
+  dueDate: string;
+  amount: number;
+  status: 'scheduled' | 'pending' | 'paid' | 'overdue';
+  transactionId?: string;
+  paidAt?: string;
+}
+
+export interface RecurringSchedule {
+  interval: RecurringInterval;
+  contractYears: number;
+  installmentAmount: number;
+  totalInstallments: number;
+  startDate: string;
+  endDate: string;
+  installments: RecurringInstallment[];
 }
 
 export interface Transaction {

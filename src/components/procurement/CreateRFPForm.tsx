@@ -1,11 +1,27 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import { useProcurement } from '@/context/ProcurementContext';
 import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
 import toast from 'react-hot-toast';
-import { Upload, X, FileText, FileSpreadsheet, File } from 'lucide-react';
+import { Upload, X, FileText, FileSpreadsheet, File, RefreshCw, ChevronDown } from 'lucide-react';
+import { RecurringInterval, RecurringInstallment, RecurringSchedule } from '@/lib/mock-data/types';
+
+const INTERVAL_OPTIONS: { value: RecurringInterval; label: string; months: number }[] = [
+  { value: 'monthly',   label: 'Monthly',   months: 1  },
+  { value: 'quarterly', label: 'Quarterly', months: 3  },
+  { value: 'biannual',  label: 'Bi-Annual', months: 6  },
+  { value: 'annual',    label: 'Annual',    months: 12 },
+];
+
+const DURATION_OPTIONS = [1, 2, 3, 5];
+
+function addMonths(date: Date, n: number): Date {
+  const d = new Date(date);
+  d.setUTCMonth(d.getUTCMonth() + n);
+  return d;
+}
 
 const CATEGORIES = [
   'IT Infrastructure',
@@ -34,12 +50,20 @@ interface AttachedFile {
   type: string;
 }
 
+interface RecurringFormState {
+  enabled: boolean;
+  interval: RecurringInterval;
+  contractYears: number;
+  startDate: string;
+}
+
 interface FormState {
   title: string;
   description: string;
   budgetCeiling: string;
   deadline: string;
   category: string;
+  recurring: RecurringFormState;
 }
 
 interface Props {
@@ -68,11 +92,32 @@ export function CreateRFPForm({ onClose }: Props) {
     budgetCeiling: '',
     deadline: '',
     category: '',
+    recurring: {
+      enabled: false,
+      interval: 'quarterly',
+      contractYears: 1,
+      startDate: '',
+    },
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [files, setFiles] = useState<AttachedFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const recurringPreview = useMemo(() => {
+    const { enabled, interval, contractYears, startDate } = form.recurring;
+    if (!enabled || !startDate || !form.budgetCeiling) return null;
+    const opt = INTERVAL_OPTIONS.find(o => o.value === interval)!;
+    const totalInstallments = (12 / opt.months) * contractYears;
+    const installmentAmount = Number(form.budgetCeiling) / totalInstallments;
+    const start = new Date(startDate + 'T00:00:00.000Z');
+    const installments: Array<{ date: Date; amount: number }> = [];
+    for (let i = 0; i < totalInstallments; i++) {
+      installments.push({ date: addMonths(start, i * opt.months), amount: installmentAmount });
+    }
+    const endDate = installments[installments.length - 1].date;
+    return { totalInstallments, installmentAmount, installments, endDate };
+  }, [form.recurring, form.budgetCeiling]);
 
   function validate(): boolean {
     const newErrors: Record<string, string> = {};
@@ -94,6 +139,9 @@ export function CreateRFPForm({ onClose }: Props) {
     if (!form.category) {
       newErrors.category = 'Category is required';
     }
+    if (form.recurring.enabled && !form.recurring.startDate) {
+      newErrors.recurringStart = 'Start date is required for recurring contracts';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -103,16 +151,41 @@ export function CreateRFPForm({ onClose }: Props) {
     e.preventDefault();
     if (!validate()) return;
 
+    let recurringSchedule: RecurringSchedule | undefined;
+    if (form.recurring.enabled && recurringPreview) {
+      const { interval, contractYears, startDate } = form.recurring;
+      const opt = INTERVAL_OPTIONS.find(o => o.value === interval)!;
+      const start = new Date(startDate + 'T00:00:00.000Z');
+      const installments: RecurringInstallment[] = recurringPreview.installments.map((inst, i) => ({
+        id: uuidv4(),
+        dueDate: inst.date.toISOString(),
+        amount: inst.amount,
+        status: 'scheduled' as const,
+      }));
+      recurringSchedule = {
+        interval,
+        contractYears,
+        installmentAmount: recurringPreview.installmentAmount,
+        totalInstallments: recurringPreview.totalInstallments,
+        startDate: start.toISOString(),
+        endDate: recurringPreview.endDate.toISOString(),
+        installments,
+      };
+    }
+
     const rfp = {
       id: uuidv4(),
       title: form.title.trim(),
       description: form.description.trim(),
       budgetCeiling: Number(form.budgetCeiling),
-      deadline: new Date(form.deadline).toISOString(),
+      deadline: form.recurring.enabled && recurringSchedule
+        ? recurringSchedule.endDate
+        : new Date(form.deadline).toISOString(),
       category: form.category,
       status: 'Draft' as const,
       createdAt: new Date().toISOString(),
       bids: [],
+      ...(recurringSchedule ? { recurring: recurringSchedule } : {}),
     };
 
     addRFP(rfp);
@@ -121,7 +194,7 @@ export function CreateRFPForm({ onClose }: Props) {
     router.push('/rfp/' + rfp.id);
   }
 
-  function handleChange(field: keyof FormState, value: string) {
+  function handleChange(field: keyof Omit<FormState, 'recurring'>, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors((prev) => {
@@ -129,6 +202,13 @@ export function CreateRFPForm({ onClose }: Props) {
         delete next[field];
         return next;
       });
+    }
+  }
+
+  function handleRecurringChange<K extends keyof RecurringFormState>(field: K, value: RecurringFormState[K]) {
+    setForm(prev => ({ ...prev, recurring: { ...prev.recurring, [field]: value } }));
+    if (errors['recurringStart']) {
+      setErrors(prev => { const n = { ...prev }; delete n.recurringStart; return n; });
     }
   }
 
@@ -198,7 +278,7 @@ export function CreateRFPForm({ onClose }: Props) {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label htmlFor="budgetCeiling" className="block text-sm font-semibold text-slate-700 mb-1">
-            Budget Ceiling ($)
+            {form.recurring.enabled ? 'Total Contract Value ($)' : 'Budget Ceiling ($)'}
           </label>
           <input
             id="budgetCeiling"
@@ -213,19 +293,21 @@ export function CreateRFPForm({ onClose }: Props) {
           {errors.budgetCeiling && <p className="mt-1 text-xs text-red-500">{errors.budgetCeiling}</p>}
         </div>
 
-        <div>
-          <label htmlFor="deadline" className="block text-sm font-semibold text-slate-700 mb-1">
-            Deadline
-          </label>
-          <input
-            id="deadline"
-            type="date"
-            className={inputClass}
-            value={form.deadline}
-            onChange={(e) => handleChange('deadline', e.target.value)}
-          />
-          {errors.deadline && <p className="mt-1 text-xs text-red-500">{errors.deadline}</p>}
-        </div>
+        {!form.recurring.enabled && (
+          <div>
+            <label htmlFor="deadline" className="block text-sm font-semibold text-slate-700 mb-1">
+              Deadline
+            </label>
+            <input
+              id="deadline"
+              type="date"
+              className={inputClass}
+              value={form.deadline}
+              onChange={(e) => handleChange('deadline', e.target.value)}
+            />
+            {errors.deadline && <p className="mt-1 text-xs text-red-500">{errors.deadline}</p>}
+          </div>
+        )}
       </div>
 
       <div>
@@ -246,6 +328,116 @@ export function CreateRFPForm({ onClose }: Props) {
           ))}
         </select>
         {errors.category && <p className="mt-1 text-xs text-red-500">{errors.category}</p>}
+      </div>
+
+      {/* Recurring Contract toggle */}
+      <div className="rounded-xl border border-slate-200 overflow-hidden">
+        <button
+          type="button"
+          onClick={() => handleRecurringChange('enabled', !form.recurring.enabled)}
+          className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors"
+        >
+          <div className="flex items-center gap-2.5">
+            <RefreshCw size={15} className={form.recurring.enabled ? 'text-[#1434CB]' : 'text-slate-400'} />
+            <div className="text-left">
+              <p className="text-sm font-semibold text-slate-700">Recurring Contract</p>
+              <p className="text-xs text-slate-400">Split payments over a fixed schedule</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className={`w-9 h-5 rounded-full transition-colors relative ${form.recurring.enabled ? 'bg-[#1434CB]' : 'bg-slate-200'}`}>
+              <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${form.recurring.enabled ? 'translate-x-4' : 'translate-x-0.5'}`} />
+            </div>
+            <ChevronDown size={14} className={`text-slate-400 transition-transform ${form.recurring.enabled ? 'rotate-180' : ''}`} />
+          </div>
+        </button>
+
+        {form.recurring.enabled && (
+          <div className="border-t border-slate-100 px-4 py-4 space-y-4 bg-slate-50/60">
+            {/* Interval + duration */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5">Payment Interval</label>
+                <select
+                  className={inputClass}
+                  value={form.recurring.interval}
+                  onChange={e => handleRecurringChange('interval', e.target.value as RecurringInterval)}
+                >
+                  {INTERVAL_OPTIONS.map(o => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5">Contract Duration</label>
+                <select
+                  className={inputClass}
+                  value={form.recurring.contractYears}
+                  onChange={e => handleRecurringChange('contractYears', Number(e.target.value))}
+                >
+                  {DURATION_OPTIONS.map(y => (
+                    <option key={y} value={y}>{y} year{y > 1 ? 's' : ''}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Start date */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">Contract Start Date</label>
+              <input
+                type="date"
+                className={inputClass}
+                value={form.recurring.startDate}
+                onChange={e => handleRecurringChange('startDate', e.target.value)}
+              />
+              {errors.recurringStart && <p className="mt-1 text-xs text-red-500">{errors.recurringStart}</p>}
+            </div>
+
+            {/* Budget ceiling label override */}
+            <p className="text-xs text-slate-500 bg-white border border-slate-200 rounded-lg px-3 py-2">
+              The <span className="font-semibold">Budget Ceiling</span> above is the <span className="font-semibold">total contract value</span>.
+              Each installment will be automatically calculated.
+            </p>
+
+            {/* Preview */}
+            {recurringPreview && (
+              <div className="rounded-lg border border-indigo-100 bg-indigo-50/60 p-3 space-y-2">
+                <p className="text-[10px] font-bold text-[#1434CB] uppercase tracking-wider">Schedule Preview</p>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div>
+                    <p className="text-xs font-bold text-slate-800">{recurringPreview.totalInstallments}</p>
+                    <p className="text-[9px] text-slate-400">Installments</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-800">
+                      ${Math.round(recurringPreview.installmentAmount).toLocaleString()}
+                    </p>
+                    <p className="text-[9px] text-slate-400">Per payment</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-800">
+                      {recurringPreview.endDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                    </p>
+                    <p className="text-[9px] text-slate-400">End date</p>
+                  </div>
+                </div>
+                <div className="flex gap-1 flex-wrap pt-1">
+                  {recurringPreview.installments.slice(0, 12).map((inst, i) => (
+                    <div
+                      key={i}
+                      className="w-2 h-2 rounded-full bg-[#1434CB]/20 border border-[#1434CB]/30"
+                      title={inst.date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                    />
+                  ))}
+                  {recurringPreview.totalInstallments > 12 && (
+                    <span className="text-[9px] text-[#1434CB]">+{recurringPreview.totalInstallments - 12}</span>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* File Upload */}

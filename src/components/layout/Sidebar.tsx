@@ -3,11 +3,13 @@
 import Link from 'next/link';
 import {
   LayoutDashboard, CreditCard, Users, FileText,
-  Wallet, Bell, Shield, Receipt, FileCheck, Wifi,
+  Wallet, Bell, Shield, Receipt, FileCheck, Wifi, Terminal,
+  Bot, CheckCircle2, ArrowRight,
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useUI } from '@/context/UIContext';
+import { useSidebarActions, SidebarAction } from '@/context/SidebarActionsContext';
 import {
   itemVariants, backVariants, glowVariants, sharedTransition,
 } from '@/components/ui/glow-menu';
@@ -24,6 +26,7 @@ const NAV_STYLE: Record<string, { gradient: string; iconColor: string }> = {
   '/audit':          { gradient: 'radial-gradient(circle, rgba(251,113,133,0.22) 0%, rgba(225,29,72,0.08) 50%, transparent 100%)',  iconColor: 'text-rose-400'   },
   '/notifications':  { gradient: 'radial-gradient(circle, rgba(56,189,248,0.22) 0%, rgba(14,165,233,0.08) 50%, transparent 100%)',  iconColor: 'text-sky-400'    },
   '/bids':           { gradient: 'radial-gradient(circle, rgba(99,102,241,0.22) 0%, rgba(79,70,229,0.08) 50%, transparent 100%)',   iconColor: 'text-indigo-400' },
+  '/sdk-logs':       { gradient: 'radial-gradient(circle, rgba(20,200,150,0.22) 0%, rgba(16,185,129,0.08) 50%, transparent 100%)',  iconColor: 'text-teal-400'   },
 };
 
 const NAV_ITEMS: Record<string, Array<{ label: string; href: string; icon: React.ComponentType<{ className?: string }> }>> = {
@@ -37,6 +40,7 @@ const NAV_ITEMS: Record<string, Array<{ label: string; href: string; icon: React
     { label: 'Transactions',   href: '/transactions',   icon: Receipt          },
     { label: 'Audit Trail',    href: '/audit',          icon: Shield           },
     { label: 'Notifications',  href: '/notifications',  icon: Bell             },
+    { label: 'SDK Logs',       href: '/sdk-logs',       icon: Terminal         },
   ],
   supplier: [
     { label: 'My Bids',       href: '/bids',          icon: FileText },
@@ -51,8 +55,97 @@ const NAV_ITEMS: Record<string, Array<{ label: string; href: string; icon: React
 
 interface SidebarProps { currentPath: string }
 
+const ACTION_CONFIG: Record<string, {
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  gradient: string; glow: string; border: string;
+}> = {
+  ai:      { icon: Bot,          gradient: 'linear-gradient(135deg,#4f46e5,#7c3aed)', glow: 'rgba(99,102,241,0.55)', border: 'rgba(99,102,241,0.5)'  },
+  award:   { icon: CheckCircle2, gradient: 'linear-gradient(135deg,#059669,#10b981)', glow: 'rgba(16,185,129,0.55)', border: 'rgba(16,185,129,0.5)'  },
+  payment: { icon: CreditCard,   gradient: 'linear-gradient(135deg,#1434CB,#6366f1)', glow: 'rgba(20,52,203,0.55)',  border: 'rgba(99,102,241,0.5)'  },
+};
+
+function ProcurementActions({ actions }: { actions: SidebarAction[] }) {
+  return (
+    <AnimatePresence>
+      {actions.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+          transition={{ duration: 0.35, ease: [0.33, 1, 0.68, 1] }}
+          className="px-3 overflow-hidden"
+        >
+          {/* divider */}
+          <div className="h-px bg-gradient-to-r from-transparent via-slate-600 to-transparent mb-3" />
+
+          <p className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.15em] mb-2 px-1">
+            Procurement Actions
+          </p>
+
+          <div className="space-y-2">
+            {actions.map((action, i) => {
+              const cfg = ACTION_CONFIG[action.variant];
+              const Icon = cfg.icon;
+
+              const inner = (
+                <motion.div
+                  key={action.id}
+                  initial={{ x: -16, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  exit={{ x: -16, opacity: 0 }}
+                  transition={{ delay: i * 0.07, duration: 0.3, ease: [0.33, 1, 0.68, 1] }}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="relative w-full rounded-xl overflow-hidden cursor-pointer"
+                  style={{ border: `1px solid ${cfg.border}` }}
+                >
+                  {/* pulsing glow background */}
+                  <motion.div
+                    className="absolute inset-0"
+                    animate={{ opacity: [0.08, 0.22, 0.08] }}
+                    transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut', delay: i * 0.4 }}
+                    style={{ background: cfg.gradient }}
+                  />
+                  {/* animated border shimmer */}
+                  <motion.div
+                    className="absolute inset-0 rounded-xl"
+                    animate={{ boxShadow: [`0 0 0px ${cfg.glow}`, `0 0 14px ${cfg.glow}`, `0 0 0px ${cfg.glow}`] }}
+                    transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut', delay: i * 0.4 }}
+                  />
+                  <div className="relative z-10 flex items-center gap-2.5 px-3 py-2.5">
+                    <Icon size={13} className="text-white shrink-0" />
+                    <span className="text-[11px] font-semibold text-white flex-1 leading-tight">{action.label}</span>
+                    <ArrowRight size={10} className="text-white/50 shrink-0" />
+                  </div>
+                </motion.div>
+              );
+
+              if (action.href) {
+                return <Link key={action.id} href={action.href}>{inner}</Link>;
+              }
+              return (
+                <button
+                  key={action.id}
+                  onClick={action.onClick}
+                  disabled={action.disabled}
+                  className="w-full text-left disabled:opacity-40"
+                >
+                  {inner}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="h-px bg-gradient-to-r from-transparent via-slate-600 to-transparent mt-3" />
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
 export function Sidebar({ currentPath }: SidebarProps) {
   const { role } = useUI();
+  const { actions } = useSidebarActions();
   const items = NAV_ITEMS[role] || NAV_ITEMS.gov;
 
   return (
@@ -133,6 +226,9 @@ export function Sidebar({ currentPath }: SidebarProps) {
           );
         })}
       </nav>
+
+      {/* ── Procurement action buttons (RFP page only) ── */}
+      <ProcurementActions actions={actions} />
 
       {/* ── Rotating Visa card ─────────────────────────────────────────── */}
       <div className="flex-1 flex items-center justify-center px-4">

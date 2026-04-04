@@ -13,7 +13,7 @@ const STREAM = [
   { icon: ShieldCheck, label: 'Compliance check passed',     sub: 'Supplier 4 · ISO 9001',      color: '#34d399', t: '9s' },
   { icon: Zap,         label: 'Instant settlement',          sub: '$48,500 · 0.3s',             color: '#fbbf24', t: '13s' },
   { icon: ArrowUpRight,label: 'RFP awarded',                 sub: 'PR-2024-0847 → MedEquip',   color: '#f87171', t: '17s' },
-  { icon: Clock,       label: 'Payment authorised',          sub: 'Visa VAA · risk score 94',   color: '#22d3ee', t: '22s' },
+  { icon: Clock,       label: 'Payment authorised',          sub: 'Visa VSMS · risk score 94',  color: '#22d3ee', t: '22s' },
 ];
 
 export default function NotificationsPage() {
@@ -124,7 +124,7 @@ export default function NotificationsPage() {
         <div className="mt-2 h-1.5 rounded-full bg-white/10 overflow-hidden">
           <div className="h-full rounded-full" style={{ width: '94%', background: 'linear-gradient(90deg,#6366f1,#a78bfa)' }} />
         </div>
-        <p className="text-violet-400/70 text-[8px] font-mono mt-1.5">Visa VAA verified · MedEquip Co.</p>
+        <p className="text-violet-400/70 text-[8px] font-mono mt-1.5">Visa VSMS verified · MedEquip Co.</p>
       </motion.div>
 
       {/* ── Settlement node – bottom right ── */}

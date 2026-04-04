@@ -69,7 +69,7 @@ export function ExplainabilityPanel({ narrative, isOverride }: ExplainabilityPan
             {isOverride ? 'Visa AI Override Warning' : 'Visa AI Analysis'}
           </span>
           <span className="ml-2 text-[9px] font-mono text-white/30">
-            {isOverride ? '· manual override detected' : '· VAA-powered evaluation'}
+            {isOverride ? '· manual override detected' : '· VSMS-powered evaluation'}
           </span>
         </div>
         <AnimatePresence mode="wait">
@@ -157,7 +157,7 @@ export function ExplainabilityPanel({ narrative, isOverride }: ExplainabilityPan
                 <div>
                   <p className="text-white text-xs font-bold leading-tight">Best Value: {winner}</p>
                   <p className="text-[#7fb3ff]/60 text-[9px] font-mono mt-0.5">
-                    AI-recommended · Visa VAA verified
+                    AI-recommended · Visa VSMS verified
                   </p>
                 </div>
               </div>

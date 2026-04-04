@@ -12,7 +12,7 @@ const COLS: { key: keyof DimensionScores; label: string; visa?: boolean }[] = [
   { key: 'reliability', label: 'Reliability' },
   { key: 'compliance',  label: 'Compliance' },
   { key: 'risk',        label: 'Risk' },
-  { key: 'vaa',         label: 'VAA Score', visa: true },
+  { key: 'vsms',        label: 'VSMS Score', visa: true },
 ];
 
 export function DimensionScoreGrid({ dimensions }: DimensionScoreGridProps) {

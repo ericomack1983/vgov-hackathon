@@ -13,6 +13,8 @@ import { StatCard } from '@/components/dashboard/StatCard';
 import { DonutChart } from '@/components/dashboard/DonutChart';
 import { AreaChart } from '@/components/dashboard/AreaChart';
 import { RecentTransactions } from '@/components/dashboard/RecentTransactions';
+import { BudgetTracker } from '@/components/dashboard/BudgetTracker';
+import { RecurringContracts } from '@/components/dashboard/RecurringContracts';
 import { computeDonutSegments } from '@/lib/chart-utils';
 
 const TABS = ['Overview', 'Analytics', 'Reports'] as const;
@@ -202,10 +204,12 @@ export default function DashboardPage() {
                 />
               </div>
 
-              {/* recent transactions preview */}
-              <div className="mt-2">
-                <RecentTransactions transactions={transactions} limit={4} />
-              </div>
+              {/* budget tracker */}
+              <BudgetTracker transactions={transactions} annualBudget={USD_BUDGET + USDC_BUDGET} />
+
+              {/* recurring contracts */}
+              <RecurringContracts rfps={rfps} />
+
             </div>
           )}
 

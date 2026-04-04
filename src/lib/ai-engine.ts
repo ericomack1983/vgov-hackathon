@@ -6,7 +6,7 @@ export const WEIGHTS = {
   reliability: 0.20,
   compliance:  0.15,
   risk:        0.10,
-  vaa:         0.10, // Visa Advanced Authorization Score
+  vsms:        0.10, // Visa Supplier Matching Service Score
 } as const;
 
 function computeDimensions(bid: Bid, supplier: Supplier, rfp: RFP): DimensionScores {
@@ -17,9 +17,9 @@ function computeDimensions(bid: Bid, supplier: Supplier, rfp: RFP): DimensionSco
     (supplier.complianceStatus === 'Compliant' ? 60 : supplier.complianceStatus === 'Pending Review' ? 30 : 0) +
     Math.min(40, supplier.certifications.length * 10);
   const risk = Math.max(0, 100 - supplier.riskScore);
-  const vaa  = supplier.vaaScore ?? 50; // default 50 if not fetched
+  const vsms = supplier.vsmsScore ?? 50; // default 50 if not fetched
 
-  return { price, delivery, reliability, compliance, risk, vaa };
+  return { price, delivery, reliability, compliance, risk, vsms };
 }
 
 function computeComposite(dimensions: DimensionScores): number {
@@ -29,7 +29,7 @@ function computeComposite(dimensions: DimensionScores): number {
     dimensions.reliability * WEIGHTS.reliability +
     dimensions.compliance  * WEIGHTS.compliance +
     dimensions.risk        * WEIGHTS.risk +
-    dimensions.vaa         * WEIGHTS.vaa
+    dimensions.vsms        * WEIGHTS.vsms
   );
 }
 
@@ -51,7 +51,7 @@ export function scoreBids(bids: Bid[], suppliers: Supplier[], rfp: RFP): ScoredB
 }
 
 export function generateOverrideNarrative(selected: ScoredBid, best: ScoredBid): string {
-  const dims = ['price', 'delivery', 'reliability', 'compliance', 'risk', 'vaa'] as (keyof DimensionScores)[];
+  const dims = ['price', 'delivery', 'reliability', 'compliance', 'risk', 'vsms'] as (keyof DimensionScores)[];
   const gap = best.composite - selected.composite;
 
   // Find the dimension where selected is furthest behind best
@@ -70,30 +70,30 @@ export function generateOverrideNarrative(selected: ScoredBid, best: ScoredBid):
     if (diff > edgeGap) { edgeGap = diff; edgeDim = d; }
   }
 
-  const vaaLine = best.dimensions.vaa > selected.dimensions.vaa
-    ? ` Visa VAA score confirms ${best.supplier.name} carries lower payment risk (${best.dimensions.vaa} vs ${selected.dimensions.vaa.toFixed(0)}).`
+  const vsmsLine = best.dimensions.vsms > selected.dimensions.vsms
+    ? ` Visa Supplier Matching Service score confirms ${best.supplier.name} carries lower payment risk (${best.dimensions.vsms} vs ${selected.dimensions.vsms.toFixed(0)}).`
     : '';
 
   const edgeLine = edgeDim && edgeGap > 2
     ? ` Note: ${selected.supplier.name} does edge ahead on ${edgeDim} (+${edgeGap.toFixed(0)} pts), but this dimension carries less weight in the composite model.`
     : '';
 
-  return `⚠ Manual override detected. You selected ${selected.supplier.name} (rank #${selected.rank}, ${selected.composite}/100), bypassing the AI recommendation.\n\n${best.supplier.name} scores ${gap} points higher at ${best.composite}/100. The largest gap is in ${weakDim}: ${best.supplier.name} scores ${best.dimensions[weakDim].toFixed(0)} vs ${selected.dimensions[weakDim].toFixed(0)} for ${selected.supplier.name}.${vaaLine}${edgeLine}\n\nThis override will be logged for audit and compliance review.`;
+  return `⚠ Manual override detected. You selected ${selected.supplier.name} (rank #${selected.rank}, ${selected.composite}/100), bypassing the AI recommendation.\n\n${best.supplier.name} scores ${gap} points higher at ${best.composite}/100. The largest gap is in ${weakDim}: ${best.supplier.name} scores ${best.dimensions[weakDim].toFixed(0)} vs ${selected.dimensions[weakDim].toFixed(0)} for ${selected.supplier.name}.${vsmsLine}${edgeLine}\n\nThis override will be logged for audit and compliance review.`;
 }
 
 export function generateNarrative(ranked: ScoredBid[]): string {
   if (ranked.length === 0) return 'No bids to evaluate.';
   if (ranked.length === 1) {
     const w = ranked[0];
-    return `${w.supplier.name} is the sole bidder with a composite score of ${w.composite}/100 and a VAA Score of ${w.dimensions.vaa}.`;
+    return `${w.supplier.name} is the sole bidder with a composite score of ${w.composite}/100 and a Visa Supplier Matching Service Score of ${w.dimensions.vsms}.`;
   }
   const winner   = ranked[0];
   const runnerUp = ranked[1];
-  const dims     = ['price','delivery','reliability','compliance','risk','vaa'] as (keyof DimensionScores)[];
+  const dims     = ['price','delivery','reliability','compliance','risk','vsms'] as (keyof DimensionScores)[];
   let topDim = dims[0], topVal = winner.dimensions[dims[0]];
   for (const d of dims) if (winner.dimensions[d] > topVal) { topDim = d; topVal = winner.dimensions[d]; }
   let weakDim = dims[0], weakVal = runnerUp.dimensions[dims[0]];
   for (const d of dims) if (runnerUp.dimensions[d] < weakVal) { weakDim = d; weakVal = runnerUp.dimensions[d]; }
   const gap = winner.composite - runnerUp.composite;
-  return `${winner.supplier.name} leads with a composite score of ${winner.composite}/100 and a Visa Advanced Authorization (VAA) Score of ${winner.dimensions.vaa}, reflecting high payment reliability. Their strongest dimension is ${topDim} (${topVal.toFixed(0)}/100). ${runnerUp.supplier.name} scored ${gap} points lower, primarily due to weak ${weakDim} (${weakVal.toFixed(0)}/100).`;
+  return `${winner.supplier.name} leads with a composite score of ${winner.composite}/100 and a Visa Supplier Matching Service (VSMS) Score of ${winner.dimensions.vsms}, reflecting high payment reliability. Their strongest dimension is ${topDim} (${topVal.toFixed(0)}/100). ${runnerUp.supplier.name} scored ${gap} points lower, primarily due to weak ${weakDim} (${weakVal.toFixed(0)}/100).`;
 }

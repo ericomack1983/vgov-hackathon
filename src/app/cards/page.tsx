@@ -5,6 +5,23 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, Loader2, Wifi, ChevronDown, ShieldCheck, ToggleLeft, ToggleRight, CreditCard } from 'lucide-react';
 import { useProcurement } from '@/context/ProcurementContext';
 import { v4 as uuidv4 } from 'uuid';
+import {
+  vcnService,
+  vpaService,
+  vpcService,
+  buildSPVRule,
+  buildBlockRule,
+  buildAmountRule,
+} from '@/lib/visa-sdk';
+
+interface SDKIssuancePayload {
+  holderName: string;
+  purpose: string;
+  spendLimit: string;
+  mccCode: string;
+  allowOnline: boolean;
+  expiryDate: string;
+}
 
 type Brand = 'Visa' | 'Mastercard' | 'Amex';
 type CardType = 'credit' | 'debit';
@@ -353,12 +370,93 @@ const STEP_BADGE: Record<IssueStep, { tag: string; color: string; bg: string; bo
 
 
 // ── Issuance overlay — dark terminal style ───────────────────────────────────
-function IssuanceOverlay({ brand, onDone }: { brand: Brand; onDone: (last4: string) => void }) {
+function IssuanceOverlay({ brand, onDone, sdkPayload }: {
+  brand: Brand;
+  onDone: (last4: string) => void;
+  sdkPayload: SDKIssuancePayload;
+}) {
   const [completedSteps, setCompletedSteps] = useState<IssueStep[]>([]);
   const [currentIdx, setCurrentIdx]         = useState(0);
   const [done, setDone]                     = useState(false);
-  const [last4]                             = useState(randomLast4);
+  const [displayLast4, setDisplayLast4]     = useState('••••');
+  const sdkLast4Ref                         = useRef<string | null>(null);
+  const sdkFiredRef                         = useRef(false);
   const expiry = `${String(new Date().getMonth() + 1).padStart(2, '0')}/${String(new Date().getFullYear() + 3).slice(-2)}`;
+
+  // Fire real SDK calls concurrently with the animation (sandbox resolves instantly)
+  useEffect(() => {
+    if (sdkFiredRef.current) return;
+    sdkFiredRef.current = true;
+
+    const today = new Date();
+    const startDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`;
+    const endDate = sdkPayload.expiryDate
+      ? sdkPayload.expiryDate
+      : `${today.getFullYear() + 1}-${String(today.getMonth() + 1).padStart(2, '0')}-01`;
+    const spendLimitAmount = sdkPayload.spendLimit ? parseFloat(sdkPayload.spendLimit) : 50_000;
+    const rules = [
+      buildSPVRule({ spendLimitAmount, maxAuth: 10, currencyCode: '840', rangeType: 'monthly' }),
+      buildAmountRule('PUR', spendLimitAmount, '840'),
+      buildBlockRule('ATM'),
+      ...(!sdkPayload.allowOnline ? [buildBlockRule('ECOM')] : []),
+    ];
+
+    (async () => {
+      try {
+        const clientId = 'B2BWS_1_1_9999';
+
+        // 0 — VPA: onboard buyer → funding account → proxy pool → supplier
+        const buyer = await vpaService.Buyer.createBuyer({
+          clientId,
+          buyerName: sdkPayload.holderName || 'Gov Procurement Agency',
+          currencyCode: '840',
+        });
+        await vpaService.FundingAccount.addFundingAccount({
+          clientId,
+          buyerId: buyer.buyerId,
+          accountNumber: '4111111111111111',
+        });
+        const pool = await vpaService.ProxyPool.createProxyPool({
+          clientId,
+          proxyPoolId: `POOL-${buyer.buyerId}`,
+          size: 50,
+        });
+        await vpaService.Supplier.createSupplier({
+          clientId,
+          supplierName: 'Procurement Supplier',
+          accountNumber: '4111111111110000',
+        });
+
+        // 1 — VCN: issue the virtual card
+        const vcnResp = await vcnService.requestVirtualCard({
+          clientId,
+          buyerId: buyer.buyerId,
+          messageId: Date.now().toString(),
+          action: 'A',
+          numberOfCards: '1',
+          proxyPoolId: pool.proxyPoolId,
+          requisitionDetails: { startDate, endDate, timeZone: 'UTC-5', rules },
+        });
+        const card = vcnResp.accounts[0];
+        const resolvedLast4 = card.accountNumber.slice(-4);
+        sdkLast4Ref.current = resolvedLast4;
+        setDisplayLast4(resolvedLast4);
+
+        // 2 — VPC: enrol the card
+        const vpcAcct = await vpcService.AccountManagement.createAccount({
+          accountNumber: card.accountNumber,
+          contacts: [{ name: sdkPayload.holderName, email: 'proc@agency.gov', notifyOn: ['transaction_declined', 'account_blocked'] }],
+        });
+
+        // 3 — IPC: translate purpose/MCC into rules and apply
+        const prompt = sdkPayload.purpose || (sdkPayload.mccCode ? `MCC ${sdkPayload.mccCode}` : 'government procurement');
+        const { suggestions } = await vpcService.IPC.getSuggestedRules({ prompt, currencyCode: '840' });
+        await vpcService.IPC.setSuggestedRules(suggestions[0].ruleSetId, vpcAcct.accountId);
+      } catch {
+        // Non-blocking — SDK failure falls back to random last4
+      }
+    })();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     let timeout: ReturnType<typeof setTimeout>;
@@ -369,7 +467,8 @@ function IssuanceOverlay({ brand, onDone }: { brand: Brand; onDone: (last4: stri
         setCompletedSteps((p) => [...p, step.key]);
         setCurrentIdx(idx);
         setTimeout(() => setDone(true), 500);
-        setTimeout(() => onDone(last4), 2200);
+        // Use real SDK last4 if available, else fall back to random
+        setTimeout(() => onDone(sdkLast4Ref.current ?? randomLast4()), 2200);
         return;
       }
       timeout = setTimeout(() => {
@@ -515,7 +614,7 @@ function IssuanceOverlay({ brand, onDone }: { brand: Brand; onDone: (last4: stri
                       <p className="text-white text-[10px] font-bold tracking-wide uppercase">VCN HOLDER</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-white/80 font-mono text-[11px] tracking-[0.15em]">•••• {last4}</p>
+                      <p className="text-white/80 font-mono text-[11px] tracking-[0.15em]">•••• {displayLast4}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-[7px] text-white/40 uppercase tracking-widest mb-0.5">Expires</p>
@@ -549,6 +648,278 @@ function IssuanceOverlay({ brand, onDone }: { brand: Brand; onDone: (last4: stri
   );
 }
 
+// ── IPC Panel ────────────────────────────────────────────────────────────────
+const ANALYZE_STEPS = [
+  'Parsing intent parameters…',
+  'Resolving MCC constraints…',
+  'Evaluating risk policy engine…',
+  'Generating VPCRule[]…',
+];
+
+function buildRules(
+  mccCode: string, spendLimit: string,
+  allowOnline: boolean, allowIntl: boolean, allowRecurring: boolean,
+  usageType: UsageType,
+) {
+  const mccLabel = MCC_CATEGORIES.find(m => m.code === mccCode)?.label;
+  const rules: { tag: string; label: string; color: string; bg: string }[] = [];
+  if (spendLimit) rules.push({ tag: 'SPV',   label: `Spend cap $${Number(spendLimit).toLocaleString()} · monthly`,  color: '#60a5fa', bg: 'rgba(96,165,250,0.12)'  });
+  if (mccCode)    rules.push({ tag: 'MCC',   label: `${mccCode} — ${mccLabel}`,                                      color: '#a78bfa', bg: 'rgba(167,139,250,0.12)' });
+  rules.push(      { tag: 'BLOCK', label: 'ATM withdrawals blocked',                                                 color: '#f87171', bg: 'rgba(248,113,113,0.12)' });
+  rules.push(      { tag: 'ECOM',  label: allowOnline ? 'Online payments allowed' : 'ECOM channel blocked',          color: allowOnline ? '#34d399' : '#f87171', bg: allowOnline ? 'rgba(52,211,153,0.12)' : 'rgba(248,113,113,0.12)' });
+  rules.push(      { tag: 'GEO',   label: allowIntl   ? 'International enabled'   : 'Domestic-only geo fence',       color: allowIntl   ? '#34d399' : '#fbbf24', bg: allowIntl   ? 'rgba(52,211,153,0.12)' : 'rgba(251,191,36,0.12)'  });
+  if (usageType === 'multi-use') rules.push({ tag: 'RECUR', label: allowRecurring ? 'Recurring charges on' : 'Recurring blocked', color: allowRecurring ? '#34d399' : '#f87171', bg: allowRecurring ? 'rgba(52,211,153,0.12)' : 'rgba(248,113,113,0.12)' });
+  return rules;
+}
+
+function buildRationale(purpose: string, mccCode: string, spendLimit: string, allowOnline: boolean, allowIntl: boolean, usageType: UsageType) {
+  const mccLabel = MCC_CATEGORIES.find(m => m.code === mccCode)?.label;
+  const parts: string[] = [];
+  if (purpose)    parts.push(`intent "${purpose.slice(0, 44)}${purpose.length > 44 ? '…' : ''}"`);
+  if (mccLabel)   parts.push(`MCC restriction to ${mccLabel}`);
+  if (spendLimit) parts.push(`spend cap of $${Number(spendLimit).toLocaleString()}`);
+  if (!allowOnline) parts.push('ECOM channel blocked');
+  if (!allowIntl)   parts.push('domestic-only geo fence applied');
+  const summary = parts.length ? `Translated ${parts.join(', ')}. ` : '';
+  return `${summary}ATM access blocked by default for security. ${usageType === 'single-use' ? 'Single-use' : 'Multi-use'} VPCRule[] is ready to apply — awaiting card issuance.`;
+}
+
+function IPCPanel({ purpose, mccCode, spendLimit, allowOnline, allowIntl, allowRecurring, usageType }: {
+  purpose: string; mccCode: string; spendLimit: string;
+  allowOnline: boolean; allowIntl: boolean; allowRecurring: boolean;
+  usageType: UsageType;
+}) {
+  const [phase, setPhase]                     = useState<'idle' | 'analyzing' | 'done'>('idle');
+  const [analyzeStep, setAnalyzeStep]         = useState(0);
+  const [displayedRationale, setDisplayedRationale] = useState('');
+  const debounceRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const typeRef      = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const stepRef      = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const hasInput = !!(purpose || mccCode || spendLimit);
+  const rules      = buildRules(mccCode, spendLimit, allowOnline, allowIntl, allowRecurring, usageType);
+  const rationale  = buildRationale(purpose, mccCode, spendLimit, allowOnline, allowIntl, usageType);
+  const confidence = Math.min(95, 70 + (purpose ? 8 : 0) + (mccCode ? 8 : 0) + (spendLimit ? 5 : 0) + (!allowIntl ? 2 : 0) + (!allowOnline ? 2 : 0));
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (typeRef.current)     clearTimeout(typeRef.current);
+    if (stepRef.current)     clearInterval(stepRef.current);
+
+    if (!hasInput) { setPhase('idle'); return; }
+
+    setPhase('analyzing');
+    setAnalyzeStep(0);
+    setDisplayedRationale('');
+
+    let step = 0;
+    stepRef.current = setInterval(() => {
+      step = Math.min(step + 1, ANALYZE_STEPS.length - 1);
+      setAnalyzeStep(step);
+    }, 280);
+
+    debounceRef.current = setTimeout(() => {
+      if (stepRef.current) clearInterval(stepRef.current);
+      setPhase('done');
+      // typewriter
+      let i = 0;
+      const tick = () => {
+        if (i >= rationale.length) return;
+        i++;
+        setDisplayedRationale(rationale.slice(0, i));
+        typeRef.current = setTimeout(tick, 14);
+      };
+      tick();
+    }, 1350);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      if (typeRef.current)     clearTimeout(typeRef.current);
+      if (stepRef.current)     clearInterval(stepRef.current);
+    };
+  }, [purpose, mccCode, spendLimit, allowOnline, allowIntl, allowRecurring, hasInput, rationale]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: 0.2 }}
+      className="w-full rounded-2xl overflow-hidden"
+      style={{
+        background: 'linear-gradient(160deg, #07102e 0%, #0d1b3e 65%, #0a1628 100%)',
+        boxShadow: '0 0 0 1px rgba(99,130,255,0.15), 0 8px 24px rgba(0,0,0,0.28)',
+      }}
+    >
+      {/* Header */}
+      <div className="flex items-center gap-2.5 px-4 py-3 border-b border-white/6">
+        <div className="w-6 h-6 rounded-md flex items-center justify-center shrink-0"
+          style={{ background: 'linear-gradient(135deg,#1434CB,#6366f1)' }}>
+          <svg viewBox="0 0 16 16" className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M2 8h3l2-5 2 10 2-5h3" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-white text-xs font-semibold leading-tight">Intelligent Payment Controls</p>
+          <p className="text-white/25 text-[9px] font-mono mt-0.5">ai.visa.com/ipc/v1/translate-intent</p>
+        </div>
+        <AnimatePresence mode="wait">
+          {phase === 'idle' && (
+            <motion.span key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="text-[9px] font-bold font-mono text-white/25 uppercase tracking-widest">
+              Standby
+            </motion.span>
+          )}
+          {phase === 'analyzing' && (
+            <motion.span key="analyzing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="flex items-center gap-1.5 text-[9px] font-bold text-[#60a5fa] font-mono uppercase tracking-widest">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#60a5fa] animate-pulse" />
+              Analyzing
+            </motion.span>
+          )}
+          {phase === 'done' && (
+            <motion.span key="done" initial={{ opacity: 0, x: 4 }} animate={{ opacity: 1, x: 0 }}
+              className="flex items-center gap-1.5 text-[9px] font-bold text-emerald-400 font-mono uppercase tracking-widest">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              Ready
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </div>
+
+      <div className="px-4 py-3 space-y-3">
+        {/* Idle state */}
+        {phase === 'idle' && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-2 space-y-2">
+            <p className="text-white/35 text-[11px] font-mono">
+              <span className="text-white/20 mr-1.5">›</span>
+              IPC ready — awaiting parameters
+            </p>
+            <p className="text-white/20 text-[10px] leading-relaxed pl-4">
+              Fill in a purpose or configure controls.<br />
+              IPC will translate your intent into VPCRule[].
+            </p>
+            {/* Subtle pulse dots */}
+            <div className="flex items-center gap-1.5 pl-4 pt-1">
+              {[0, 1, 2].map(i => (
+                <motion.span
+                  key={i}
+                  className="w-1 h-1 rounded-full bg-[#1434CB]/40"
+                  animate={{ opacity: [0.3, 1, 0.3] }}
+                  transition={{ duration: 1.4, repeat: Infinity, delay: i * 0.25 }}
+                />
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Analyzing state */}
+        {phase === 'analyzing' && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-1.5 py-1">
+            {ANALYZE_STEPS.slice(0, analyzeStep + 1).map((label, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.2 }}
+                className="flex items-center gap-2 font-mono"
+              >
+                <span className="text-white/20 text-[10px]">›</span>
+                <span className="text-[10px]" style={{ color: i === analyzeStep ? 'rgba(200,215,255,0.85)' : 'rgba(148,180,255,0.4)' }}>
+                  {label}
+                </span>
+                {i === analyzeStep && (
+                  <motion.span
+                    animate={{ opacity: [1, 0] }}
+                    transition={{ duration: 0.5, repeat: Infinity }}
+                    className="inline-block w-[2px] h-[10px] bg-[#60a5fa] shrink-0"
+                  />
+                )}
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
+
+        {/* Done state — rules + confidence + rationale */}
+        {phase === 'done' && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }} className="space-y-2.5">
+            {/* Rule list */}
+            <div className="space-y-1">
+              {rules.map((rule, i) => (
+                <motion.div
+                  key={rule.tag + i}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.2, delay: i * 0.05 }}
+                  className="flex items-center gap-2 font-mono"
+                >
+                  <span className="text-white/20 text-[10px] shrink-0">›</span>
+                  <span
+                    className="text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0"
+                    style={{ color: rule.color, background: rule.bg, border: `1px solid ${rule.color}40` }}
+                  >
+                    {rule.tag}
+                  </span>
+                  <span className="text-[10px] text-[#94b4ff]/70 truncate">{rule.label}</span>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Confidence bar */}
+            <div className="pt-1">
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-[9px] font-semibold text-white/30 uppercase tracking-wider font-mono">Confidence</span>
+                <motion.span
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  className="text-xs font-bold font-mono"
+                  style={{ color: confidence >= 88 ? '#34d399' : confidence >= 75 ? '#fbbf24' : '#f87171' }}
+                >
+                  {confidence}%
+                </motion.span>
+              </div>
+              <div className="h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
+                <motion.div
+                  className="h-full rounded-full"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${confidence}%` }}
+                  transition={{ duration: 0.8, ease: 'easeOut', delay: 0.2 }}
+                  style={{ background: confidence >= 88 ? 'linear-gradient(to right,#10b981,#34d399)' : 'linear-gradient(to right,#f59e0b,#fbbf24)' }}
+                />
+              </div>
+            </div>
+
+            {/* Rationale */}
+            {displayedRationale && (
+              <div className="border-t border-white/6 pt-2.5">
+                <p className="text-[9px] font-semibold text-white/25 uppercase tracking-wider font-mono mb-1.5">
+                  AI Rationale
+                </p>
+                <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(148,180,255,0.6)' }}>
+                  {displayedRationale}
+                  <motion.span
+                    animate={{ opacity: [1, 0] }}
+                    transition={{ duration: 0.5, repeat: Infinity }}
+                    className="inline-block w-[2px] h-[9px] bg-[#60a5fa]/60 ml-0.5 align-middle"
+                  />
+                </p>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="px-4 pb-3 flex items-center gap-1.5">
+        <svg viewBox="0 0 72 24" className="h-2.5 w-auto opacity-20">
+          <path fill="white" d="M27.5 1.2l-4.7 21.6h-5L22.4 1.2h5.1zm19.4 14l2.6-7.2 1.5 7.2h-4.1zm5.6 7.6h4.6L53 1.2h-4.2c-.9 0-1.7.5-2.1 1.3L39.3 22.8h5l1-2.7h6.1l.6 2.7zm-12.5-7c0-4.9-6.8-5.2-6.7-7.4 0-.7.6-1.4 2-1.5 1.3-.1 2.7.1 3.9.7l.7-3.3C38.7 3.8 37.2 3.5 35.7 3.5c-4.7 0-8 2.5-8 6 0 2.6 2.3 4.1 4.1 4.9 1.8.9 2.4 1.5 2.4 2.3 0 1.2-1.4 1.8-2.8 1.8-2.3 0-3.6-.6-4.7-1.1l-.8 3.5c1.1.5 3 .9 5.1.9 4.8 0 8-2.4 8-6.1zm-17.2-14.6L16.4 22.8h-5.1L8.4 4.9C8.2 4 7.7 3.2 6.8 2.8 5.3 2.1 3.5 1.6 1.9 1.3L2 1.2h8.1c1.1 0 2 .7 2.3 1.8l2.1 11.1 5.3-12.9h5.1z"/>
+        </svg>
+        <span className="text-[8px] text-white/15 font-mono">IPC · Intent → VPCRule[] · Gen-AI model</span>
+      </div>
+    </motion.div>
+  );
+}
+
 export default function CardsPage() {
   const { suppliers, addCardToSupplier } = useProcurement();
 
@@ -566,8 +937,9 @@ export default function CardsPage() {
   const [allowIntl, setAllowIntl]           = useState(false);
   const [allowRecurring, setAllowRecurring] = useState(false);
 
-  const [isRequesting, setIsRequesting] = useState(false);
-  const [issuedCard, setIssuedCard]     = useState<IssuedCard | null>(null);
+  const [isRequesting, setIsRequesting]       = useState(false);
+  const [issuedCard, setIssuedCard]           = useState<IssuedCard | null>(null);
+  const [sdkIssuancePayload, setSdkIssuancePayload] = useState<SDKIssuancePayload | null>(null);
 
   const inputClass = 'w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1434CB] focus:border-[#1434CB] bg-white text-slate-800 placeholder:text-slate-400 transition';
 
@@ -579,6 +951,7 @@ export default function CardsPage() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!holderName.trim() || !supplierId) return;
+    setSdkIssuancePayload({ holderName: holderName.trim(), purpose, spendLimit, mccCode, allowOnline, expiryDate });
     setIsRequesting(true);
   }
 
@@ -640,8 +1013,8 @@ export default function CardsPage() {
   return (
     <>
       <AnimatePresence>
-        {isRequesting && (
-          <IssuanceOverlay brand={brand} onDone={handleIssuanceDone} />
+        {isRequesting && sdkIssuancePayload && (
+          <IssuanceOverlay brand={brand} onDone={handleIssuanceDone} sdkPayload={sdkIssuancePayload} />
         )}
       </AnimatePresence>
 
@@ -752,6 +1125,19 @@ export default function CardsPage() {
                 </motion.div>
               )}
             </AnimatePresence>
+
+            {/* IPC panel — visible only before issuance */}
+            {!issuedCard && (
+              <IPCPanel
+                purpose={purpose}
+                mccCode={mccCode}
+                spendLimit={spendLimit}
+                allowOnline={allowOnline}
+                allowIntl={allowIntl}
+                allowRecurring={allowRecurring}
+                usageType={usageType}
+              />
+            )}
           </div>
 
           {/* Right — Form */}
@@ -761,14 +1147,14 @@ export default function CardsPage() {
               initial={{ opacity: 0, x: 12 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.3, delay: 0.1 }}
-              className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-5"
+              className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4"
             >
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Card Details</p>
-
-              {/* Usage type */}
+              {/* ── Section: Card Identity ── */}
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">VCN Usage Type</label>
-                <div className="grid grid-cols-2 gap-2">
+                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-3">Card Identity</p>
+
+                {/* Usage type — full width */}
+                <div className="grid grid-cols-2 gap-2 mb-3">
                   {([
                     { value: 'single-use', label: 'Single-Use',  sub: 'One transaction only' },
                     { value: 'multi-use',  label: 'Multi-Use',   sub: 'Limited period / amount' },
@@ -777,7 +1163,7 @@ export default function CardsPage() {
                       key={opt.value}
                       type="button"
                       onClick={() => setUsageType(opt.value)}
-                      className={`py-2.5 px-3 rounded-xl text-left border transition-all ${
+                      className={`py-2 px-3 rounded-xl text-left border transition-all ${
                         usageType === opt.value
                           ? 'bg-[#1434CB] text-white border-transparent shadow'
                           : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-slate-300'
@@ -788,98 +1174,95 @@ export default function CardsPage() {
                     </button>
                   ))}
                 </div>
-              </div>
 
-              {/* Holder name */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Card Holder Name</label>
-                <input
-                  type="text"
-                  className={inputClass}
-                  placeholder="e.g. John Harrington"
-                  value={holderName}
-                  onChange={(e) => setHolderName(e.target.value)}
-                  required
-                />
-              </div>
-
-              {/* Brand */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Network</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {(['Visa', 'Mastercard', 'Amex'] as Brand[]).map((b) => {
-                    const disabled = b !== 'Visa';
-                    return (
-                      <button
-                        key={b}
-                        type="button"
-                        disabled={disabled}
-                        onClick={() => !disabled && setBrand(b)}
-                        title={disabled ? 'Not available in this system' : undefined}
-                        className={`relative py-2 rounded-xl text-xs font-bold border transition-all ${
-                          brand === b
-                            ? `bg-gradient-to-br ${BRAND_BG[b]} text-white border-transparent shadow`
-                            : disabled
-                            ? 'bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed'
-                            : 'bg-slate-50 text-slate-500 border-slate-200 hover:border-slate-300'
-                        }`}
+                {/* Holder name + Supplier — 2 col */}
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1.5">Card Holder Name</label>
+                    <input
+                      type="text"
+                      className={inputClass}
+                      placeholder="John Harrington"
+                      value={holderName}
+                      onChange={(e) => setHolderName(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1.5">Assign to Supplier</label>
+                    <div className="relative">
+                      <select
+                        className={inputClass + ' appearance-none pr-8'}
+                        value={supplierId}
+                        onChange={(e) => setSupplierId(e.target.value)}
+                        required
                       >
-                        {BRAND_LABEL[b]}
-                        {disabled && (
-                          <span className="absolute -top-1.5 -right-1.5 text-[8px] font-bold bg-slate-200 text-slate-400 rounded-full px-1 py-0.5 leading-none">
-                            N/A
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
+                        <option value="">Select supplier…</option>
+                        {suppliers.map((s) => (
+                          <option key={s.id} value={s.id}>{s.name}</option>
+                        ))}
+                      </select>
+                      <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Network + Card Type — 2 col */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1.5">Network</label>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {(['Visa', 'Mastercard', 'Amex'] as Brand[]).map((b) => {
+                        const disabled = b !== 'Visa';
+                        return (
+                          <button
+                            key={b}
+                            type="button"
+                            disabled={disabled}
+                            onClick={() => !disabled && setBrand(b)}
+                            title={disabled ? 'Not available in this system' : undefined}
+                            className={`relative py-2 rounded-lg text-xs font-bold border transition-all ${
+                              brand === b
+                                ? `bg-gradient-to-br ${BRAND_BG[b]} text-white border-transparent shadow`
+                                : disabled
+                                ? 'bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed'
+                                : 'bg-slate-50 text-slate-500 border-slate-200 hover:border-slate-300'
+                            }`}
+                          >
+                            {BRAND_LABEL[b]}
+                            {disabled && (
+                              <span className="absolute -top-1.5 -right-1.5 text-[7px] font-bold bg-slate-200 text-slate-400 rounded-full px-1 py-0.5 leading-none">N/A</span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1.5">Card Type</label>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {(['credit', 'debit'] as CardType[]).map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => setCardType(t)}
+                          className={`py-2 rounded-lg text-xs font-semibold border capitalize transition-all ${
+                            cardType === t
+                              ? 'bg-[#1434CB] text-white border-transparent shadow'
+                              : 'bg-slate-50 text-slate-500 border-slate-200 hover:border-slate-300'
+                          }`}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Card type */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Card Type</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {(['credit', 'debit'] as CardType[]).map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => setCardType(t)}
-                      className={`py-2 rounded-xl text-xs font-semibold border capitalize transition-all ${
-                        cardType === t
-                          ? 'bg-[#1434CB] text-white border-transparent shadow'
-                          : 'bg-slate-50 text-slate-500 border-slate-200 hover:border-slate-300'
-                      }`}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Supplier */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Assign to Supplier</label>
-                <div className="relative">
-                  <select
-                    className={inputClass + ' appearance-none pr-8'}
-                    value={supplierId}
-                    onChange={(e) => setSupplierId(e.target.value)}
-                    required
-                  >
-                    <option value="">Select supplier…</option>
-                    {suppliers.map((s) => (
-                      <option key={s.id} value={s.id}>{s.name}</option>
-                    ))}
-                  </select>
-                  <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                </div>
-                <p className="text-[11px] text-slate-400 mt-1">VCN will be locked to this merchant only.</p>
-              </div>
-
-              {/* Purpose */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+              {/* ── Section: Purpose ── */}
+              <div className="border-t border-slate-100 pt-4">
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5">
                   Purpose <span className="text-slate-400 font-normal">(optional)</span>
                 </label>
                 <input
@@ -891,102 +1274,106 @@ export default function CardsPage() {
                 />
               </div>
 
-              {/* Divider */}
-              <div className="border-t border-slate-100 pt-1">
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <ShieldCheck size={13} /> Limits &amp; Controls
+              {/* ── Section: Limits & Controls ── */}
+              <div className="border-t border-slate-100 pt-4">
+                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 mb-3">
+                  <ShieldCheck size={12} /> Limits &amp; Controls
                 </p>
-              </div>
 
-              {/* Spend limit */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                  Spending Limit ($) <span className="text-slate-400 font-normal">(optional)</span>
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  step="500"
-                  className={inputClass}
-                  placeholder="e.g. 12450"
-                  value={spendLimit}
-                  onChange={(e) => setSpendLimit(e.target.value)}
-                />
-                <p className="text-[11px] text-slate-400 mt-1">Exact invoice amount recommended for single-use VCNs.</p>
-              </div>
-
-              {/* Expiry date */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                  Valid Until <span className="text-slate-400 font-normal">(optional)</span>
-                </label>
-                <input
-                  type="date"
-                  className={inputClass}
-                  value={expiryDate}
-                  onChange={(e) => setExpiryDate(e.target.value)}
-                />
-                <p className="text-[11px] text-slate-400 mt-1">VCN auto-expires after this date.</p>
-              </div>
-
-              {/* MCC Category */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                  MCC Category <span className="text-slate-400 font-normal">(optional)</span>
-                </label>
-                <div className="relative">
-                  <select
-                    className={inputClass + ' appearance-none pr-8'}
-                    value={mccCode}
-                    onChange={(e) => setMccCode(e.target.value)}
-                  >
-                    <option value="">Any category…</option>
-                    {MCC_CATEGORIES.map((m) => (
-                      <option key={m.code} value={m.code}>{m.code} — {m.label}</option>
-                    ))}
-                  </select>
-                  <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                </div>
-                <p className="text-[11px] text-slate-400 mt-1">Restrict card to a specific Merchant Category Code.</p>
-              </div>
-
-              {/* Card Acceptor ID */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                  Card Acceptor ID <span className="text-slate-400 font-normal">(POS terminal)</span>
-                </label>
-                <input
-                  type="text"
-                  className={inputClass}
-                  placeholder="e.g. POS-00482-TX"
-                  value={cardAcceptorId}
-                  onChange={(e) => setCardAcceptorId(e.target.value)}
-                  maxLength={24}
-                />
-                <p className="text-[11px] text-slate-400 mt-1">The terminal ID where this card is authorized to transact.</p>
-              </div>
-
-              {/* Toggle controls */}
-              <div className="space-y-3">
-                {[
-                  { label: 'Online transactions',    sub: 'Allow e-commerce & virtual payments', value: allowOnline,    set: setAllowOnline,    disabled: false           },
-                  { label: 'International payments', sub: 'Allow cross-border transactions',      value: allowIntl,      set: setAllowIntl,      disabled: false           },
-                  { label: 'Recurring charges',      sub: 'Allow subscriptions & auto-billing',   value: allowRecurring, set: setAllowRecurring, disabled: usageType === 'single-use' },
-                ].map(({ label, sub, value, set, disabled }) => (
-                  <div key={label} className={`flex items-center justify-between gap-3 py-2.5 px-3.5 rounded-xl border transition-colors ${disabled ? 'bg-slate-50/50 border-slate-100 opacity-50' : 'bg-slate-50 border-slate-100'}`}>
-                    <div>
-                      <p className="text-sm font-medium text-slate-700">{label}</p>
-                      <p className="text-xs text-slate-400">
-                        {disabled ? 'Not available for single-use VCNs' : sub}
-                      </p>
-                    </div>
-                    <button type="button" onClick={() => !disabled && set(!value)} disabled={disabled} className="shrink-0 disabled:cursor-not-allowed">
-                      {value && !disabled
-                        ? <ToggleRight size={28} className="text-[#1434CB]" />
-                        : <ToggleLeft  size={28} className="text-slate-300" />}
-                    </button>
+                {/* Spend limit + Valid Until — 2 col */}
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                      Spend Limit ($) <span className="text-slate-400 font-normal">opt.</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="500"
+                      className={inputClass}
+                      placeholder="e.g. 12450"
+                      value={spendLimit}
+                      onChange={(e) => setSpendLimit(e.target.value)}
+                    />
                   </div>
-                ))}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                      Valid Until <span className="text-slate-400 font-normal">opt.</span>
+                    </label>
+                    <input
+                      type="date"
+                      className={inputClass}
+                      value={expiryDate}
+                      onChange={(e) => setExpiryDate(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                {/* MCC + Acceptor ID — 2 col */}
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                      MCC Category <span className="text-slate-400 font-normal">opt.</span>
+                    </label>
+                    <div className="relative">
+                      <select
+                        className={inputClass + ' appearance-none pr-8'}
+                        value={mccCode}
+                        onChange={(e) => setMccCode(e.target.value)}
+                      >
+                        <option value="">Any category…</option>
+                        {MCC_CATEGORIES.map((m) => (
+                          <option key={m.code} value={m.code}>{m.code} — {m.label}</option>
+                        ))}
+                      </select>
+                      <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                      Acceptor ID <span className="text-slate-400 font-normal">(POS)</span>
+                    </label>
+                    <input
+                      type="text"
+                      className={inputClass}
+                      placeholder="e.g. POS-00482-TX"
+                      value={cardAcceptorId}
+                      onChange={(e) => setCardAcceptorId(e.target.value)}
+                      maxLength={24}
+                    />
+                  </div>
+                </div>
+
+                {/* Toggles — compact 3-col */}
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { label: 'Online',        sub: 'e-commerce',     value: allowOnline,    set: setAllowOnline,    disabled: false },
+                    { label: 'International', sub: 'cross-border',   value: allowIntl,      set: setAllowIntl,      disabled: false },
+                    { label: 'Recurring',     sub: 'auto-billing',   value: allowRecurring, set: setAllowRecurring, disabled: usageType === 'single-use' },
+                  ].map(({ label, sub, value, set, disabled }) => (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => !disabled && set(!value)}
+                      disabled={disabled}
+                      className={`flex flex-col items-start gap-1 px-3 py-2.5 rounded-xl border text-left transition-all disabled:cursor-not-allowed ${
+                        disabled
+                          ? 'bg-slate-50/50 border-slate-100 opacity-40'
+                          : value
+                          ? 'bg-[#EEF1FD] border-[#dde3fc]'
+                          : 'bg-slate-50 border-slate-200 hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <span className={`text-xs font-semibold ${value && !disabled ? 'text-[#1434CB]' : 'text-slate-600'}`}>{label}</span>
+                        {value && !disabled
+                          ? <ToggleRight size={18} className="text-[#1434CB] shrink-0" />
+                          : <ToggleLeft  size={18} className="text-slate-300 shrink-0" />}
+                      </div>
+                      <span className="text-[10px] text-slate-400">{sub}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <button

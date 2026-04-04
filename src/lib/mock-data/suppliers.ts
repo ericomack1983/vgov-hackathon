@@ -12,7 +12,7 @@ export const MOCK_SUPPLIERS: Supplier[] = [
     walletAddress: '0x1a2b3c4d5e6f7890abcdef1234567890abcdef12',
     deliveryAvgDays: 14,
     riskScore: 8,
-    vaaScore: 94,
+    vsmsScore: 94,
     cards: [
       {
         id: 'card-sup001-002',
@@ -36,7 +36,7 @@ export const MOCK_SUPPLIERS: Supplier[] = [
     walletAddress: '0x2b3c4d5e6f7890abcdef1234567890abcdef1234',
     deliveryAvgDays: 30,
     riskScore: 35,
-    vaaScore: 61,
+    vsmsScore: 61,
   },
   {
     id: 'sup-003',
@@ -49,7 +49,7 @@ export const MOCK_SUPPLIERS: Supplier[] = [
     walletAddress: '0x3c4d5e6f7890abcdef1234567890abcdef123456',
     deliveryAvgDays: 18,
     riskScore: 12,
-    vaaScore: 88,
+    vsmsScore: 88,
     cards: [
       {
         id: 'card-sup003-001',
@@ -73,7 +73,7 @@ export const MOCK_SUPPLIERS: Supplier[] = [
     walletAddress: '0x4d5e6f7890abcdef1234567890abcdef12345678',
     deliveryAvgDays: 22,
     riskScore: 28,
-    vaaScore: 72,
+    vsmsScore: 72,
   },
   {
     id: 'sup-005',
@@ -86,7 +86,7 @@ export const MOCK_SUPPLIERS: Supplier[] = [
     walletAddress: '0x5e6f7890abcdef1234567890abcdef1234567890',
     deliveryAvgDays: 12,
     riskScore: 6,
-    vaaScore: 97,
+    vsmsScore: 97,
   },
   {
     id: 'sup-006',
@@ -99,7 +99,7 @@ export const MOCK_SUPPLIERS: Supplier[] = [
     walletAddress: '0x6f7890abcdef1234567890abcdef123456789012',
     deliveryAvgDays: 25,
     riskScore: 22,
-    vaaScore: 78,
+    vsmsScore: 78,
   },
   {
     id: 'sup-007',
@@ -112,7 +112,7 @@ export const MOCK_SUPPLIERS: Supplier[] = [
     walletAddress: '0x7890abcdef1234567890abcdef12345678901234',
     deliveryAvgDays: 16,
     riskScore: 18,
-    vaaScore: 83,
+    vsmsScore: 83,
   },
   {
     id: 'sup-008',
@@ -125,7 +125,7 @@ export const MOCK_SUPPLIERS: Supplier[] = [
     walletAddress: '0x890abcdef1234567890abcdef1234567890123456',
     deliveryAvgDays: 35,
     riskScore: 45,
-    vaaScore: 41,
+    vsmsScore: 41,
     cards: [
       {
         id: 'card-002',

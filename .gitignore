@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# large media files
+*.mp4
+*.mp3
+
+# claude internal
+.claude/
+.planning/

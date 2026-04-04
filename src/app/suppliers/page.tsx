@@ -34,7 +34,7 @@ const LOG_STEPS = [
   { tag: 'NETWORK', color: '#a78bfa', label: 'Scanning Visa Commercial Network nodes',          delay: 900  },
   { tag: 'MCC',     color: '#34d399', label: 'Resolving Merchant Category Codes (MCC)',         delay: 1600 },
   { tag: 'VERIFY',  color: '#fbbf24', label: 'Validating B2B payment product acceptance',       delay: 2300 },
-  { tag: 'SCORE',   color: '#f472b6', label: 'Computing Visa Advanced Authorization scores',    delay: 3000 },
+  { tag: 'SCORE',   color: '#f472b6', label: 'Computing Visa Supplier Matching Service scores', delay: 3000 },
 ];
 
 const DONE_DELAY  = 3700;
@@ -360,7 +360,7 @@ function VisaApiLoader({ supplierCount }: { supplierCount: number }) {
                   <AnimatedCount target={supplierCount} /> suppliers matched &amp; verified
                 </p>
                 <p className="text-emerald-400/70 text-[10px] font-mono mt-0.5">
-                  Visa Network eligibility confirmed · VAA scores computed
+                  Visa Network eligibility confirmed · VSMS scores computed
                 </p>
               </div>
               <div className="shrink-0 text-right">

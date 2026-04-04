@@ -6,7 +6,7 @@ import { ShieldCheck, Building2, Shield, CreditCard, FileCheck, Bot, BarChart2 }
 
 const STEPS = [
   { icon: Building2, tag: 'VERIFY', tagColor: '#34d399', label: 'Verifying company registration',       sub: 'Cross-referencing federal contractor database',      duration: 700,  activates: ['s1','s2']  },
-  { icon: Shield,    tag: 'API',    tagColor: '#60a5fa', label: 'Fetching VAA Score from Visa API',     sub: 'Visa Advanced Authorization · merchant risk check',  duration: 1100, activates: ['s3','s4'], visa: true },
+  { icon: Shield,    tag: 'API',    tagColor: '#60a5fa', label: 'Fetching VSMS Score from Visa API',    sub: 'Visa Supplier Matching Service · merchant risk check', duration: 1100, activates: ['s3','s4'], visa: true },
   { icon: CreditCard,tag: 'CREDIT', tagColor: '#fbbf24', label: 'Checking credit history',              sub: 'Reviewing payment reliability & past transactions',  duration: 700,  activates: ['s5']       },
   { icon: FileCheck, tag: 'COMPLY', tagColor: '#a78bfa', label: 'Analyzing compliance certifications',  sub: 'Validating ISO, FedRAMP, SOC 2 & CMMC levels',      duration: 650,  activates: ['s6']       },
   { icon: Bot,       tag: 'MODEL',  tagColor: '#f472b6', label: 'Computing AI composite score',         sub: 'Applying weighted model across 6 dimensions',        duration: 750,  activates: ['s7']       },
@@ -29,7 +29,7 @@ function AnimatedCount({ target, suffix = '' }: { target: number; suffix?: strin
 // ── Chip / PCB animation ──────────────────────────────────────────────────────
 const LEFT_MODULES = [
   { stepIdx: 0, y: 14,  tag: 'REG',  color: '#34d399' },
-  { stepIdx: 1, y: 74,  tag: 'VAA',  color: '#60a5fa' },
+  { stepIdx: 1, y: 74,  tag: 'VSMS', color: '#60a5fa' },
   { stepIdx: 2, y: 134, tag: 'FIN',  color: '#fbbf24' },
 ];
 
@@ -323,7 +323,7 @@ export function EvaluationOverlay({ onDone }: { onDone: () => void }) {
           </div>
           <div>
             <p className="text-white text-sm font-semibold tracking-tight leading-tight">AI Evaluation Engine</p>
-            <p className="text-white/35 text-[10px] font-mono mt-0.5">Powered by Visa Advanced Authorization</p>
+            <p className="text-white/35 text-[10px] font-mono mt-0.5">Powered by Visa Supplier Matching Service</p>
           </div>
           <div className="ml-auto flex items-center gap-3">
             <span className="text-[10px] font-mono text-white/25">
@@ -435,7 +435,7 @@ export function EvaluationOverlay({ onDone }: { onDone: () => void }) {
                   {STEPS.length} suppliers verified globally — loading results…
                 </p>
                 <p className="text-emerald-400/70 text-[10px] font-mono mt-0.5">
-                  6 dimensions scored · VAA confirmed · ranked by composite
+                  6 dimensions scored · VSMS confirmed · ranked by composite
                 </p>
               </div>
               <div className="shrink-0 text-right">

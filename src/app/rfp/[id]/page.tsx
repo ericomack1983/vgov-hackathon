@@ -1,9 +1,10 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useProcurement } from '@/context/ProcurementContext';
 import { useUI } from '@/context/UIContext';
+import { useSidebarActions } from '@/context/SidebarActionsContext';
 import { RFPStatusTimeline } from '@/components/procurement/RFPStatusTimeline';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { RankedSupplierRow } from '@/components/ai/RankedSupplierRow';
@@ -11,8 +12,10 @@ import { ExplainabilityPanel } from '@/components/ai/ExplainabilityPanel';
 import { OverrideForm } from '@/components/ai/OverrideForm';
 import { scoreBids, generateNarrative, generateOverrideNarrative } from '@/lib/ai-engine';
 import Link from 'next/link';
-import { ArrowLeft, FileText, Bot, CreditCard } from 'lucide-react';
+import { ArrowLeft, FileText, Bot, CreditCard, RefreshCw, CalendarRange, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
 import { EvaluationOverlay } from '@/components/ai/EvaluationOverlay';
+import { InvoiceOverlay } from '@/components/procurement/InvoiceOverlay';
+import { ConfettiCanvas, useConfetti } from '@/components/ui/ConfettiCanvas';
 import { AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { RFPStatus, ScoredBid } from '@/lib/mock-data/types';
@@ -30,7 +33,10 @@ export default function RfpDetailPage({ params }: { params: Promise<{ id: string
   const { id } = use(params);
   const { rfps, suppliers, updateRFP, setEvaluation, setOverride } = useProcurement();
   const { role } = useUI();
+  const { setActions, clearActions } = useSidebarActions();
   const [isEvaluating, setIsEvaluating] = useState(false);
+  const [showInvoiceOverlay, setShowInvoiceOverlay] = useState(false);
+  const { handleRef: confettiRef, fire: fireConfetti } = useConfetti();
 
   const rfp = rfps.find((r) => r.id === id);
 
@@ -91,14 +97,67 @@ export default function RfpDetailPage({ params }: { params: Promise<{ id: string
     }
   }
 
+  // Register / update sidebar action buttons whenever RFP state changes
+  useEffect(() => {
+    if (role !== 'gov' || !rfp) return;
+    const actions = [];
+
+    if (!rfp.evaluationResults && rfp.bids.length >= 2) {
+      actions.push({
+        id: 'evaluate',
+        label: 'Run AI Evaluation',
+        variant: 'ai' as const,
+        onClick: handleEvaluate,
+        disabled: isEvaluating,
+      });
+    }
+    if (rfp.status === 'Evaluating') {
+      actions.push({
+        id: 'award',
+        label: 'Award Supplier',
+        variant: 'award' as const,
+        onClick: () => {
+          updateRFP(rfp.id, { status: 'Awarded', selectedWinnerId: effectiveWinnerId });
+          toast.success('Supplier awarded');
+          fireConfetti();
+        },
+      });
+    }
+    if (rfp.status === 'Awarded') {
+      actions.push({
+        id: 'payment',
+        label: 'Proceed to Payment',
+        variant: 'payment' as const,
+        onClick: () => setShowInvoiceOverlay(true),
+      });
+    }
+
+    setActions(actions);
+    return () => clearActions();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [role, rfp?.status, rfp?.evaluationResults, rfp?.bids.length, isEvaluating, effectiveWinnerId]);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
     >
+      <ConfettiCanvas handleRef={confettiRef} />
+
       <AnimatePresence>
         {isEvaluating && <EvaluationOverlay onDone={handleOverlayDone} />}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showInvoiceOverlay && winnerScoredBid && (
+          <InvoiceOverlay
+            rfpId={rfp.id}
+            amount={winnerScoredBid.bid.amount}
+            supplierName={winnerScoredBid.supplier.name}
+            onClose={() => setShowInvoiceOverlay(false)}
+          />
+        )}
       </AnimatePresence>
 
       <Link
@@ -109,9 +168,16 @@ export default function RfpDetailPage({ params }: { params: Promise<{ id: string
         Back to RFPs
       </Link>
 
-      <div className="flex items-center gap-3 mb-4">
+      <div className="flex items-center gap-3 mb-4 flex-wrap">
         <h1 className="text-xl font-semibold text-slate-900">{rfp.title}</h1>
         <StatusBadge status={rfp.status} variant={statusVariant[rfp.status]} />
+        {rfp.recurring && (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border"
+            style={{ background: 'linear-gradient(135deg,#EEF1FD,#f0f4ff)', borderColor: '#dde3fc', color: '#1434CB' }}>
+            <RefreshCw size={10} />
+            Recurring Contract
+          </span>
+        )}
       </div>
 
       <div className="mb-6">
@@ -145,6 +211,161 @@ export default function RfpDetailPage({ params }: { params: Promise<{ id: string
           </div>
         </div>
       </div>
+
+      {/* ── Recurring Contract Terms ─────────────────────────────────── */}
+      {rfp.recurring && (() => {
+        const rec = rfp.recurring!;
+        const INTERVAL_LABEL: Record<string, string> = {
+          monthly: 'Monthly', quarterly: 'Quarterly', biannual: 'Bi-Annual', annual: 'Annual',
+        };
+        const INTERVAL_COLOR: Record<string, string> = {
+          monthly: 'bg-violet-50 text-violet-700 border-violet-200',
+          quarterly: 'bg-sky-50 text-sky-700 border-sky-200',
+          biannual: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+          annual: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+        };
+        const paidCount = rec.installments.filter(i => i.status === 'paid').length;
+        const pendingCount = rec.installments.filter(i => i.status === 'pending' || i.status === 'overdue').length;
+        const pct = Math.round((paidCount / rec.totalInstallments) * 100);
+        const totalValue = rec.totalInstallments * rec.installmentAmount;
+        const paidAmount = paidCount * rec.installmentAmount;
+        const nextDue = rec.installments.find(i => i.status !== 'paid');
+
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.05 }}
+            className="mt-4 rounded-xl border overflow-hidden"
+            style={{ borderColor: '#dde3fc' }}
+          >
+            {/* card header */}
+            <div className="flex items-center justify-between px-5 py-3.5"
+              style={{ background: 'linear-gradient(to right,#EEF1FD,#f3f5ff)' }}>
+              <div className="flex items-center gap-2.5">
+                <div className="w-6 h-6 rounded-md flex items-center justify-center"
+                  style={{ background: 'linear-gradient(135deg,#1434CB,#6366f1)' }}>
+                  <RefreshCw size={11} className="text-white" />
+                </div>
+                <span className="text-sm font-semibold text-[#1434CB]">Recurring Contract Terms</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wide ${INTERVAL_COLOR[rec.interval]}`}>
+                  {INTERVAL_LABEL[rec.interval]}
+                </span>
+                <span className="text-[10px] font-semibold text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded-full">
+                  {rec.contractYears}yr
+                </span>
+                {pendingCount > 0 && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 uppercase tracking-wide flex items-center gap-1">
+                    <AlertCircle size={8} /> {pendingCount} Pending
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="bg-white px-5 py-4 space-y-4">
+              {/* key metrics grid */}
+              <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+                {[
+                  { label: 'Total Contract Value', value: `$${totalValue.toLocaleString()}` },
+                  { label: 'Per Installment', value: `$${rec.installmentAmount.toLocaleString()}` },
+                  { label: 'Installments', value: `${rec.totalInstallments} payments` },
+                  { label: 'Start Date', value: format(new Date(rec.startDate), 'MMM d, yyyy') },
+                  { label: 'End Date', value: format(new Date(rec.endDate), 'MMM d, yyyy') },
+                  { label: 'Total Paid', value: `$${paidAmount.toLocaleString()}`, highlight: true },
+                ].map(({ label, value, highlight }) => (
+                  <div key={label} className="rounded-lg bg-slate-50 border border-slate-100 px-3 py-2.5">
+                    <p className="text-[9px] text-slate-400 uppercase font-semibold tracking-wide mb-0.5">{label}</p>
+                    <p className={`text-sm font-bold ${highlight ? 'text-emerald-700' : 'text-slate-800'}`}>{value}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* progress */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs font-semibold text-slate-600">{paidCount} of {rec.totalInstallments} installments paid</span>
+                  <span className="text-xs font-bold text-[#1434CB]">{pct}%</span>
+                </div>
+                <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full rounded-full"
+                    style={{ background: 'linear-gradient(to right,#1434CB,#6366f1)' }}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${pct}%` }}
+                    transition={{ duration: 0.9, ease: 'easeOut', delay: 0.2 }}
+                  />
+                </div>
+              </div>
+
+              {/* installment dot timeline */}
+              <div>
+                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Payment Timeline</p>
+                <div className="flex items-end gap-2 flex-wrap">
+                  {rec.installments.map((inst, idx) => {
+                    const isPaid    = inst.status === 'paid';
+                    const isPending = inst.status === 'pending';
+                    const isOverdue = inst.status === 'overdue';
+                    const dueStr = format(new Date(inst.dueDate), 'MMM d, yyyy');
+                    const title = isPaid ? `Paid · ${dueStr}` : isPending ? `Pending · due ${dueStr}` : isOverdue ? `Overdue · ${dueStr}` : `Scheduled · ${dueStr}`;
+                    return (
+                      <div key={inst.id} className="flex flex-col items-center gap-1" title={title}>
+                        <div className={`w-3 h-3 rounded-full transition-all ${
+                          isPaid    ? 'bg-emerald-500' :
+                          isPending ? 'bg-amber-400 ring-2 ring-amber-300 ring-offset-1 animate-pulse' :
+                          isOverdue ? 'bg-red-500 ring-2 ring-red-300 ring-offset-1' :
+                                      'bg-slate-200'
+                        }`} />
+                        {(isPaid || isPending || isOverdue) && (
+                          <span className="text-[8px] text-slate-400 leading-none">
+                            {format(new Date(inst.dueDate), 'MMM yy')}
+                          </span>
+                        )}
+                        {!isPaid && !isPending && !isOverdue && idx === rec.installments.indexOf(nextDue!) && (
+                          <span className="text-[8px] text-[#1434CB] font-semibold leading-none">next</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* next installment highlight */}
+              {nextDue && (
+                <div className={`flex items-center gap-3 px-4 py-3 rounded-lg border ${
+                  nextDue.status === 'pending' || nextDue.status === 'overdue'
+                    ? 'bg-amber-50 border-amber-200'
+                    : 'bg-slate-50 border-slate-200'
+                }`}>
+                  {nextDue.status === 'pending' || nextDue.status === 'overdue'
+                    ? <AlertCircle size={14} className="text-amber-500 shrink-0" />
+                    : <CalendarRange size={14} className="text-[#1434CB] shrink-0" />
+                  }
+                  <div>
+                    <p className={`text-xs font-semibold ${nextDue.status === 'pending' ? 'text-amber-800' : 'text-slate-700'}`}>
+                      {nextDue.status === 'pending'
+                        ? 'Payment action required'
+                        : nextDue.status === 'overdue'
+                          ? 'Overdue payment'
+                          : 'Next scheduled installment'
+                      }
+                    </p>
+                    <p className={`text-xs ${nextDue.status === 'pending' ? 'text-amber-700' : 'text-slate-500'}`}>
+                      <span className="font-bold">${nextDue.amount.toLocaleString()}</span>
+                      {' '}due on {format(new Date(nextDue.dueDate), 'MMMM d, yyyy')}
+                    </p>
+                  </div>
+                  <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide border
+                    bg-white text-slate-500 border-slate-200">
+                    #{rec.installments.indexOf(nextDue) + 1} of {rec.totalInstallments}
+                  </span>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        );
+      })()}
 
       {role === 'gov' && rfp.status === 'Draft' && (
         <div className="mt-4">
@@ -209,27 +430,14 @@ export default function RfpDetailPage({ params }: { params: Promise<{ id: string
       {/* AI Evaluation Section - Gov only */}
       {role === 'gov' && (
         <div className="mt-8">
-          {/* Run AI Evaluation button - shown when no evaluation results yet */}
-          {!evaluationResults && (
-            <>
-              {rfp.bids.length < 2 ? (
-                <div className="bg-slate-50 rounded-xl p-6 text-center">
-                  <p className="text-base font-semibold text-slate-900">Awaiting evaluation</p>
-                  <p className="mt-2 text-sm text-slate-500">
-                    At least 2 bids are required before running AI evaluation.
-                  </p>
-                </div>
-              ) : (
-                <button
-                  onClick={handleEvaluate}
-                  disabled={rfp.bids.length < 2 || isEvaluating}
-                  className="bg-[#1434CB] hover:bg-[#0F27B0] text-white px-6 py-2.5 rounded-lg text-sm font-semibold inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <Bot size={16} />
-                  Run AI Evaluation
-                </button>
-              )}
-            </>
+          {/* Awaiting bids notice (button moved to sidebar) */}
+          {!evaluationResults && rfp.bids.length < 2 && (
+            <div className="bg-slate-50 rounded-xl p-6 text-center">
+              <p className="text-base font-semibold text-slate-900">Awaiting evaluation</p>
+              <p className="mt-2 text-sm text-slate-500">
+                At least 2 bids are required before running AI evaluation.
+              </p>
+            </div>
           )}
 
           {/* AI Results Section */}
@@ -294,33 +502,6 @@ export default function RfpDetailPage({ params }: { params: Promise<{ id: string
 
               {/* Explainability Panel */}
               <ExplainabilityPanel narrative={generateNarrative(evaluationResults)} />
-
-              {/* Award Supplier button */}
-              {(rfp.status === 'Evaluating') && (
-                <button
-                  onClick={() => {
-                    updateRFP(rfp.id, {
-                      status: 'Awarded',
-                      selectedWinnerId: effectiveWinnerId,
-                    });
-                    toast.success('Supplier awarded');
-                  }}
-                  className="bg-[#1434CB] hover:bg-[#0F27B0] text-white px-6 py-2.5 rounded-lg text-sm font-semibold transition-colors"
-                >
-                  Award Supplier
-                </button>
-              )}
-
-              {/* Proceed to Payment - shown when Awarded */}
-              {rfp.status === 'Awarded' && (
-                <Link
-                  href={`/payment/${rfp.id}`}
-                  className="inline-flex items-center gap-2 bg-[#1434CB] hover:bg-[#0F27B0] text-white px-6 py-2.5 rounded-lg text-sm font-semibold transition-colors mt-4"
-                >
-                  <CreditCard size={16} />
-                  Proceed to Payment
-                </Link>
-              )}
 
               {/* Override Form - shown when Evaluating and no override yet */}
               {rfp.status === 'Evaluating' && !rfp.overrideWinnerId && (

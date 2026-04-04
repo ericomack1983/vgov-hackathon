@@ -14,10 +14,10 @@ interface RankedSupplierRowProps {
   onSelect?: () => void;
 }
 
-const DIMENSIONS = ['price', 'delivery', 'reliability', 'compliance', 'risk', 'vaa'] as const;
+const DIMENSIONS = ['price', 'delivery', 'reliability', 'compliance', 'risk', 'vsms'] as const;
 
 export function RankedSupplierRow({ scoredBid, isSelected, isAiBest, onSelect }: RankedSupplierRowProps) {
-  const hasVisa = !!scoredBid.supplier.vaaScore;
+  const hasVisa = !!scoredBid.supplier.vsmsScore;
 
   return (
     <div

@@ -3,13 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "NODE_OPTIONS='--max-old-space-size=4096' next dev --webpack",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.100.0",
+    "@visa-gov/sdk": "github:ericomack1983/visa-gov-sdk",
     "clsx": "^2.1.1",
     "cobe": "^2.0.1",
     "date-fns": "^3.6.0",

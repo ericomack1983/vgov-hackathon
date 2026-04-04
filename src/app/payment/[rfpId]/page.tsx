@@ -14,6 +14,7 @@ import {
 import Link from 'next/link';
 import { v4 as uuidv4 } from 'uuid';
 import type { PaymentMethod, PaymentCard } from '@/lib/mock-data/types';
+import { b2bService, vpaService } from '@/lib/visa-sdk';
 
 // ─── types ────────────────────────────────────────────────────────────────────
 type Step = 'card-select' | 'card-confirm' | 'fund-select' | 'auth' | 'processing' | 'done';
@@ -167,13 +168,14 @@ function PushAuthStep({ amount, supplier, onApprove, onDeny }: {
 }
 
 // ─── done step ────────────────────────────────────────────────────────────────
-function DoneStep({ bidAmount, fundMethod, selectedCard, winner, orderId, isCnp }: {
+function DoneStep({ bidAmount, fundMethod, selectedCard, winner, orderId, isCnp, visaPaymentId }: {
   bidAmount: number;
   fundMethod: string | null;
   selectedCard: { last4: string } | null;
   winner: { name: string } | undefined;
   orderId: string;
   isCnp?: boolean;
+  visaPaymentId?: string | null;
 }) {
   const [notifVisible, setNotifVisible] = useState(false);
   useEffect(() => {
@@ -215,6 +217,7 @@ function DoneStep({ bidAmount, fundMethod, selectedCard, winner, orderId, isCnp 
           { label: 'Method',    value: isCnp ? 'USD · STP' : (fundMethod ?? '') },
           ...(!isCnp ? [{ label: 'Card', value: `•••• ${selectedCard?.last4}` }] : []),
           { label: 'Order ID',  value: orderId },
+          ...(visaPaymentId ? [{ label: isCnp ? 'BIP ID' : 'SIP ID', value: visaPaymentId }] : []),
           ...(isCnp ? [{ label: 'Status', value: '✓ Executed' }] : []),
         ].map(({ label, value }) => (
           <div key={label} className="flex justify-between">
@@ -282,7 +285,7 @@ function DoneStep({ bidAmount, fundMethod, selectedCard, winner, orderId, isCnp 
 export default function PaymentCheckoutPage({ params }: { params: Promise<{ rfpId: string }> }) {
   const { rfpId } = use(params);
   const { rfps, suppliers, updateRFP } = useProcurement();
-  const { transactions, addTransaction, addNotification } = usePayment();
+  const { transactions, addTransaction, addNotification, setVisaPaymentId } = usePayment();
 
   const rfp    = rfps.find((r) => r.id === rfpId);
   const winner = rfp ? suppliers.find((s) => s.id === rfp.selectedWinnerId) : undefined;
@@ -314,6 +317,7 @@ export default function PaymentCheckoutPage({ params }: { params: Promise<{ rfpI
   const [fundMethod, setFundMethod]   = useState<FundMethod | null>(null);
   const [usdSubMethod, setUsdSubMethod] = useState<'cnp' | 'card-present' | null>(null);
   const [orderId]                     = useState(() => 'ORD-' + uuidv4().slice(0, 8).toUpperCase());
+  const [visaPaymentId, setLocalVisaPaymentId] = useState<string | null>(null);
 
   const selectedCard = allCards.find((c) => c.id === selectedCardId) ?? null;
   const paymentMethod: PaymentMethod  = fundMethod ?? 'USD';
@@ -351,8 +355,79 @@ export default function PaymentCheckoutPage({ params }: { params: Promise<{ rfpI
 
   const { state, start } = useSettlement(handleComplete);
 
-  const handleStart = useCallback((method: 'USD' | 'USDC' | 'Card', oid: string) => {
+  const handleStart = useCallback(async (method: 'USD' | 'USDC' | 'Card', oid: string) => {
     const isCnp = method === 'USD' && usdSubMethod === 'cnp';
+    const clientId = 'B2BWS_1_1_9999';
+    const today = new Date().toISOString().split('T')[0];
+    const nextMonth = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    // Call Visa B2B payment service — VPA onboarding first, then BIP or SIP
+    try {
+      if (winner) {
+        // VPA: onboard buyer + register supplier before payment
+        const buyer = await vpaService.Buyer.createBuyer({
+          clientId,
+          buyerName: 'Gov Procurement Agency',
+          currencyCode: '840',
+        });
+        await vpaService.FundingAccount.addFundingAccount({
+          clientId,
+          buyerId: buyer.buyerId,
+          accountNumber: '4111111111111111',
+        });
+        const pool = await vpaService.ProxyPool.createProxyPool({
+          clientId,
+          proxyPoolId: `POOL-PAY-${buyer.buyerId}`,
+          size: 10,
+        });
+        const registeredSupplier = await vpaService.Supplier.createSupplier({
+          clientId,
+          supplierName: winner.name,
+          accountNumber: winner.walletAddress ?? '4111111111110000',
+        });
+        void pool; // used implicitly via proxyPoolId below
+
+        if (isCnp) {
+          // BIP — buyer provisions virtual card and pushes it to supplier
+          const payment = await b2bService.BIP.initiate({
+            messageId: uuidv4(),
+            clientId,
+            buyerId: buyer.buyerId,
+            supplierId: registeredSupplier.supplierId,
+            paymentAmount: bidAmount,
+            currencyCode: '840',
+            memo: `Award payment: ${rfp?.title ?? oid}`,
+          });
+          setLocalVisaPaymentId(payment.paymentId);
+          setVisaPaymentId(payment.paymentId);
+        } else {
+          // SIP — supplier submits invoice, buyer approves
+          const req = await b2bService.SIP.submitRequest({
+            messageId: uuidv4(),
+            clientId,
+            supplierId: registeredSupplier.supplierId,
+            buyerId: buyer.buyerId,
+            requestedAmount: bidAmount,
+            currencyCode: '840',
+            startDate: today,
+            endDate: nextMonth,
+          });
+          const result = await b2bService.SIP.approve({
+            messageId: uuidv4(),
+            clientId,
+            buyerId: buyer.buyerId,
+            requisitionId: req.requisitionId,
+            approvedAmount: bidAmount,
+            currencyCode: '840',
+          });
+          setLocalVisaPaymentId(result.paymentId);
+          setVisaPaymentId(result.paymentId);
+        }
+      }
+    } catch {
+      // Non-blocking — B2B SDK failure does not interrupt the UI settlement flow
+    }
+
     if (winner && !isCnp) {
       addNotification({
         id: 'notif-pending-' + uuidv4().slice(0, 8),
@@ -375,7 +450,7 @@ export default function PaymentCheckoutPage({ params }: { params: Promise<{ rfpI
     }
     const mode = method === 'USD' ? (usdSubMethod ?? undefined) : undefined;
     start(method, oid, mode);
-  }, [winner, selectedCard, bidAmount, usdSubMethod, addNotification, start]);
+  }, [winner, selectedCard, bidAmount, usdSubMethod, rfp, addNotification, setVisaPaymentId, start]);
 
   const slideProps = {
     initial:    { opacity: 0, x: 24 },
@@ -557,14 +632,14 @@ export default function PaymentCheckoutPage({ params }: { params: Promise<{ rfpI
                     {([
                       {
                         id: 'cnp' as const,
-                        label: 'Card-not-Present / STP',
-                        sub: 'Straight-Through Processing — no physical card required',
+                        label: 'Buyer Initiated Transaction',
+                        sub: 'Buyer provisions virtual card and pushes to supplier (BIP)',
                         icon: '⚡',
                       },
                       {
                         id: 'card-present' as const,
-                        label: 'Card Present',
-                        sub: 'Supplier processes card at POS terminal',
+                        label: 'Supplier Initiated Payments',
+                        sub: 'Supplier submits invoice, buyer approves (SIP)',
                         icon: '💳',
                       },
                     ]).map(({ id, label, sub, icon }) => {
@@ -656,6 +731,7 @@ export default function PaymentCheckoutPage({ params }: { params: Promise<{ rfpI
             winner={winner}
             orderId={orderId}
             isCnp={usdSubMethod === 'cnp'}
+            visaPaymentId={visaPaymentId}
           />
         )}
 

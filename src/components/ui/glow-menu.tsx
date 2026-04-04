@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client"
 
 import * as React from "react"
@@ -14,7 +13,8 @@ interface MenuItem {
   iconColor: string
 }
 
-interface MenuBarProps extends React.HTMLAttributes<HTMLDivElement> {
+interface MenuBarProps {
+  className?: string
   items: MenuItem[]
   activeItem?: string
   onItemClick?: (label: string) => void
@@ -61,9 +61,9 @@ export { itemVariants, backVariants, glowVariants, navGlowVariants, sharedTransi
 export type { MenuItem }
 
 export const MenuBar = React.forwardRef<HTMLElement, MenuBarProps>(
-  ({ className, items, activeItem, onItemClick, ...props }, ref) => {
+  ({ className, items, activeItem, onItemClick }, ref) => {
     return (
-      <motion.nav as={motion.nav as unknown as React.ElementType}
+      <motion.nav
         ref={ref as React.Ref<HTMLElement>}
         className={cn(
           "p-2 rounded-2xl bg-gradient-to-b from-background/80 to-background/40 backdrop-blur-lg border border-border/40 shadow-lg relative overflow-hidden",
@@ -71,7 +71,6 @@ export const MenuBar = React.forwardRef<HTMLElement, MenuBarProps>(
         )}
         initial="initial"
         whileHover="hover"
-        {...(props as object)}
       >
         <motion.div
           className="absolute -inset-2 bg-gradient-radial from-transparent via-blue-400/30 via-30% via-purple-400/30 via-60% via-red-400/30 via-90% to-transparent rounded-3xl z-0 pointer-events-none"
