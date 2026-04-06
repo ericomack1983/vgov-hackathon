@@ -51,7 +51,7 @@ const PaymentContext = createContext<PaymentContextValue | undefined>(undefined)
 
 export function PaymentProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(paymentReducer, {
-    transactions: MOCK_TRANSACTIONS,
+    transactions: [],
     notifications: [],
     visaPaymentId: null,
   });

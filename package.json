@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.82.0",
     "@supabase/supabase-js": "^2.100.0",
     "@visa-gov/sdk": "github:ericomack1983/visa-gov-sdk",
     "clsx": "^2.1.1",

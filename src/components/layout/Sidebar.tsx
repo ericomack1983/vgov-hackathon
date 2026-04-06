@@ -4,7 +4,7 @@ import Link from 'next/link';
 import {
   LayoutDashboard, CreditCard, Users, FileText,
   Wallet, Bell, Shield, Receipt, FileCheck, Wifi, Terminal,
-  Bot, CheckCircle2, ArrowRight,
+  Bot, CheckCircle2, ArrowRight, Upload,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -62,6 +62,7 @@ const ACTION_CONFIG: Record<string, {
   ai:      { icon: Bot,          gradient: 'linear-gradient(135deg,#4f46e5,#7c3aed)', glow: 'rgba(99,102,241,0.55)', border: 'rgba(99,102,241,0.5)'  },
   award:   { icon: CheckCircle2, gradient: 'linear-gradient(135deg,#059669,#10b981)', glow: 'rgba(16,185,129,0.55)', border: 'rgba(16,185,129,0.5)'  },
   payment: { icon: CreditCard,   gradient: 'linear-gradient(135deg,#1434CB,#6366f1)', glow: 'rgba(20,52,203,0.55)',  border: 'rgba(99,102,241,0.5)'  },
+  upload:  { icon: Upload,       gradient: 'linear-gradient(135deg,#0ea5e9,#6366f1)', glow: 'rgba(14,165,233,0.55)', border: 'rgba(14,165,233,0.5)'  },
 };
 
 function ProcurementActions({ actions }: { actions: SidebarAction[] }) {

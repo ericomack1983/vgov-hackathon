@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePayment } from '@/context/PaymentContext';
 import {
@@ -9,6 +9,10 @@ import {
 } from 'lucide-react';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { vpcService, type VPCReconciliationResult } from '@/lib/visa-sdk';
+import { useSidebarActions } from '@/context/SidebarActionsContext';
+import { InvoiceUploadModal } from '@/components/ai/InvoiceUploadModal';
+import { InvoiceAnalysisPanel } from '@/components/ai/InvoiceAnalysisPanel';
+import { MOCK_RFPS } from '@/lib/mock-data/rfps';
 
 // ── Reconciliation state per transaction ──────────────────────────────────────
 
@@ -103,8 +107,26 @@ function VPCMatchCell({
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function ReconciliationPage() {
   const { transactions } = usePayment();
+  const { setActions, clearActions } = useSidebarActions();
   const [reconcileStates, setReconcileStates] = useState<Record<string, ReconcileState>>({});
   const [searchQuery, setSearchQuery] = useState('');
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [analysisInvoice, setAnalysisInvoice] = useState<{
+    supplierId: string; rfpId: string; amount: number;
+    description: string; invoiceNo: string; supplierName: string;
+    autoMatched: boolean;
+  } | null>(null);
+
+  // Register sidebar action
+  useEffect(() => {
+    setActions([{
+      id: 'send-invoice',
+      label: 'Send Invoice',
+      variant: 'upload',
+      onClick: () => setUploadOpen(true),
+    }]);
+    return () => clearActions();
+  }, [setActions, clearActions]);
 
   const getState = (txId: string): ReconcileState =>
     reconcileStates[txId] ?? { status: 'idle' };
@@ -183,6 +205,7 @@ export default function ReconciliationPage() {
   );
 
   return (
+    <>
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
@@ -372,5 +395,58 @@ export default function ReconciliationPage() {
         </div>
       )}
     </motion.div>
+
+      {/* ── Upload modal ── */}
+      <AnimatePresence>
+        {uploadOpen && (
+          <InvoiceUploadModal
+            onClose={() => setUploadOpen(false)}
+            onAnalyze={({ supplierId, rfpId, amount, description, fileName, autoMatched }) => {
+              const rfp = MOCK_RFPS.find((r) => r.id === rfpId);
+              const rfpPart = rfpId.toUpperCase().replace('rfp-', '').replace('RFP-', '');
+              setUploadOpen(false);
+              setAnalysisInvoice({
+                supplierId,
+                rfpId,
+                amount,
+                description,
+                invoiceNo: `INV-${rfpPart}-${new Date().getFullYear()}`,
+                supplierName:
+                  rfp?.bids.find((b) => b.supplierId === supplierId)?.supplierName ??
+                  fileName.replace(/\.[^.]+$/, ''),
+                autoMatched: autoMatched ?? false,
+              });
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* ── AI Analysis panel ── */}
+      <AnimatePresence>
+        {analysisInvoice && (
+          <InvoiceAnalysisPanel
+            rfpId={analysisInvoice.rfpId}
+            supplierId={analysisInvoice.supplierId}
+            supplierName={analysisInvoice.supplierName}
+            amount={analysisInvoice.amount}
+            description={analysisInvoice.description}
+            invoiceNo={analysisInvoice.invoiceNo}
+            autoMatched={analysisInvoice.autoMatched}
+            onClose={() => setAnalysisInvoice(null)}
+            onComplete={() => {
+              // Auto-trigger VPC reconciliation for the matching supplier's transaction
+              const name = analysisInvoice.supplierName.toLowerCase();
+              const match = transactions.find(
+                (tx) => tx.supplierName.toLowerCase().includes(name) ||
+                        name.includes(tx.supplierName.toLowerCase()),
+              );
+              if (match && getState(match.id).status === 'idle') {
+                handleReconcile(match.id);
+              }
+            }}
+          />
+        )}
+      </AnimatePresence>
+    </>
   );
 }

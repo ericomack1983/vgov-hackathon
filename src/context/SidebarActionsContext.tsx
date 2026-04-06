@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 
-export type SidebarActionVariant = 'ai' | 'award' | 'payment';
+export type SidebarActionVariant = 'ai' | 'award' | 'payment' | 'upload';
 
 export interface SidebarAction {
   id: string;
