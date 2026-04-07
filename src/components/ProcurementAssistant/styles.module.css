@@ -1,0 +1,808 @@
+/* ─── Widget-scoped dark surface tokens ────────────────────────────────────── */
+/* Maps portal variables to widget-local names. Portal always defines these.    */
+.widgetRoot {
+  --pa-bg:            var(--visa-dark);
+  --pa-bg-mid:        var(--visa-dark-mid);
+  --pa-bg-input:      color-mix(in srgb, var(--visa-dark-mid) 80%, white 20%);
+  --pa-border:        var(--visa-dark-border);
+  --pa-text:          var(--visa-white);
+  --pa-text-muted:    var(--visa-gray-400);
+  --pa-text-dim:      var(--visa-gray-500);
+  --pa-brand:         var(--visa-blue);
+  --pa-brand-mid:     var(--visa-blue-mid);
+  --pa-gold:          var(--visa-gold);
+  --pa-success:       var(--visa-success);
+  --pa-error:         var(--visa-error);
+  --pa-radius:        var(--visa-radius-xl, 16px);
+  --pa-radius-lg:     var(--visa-radius-lg, 12px);
+  --pa-radius-sm:     var(--visa-radius-sm, 4px);
+  --pa-radius-full:   var(--visa-radius-full, 9999px);
+  --pa-font:          var(--visa-font-sans);
+  --pa-font-mono:     var(--visa-font-mono);
+  --pa-shadow:        var(--visa-shadow-xl);
+  --pa-shadow-blue:   var(--visa-shadow-blue);
+  font-family:        var(--pa-font);
+}
+
+/* ─── FAB ───────────────────────────────────────────────────────────────────── */
+.fab {
+  position:           fixed;
+  bottom:             32px;
+  right:              32px;
+  width:              56px;
+  height:             56px;
+  border-radius:      var(--pa-radius-full);
+  background:         var(--pa-brand);
+  border:             none;
+  cursor:             pointer;
+  z-index:            9000;
+  display:            flex;
+  align-items:        center;
+  justify-content:    center;
+  color:              var(--pa-text);
+  box-shadow:         0 4px 20px -2px color-mix(in srgb, var(--pa-brand) 40%, transparent);
+  transition:         transform 200ms ease, box-shadow 200ms ease, background-color 200ms ease;
+}
+
+.fab:hover {
+  transform:    scale(1.08);
+  background:   var(--pa-brand-mid);
+  box-shadow:   0 4px 24px 0 color-mix(in srgb, var(--pa-brand) 50%, transparent);
+}
+
+.fab:focus-visible {
+  outline:        2px solid var(--pa-brand);
+  outline-offset: 3px;
+}
+
+.fabIcon {
+  transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 200ms ease;
+}
+
+.fabIconExit {
+  transform: rotate(90deg);
+  opacity: 0;
+}
+
+/* Pulse ring — radiates outward */
+.pulseRing {
+  position:         absolute;
+  inset:            -4px;
+  border-radius:    var(--pa-radius-full);
+  border:           2px solid color-mix(in srgb, var(--pa-brand) 60%, transparent);
+  animation:        fabPulse 8s ease-out infinite;
+  pointer-events:   none;
+}
+
+@keyframes fabPulse {
+  0%   { transform: scale(1);    opacity: 0.8; }
+  30%  { transform: scale(1.5);  opacity: 0; }
+  100% { transform: scale(1.5);  opacity: 0; }
+}
+
+/* ─── Panel ──────────────────────────────────────────────────────────────────── */
+.panel {
+  position:         fixed;
+  bottom:           104px;
+  right:            32px;
+  width:            min(480px, calc(100vw - 48px));
+  background:       var(--pa-bg);
+  border:           1px solid var(--pa-border);
+  border-radius:    20px;
+  box-shadow:       0 24px 48px -8px color-mix(in srgb, black 50%, transparent),
+                    0 0 0 1px color-mix(in srgb, var(--pa-brand) 15%, transparent);
+  z-index:          8999;
+  display:          flex;
+  flex-direction:   column;
+  overflow:         hidden;
+  font-family:      var(--pa-font);
+  color:            var(--pa-text);
+}
+
+/* ─── Panel Header ───────────────────────────────────────────────────────────── */
+.panelHeader {
+  display:          flex;
+  align-items:      center;
+  gap:              10px;
+  padding:          0 16px;
+  height:           52px;
+  min-height:       52px;
+  border-bottom:    1px solid var(--pa-border);
+  background:       var(--pa-bg-mid);
+  flex-shrink:      0;
+}
+
+.panelHeaderIcon {
+  width:            28px;
+  height:           28px;
+  border-radius:    var(--pa-radius-full);
+  background:       color-mix(in srgb, var(--pa-brand) 20%, transparent);
+  display:          flex;
+  align-items:      center;
+  justify-content:  center;
+  color:            var(--pa-brand);
+  flex-shrink:      0;
+}
+
+.panelHeaderTitle {
+  flex:             1;
+  font-size:        var(--visa-text-sm, 0.875rem);
+  font-weight:      var(--visa-weight-semibold, 600);
+  color:            var(--pa-text);
+  letter-spacing:   var(--visa-tracking-wide, 0.04em);
+}
+
+.panelHeaderBadge {
+  display:          inline-flex;
+  align-items:      center;
+  gap:              4px;
+  padding:          2px 8px;
+  border-radius:    var(--pa-radius-full);
+  background:       color-mix(in srgb, var(--pa-brand) 15%, transparent);
+  border:           1px solid color-mix(in srgb, var(--pa-brand) 30%, transparent);
+  font-size:        0.625rem;
+  font-weight:      var(--visa-weight-bold, 700);
+  letter-spacing:   var(--visa-tracking-wider, 0.08em);
+  text-transform:   uppercase;
+  color:            var(--pa-brand);
+}
+
+.panelHeaderBadgeDot {
+  width:            6px;
+  height:           6px;
+  border-radius:    var(--pa-radius-full);
+  background:       var(--pa-brand);
+  animation:        blink 2s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+.panelCloseBtn {
+  width:            32px;
+  height:           32px;
+  border-radius:    var(--pa-radius-full);
+  border:           none;
+  background:       transparent;
+  color:            var(--pa-text-muted);
+  cursor:           pointer;
+  display:          flex;
+  align-items:      center;
+  justify-content:  center;
+  transition:       background-color 150ms ease, color 150ms ease;
+  flex-shrink:      0;
+}
+
+.panelCloseBtn:hover {
+  background:  color-mix(in srgb, white 10%, transparent);
+  color:       var(--pa-text);
+}
+
+.panelCloseBtn:focus-visible {
+  outline:        2px solid var(--pa-brand);
+  outline-offset: 2px;
+}
+
+/* ─── Conversation Thread ────────────────────────────────────────────────────── */
+.thread {
+  flex:             1;
+  overflow-y:       auto;
+  padding:          12px 16px;
+  display:          flex;
+  flex-direction:   column;
+  gap:              10px;
+  max-height:       260px;
+  min-height:       80px;
+  scroll-behavior:  smooth;
+}
+
+.thread::-webkit-scrollbar        { width: 4px; }
+.thread::-webkit-scrollbar-track  { background: transparent; }
+.thread::-webkit-scrollbar-thumb  { background: var(--pa-border); border-radius: var(--pa-radius-full); }
+
+.showEarlierBtn {
+  align-self:       center;
+  background:       color-mix(in srgb, white 8%, transparent);
+  border:           1px solid var(--pa-border);
+  color:            var(--pa-text-muted);
+  font-size:        var(--visa-text-xs, 0.75rem);
+  padding:          4px 12px;
+  border-radius:    var(--pa-radius-full);
+  cursor:           pointer;
+  transition:       background-color 150ms ease;
+  font-family:      var(--pa-font);
+}
+.showEarlierBtn:hover {
+  background: color-mix(in srgb, white 14%, transparent);
+}
+
+/* ─── Message Bubbles ────────────────────────────────────────────────────────── */
+.msgRow {
+  display:          flex;
+  flex-direction:   column;
+}
+
+.msgRowUser {
+  align-items:      flex-end;
+}
+
+.msgRowAssistant {
+  align-items:      flex-start;
+}
+
+.msgRowTool {
+  align-items:      stretch;
+}
+
+.bubble {
+  max-width:        85%;
+  padding:          8px 12px;
+  font-size:        var(--visa-text-sm, 0.875rem);
+  line-height:      var(--visa-leading-relaxed, 1.625);
+  word-break:       break-word;
+}
+
+.bubbleUser {
+  background:       var(--pa-brand);
+  color:            var(--pa-text);
+  border-radius:    18px 18px 4px 18px;
+}
+
+.bubbleAssistant {
+  background:       color-mix(in srgb, white 8%, var(--pa-bg-mid));
+  color:            var(--pa-text);
+  border-radius:    18px 18px 18px 4px;
+}
+
+.bubbleTool {
+  background:       color-mix(in srgb, var(--pa-brand) 8%, var(--pa-bg-mid));
+  border-left:      3px solid var(--pa-brand);
+  border-radius:    0 var(--pa-radius-sm) var(--pa-radius-sm) 0;
+  padding:          10px 12px;
+  width:            100%;
+  font-size:        var(--visa-text-xs, 0.75rem);
+  color:            var(--pa-text-muted);
+  font-family:      var(--pa-font-mono);
+}
+
+.bubbleTimestamp {
+  font-size:        0.65rem;
+  color:            var(--pa-text-dim);
+  margin-top:       3px;
+  padding:          0 4px;
+}
+
+/* ─── Typing indicator ───────────────────────────────────────────────────────── */
+.typingDots {
+  display:          flex;
+  align-items:      center;
+  gap:              4px;
+  padding:          10px 14px;
+  background:       color-mix(in srgb, white 8%, var(--pa-bg-mid));
+  border-radius:    18px 18px 18px 4px;
+  width:            fit-content;
+}
+
+.typingDot {
+  width:            6px;
+  height:           6px;
+  border-radius:    var(--pa-radius-full);
+  background:       var(--pa-text-muted);
+  animation:        dotBounce 1.2s ease-in-out infinite;
+}
+
+.typingDot:nth-child(2) { animation-delay: 0.2s; }
+.typingDot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes dotBounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
+  40%           { transform: translateY(-6px); opacity: 1; }
+}
+
+/* ─── Result Cards ────────────────────────────────────────────────────────────── */
+.resultCard {
+  background:       color-mix(in srgb, white 5%, var(--pa-bg-mid));
+  border:           1px solid var(--pa-border);
+  border-radius:    var(--pa-radius-lg);
+  padding:          12px;
+  width:            100%;
+  overflow:         hidden;
+}
+
+.resultCardTitle {
+  font-size:        var(--visa-text-xs, 0.75rem);
+  font-weight:      var(--visa-weight-bold, 700);
+  text-transform:   uppercase;
+  letter-spacing:   var(--visa-tracking-wider, 0.08em);
+  color:            var(--pa-text-muted);
+  margin-bottom:    8px;
+}
+
+.resultCardName {
+  font-size:        var(--visa-text-sm, 0.875rem);
+  font-weight:      var(--visa-weight-semibold, 600);
+  color:            var(--pa-text);
+  margin-bottom:    6px;
+}
+
+.resultCardRow {
+  display:          flex;
+  justify-content:  space-between;
+  align-items:      center;
+  font-size:        var(--visa-text-xs, 0.75rem);
+  color:            var(--pa-text-muted);
+  padding:          3px 0;
+}
+
+.resultCardValue {
+  color:            var(--pa-text);
+  font-weight:      var(--visa-weight-medium, 500);
+}
+
+.scoreBar {
+  height:           4px;
+  background:       color-mix(in srgb, white 15%, transparent);
+  border-radius:    var(--pa-radius-full);
+  overflow:         hidden;
+  margin:           6px 0;
+}
+
+.scoreBarFill {
+  height:           100%;
+  border-radius:    var(--pa-radius-full);
+  background:       var(--pa-brand);
+  transition:       width 600ms ease;
+}
+
+.scoreBarFillGold {
+  background:       var(--pa-gold);
+}
+
+.scoreBarFillSuccess {
+  background:       var(--pa-success);
+}
+
+.statusBadge {
+  display:          inline-flex;
+  align-items:      center;
+  gap:              4px;
+  padding:          2px 8px;
+  border-radius:    var(--pa-radius-full);
+  font-size:        0.65rem;
+  font-weight:      var(--visa-weight-bold, 700);
+  letter-spacing:   var(--visa-tracking-wide, 0.04em);
+  text-transform:   uppercase;
+}
+
+.statusBadgeSuccess {
+  background:       color-mix(in srgb, var(--pa-success) 15%, transparent);
+  color:            var(--pa-success);
+  border:           1px solid color-mix(in srgb, var(--pa-success) 30%, transparent);
+}
+
+.statusBadgeError {
+  background:       color-mix(in srgb, var(--pa-error) 15%, transparent);
+  color:            var(--pa-error);
+  border:           1px solid color-mix(in srgb, var(--pa-error) 30%, transparent);
+}
+
+.cardNumber {
+  font-family:      var(--pa-font-mono);
+  font-size:        var(--visa-text-sm, 0.875rem);
+  letter-spacing:   0.12em;
+  color:            var(--pa-text);
+}
+
+.bidTable {
+  width:            100%;
+  border-collapse:  separate;
+  border-spacing:   0;
+  font-size:        var(--visa-text-xs, 0.75rem);
+}
+
+.bidTableRow {
+  border-bottom:    1px solid var(--pa-border);
+}
+
+.bidTableRow:last-child {
+  border-bottom:    none;
+}
+
+.bidTableCell {
+  padding:          5px 6px;
+  color:            var(--pa-text-muted);
+  vertical-align:   middle;
+}
+
+.bidTableCellWinner {
+  color:            var(--pa-gold);
+  font-weight:      var(--visa-weight-semibold, 600);
+}
+
+.shimmer {
+  background:       linear-gradient(
+    90deg,
+    color-mix(in srgb, white 5%, var(--pa-bg-mid)) 25%,
+    color-mix(in srgb, white 12%, var(--pa-bg-mid)) 50%,
+    color-mix(in srgb, white 5%, var(--pa-bg-mid)) 75%
+  );
+  background-size:  200% 100%;
+  animation:        shimmer 1.5s ease-in-out infinite;
+  border-radius:    var(--pa-radius-sm);
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.shimmerLine {
+  height:     12px;
+  margin:     6px 0;
+  border-radius: var(--pa-radius-sm);
+}
+
+.shimmerLineShort {
+  width: 40%;
+}
+
+.shimmerLineMed {
+  width: 70%;
+}
+
+.shimmerLineLong {
+  width: 90%;
+}
+
+/* ─── Confirmation Card ──────────────────────────────────────────────────────── */
+.confirmCard {
+  background:       color-mix(in srgb, var(--pa-gold) 6%, var(--pa-bg-mid));
+  border:           1px solid color-mix(in srgb, var(--pa-gold) 30%, transparent);
+  border-radius:    var(--pa-radius-lg);
+  padding:          14px;
+  width:            100%;
+}
+
+.confirmCardHeader {
+  display:          flex;
+  align-items:      center;
+  gap:              8px;
+  margin-bottom:    12px;
+  color:            var(--pa-gold);
+  font-weight:      var(--visa-weight-semibold, 600);
+  font-size:        var(--visa-text-sm, 0.875rem);
+}
+
+.confirmCardFields {
+  display:          flex;
+  flex-direction:   column;
+  gap:              6px;
+  margin-bottom:    14px;
+}
+
+.confirmCardFieldRow {
+  display:          flex;
+  justify-content:  space-between;
+  font-size:        var(--visa-text-xs, 0.75rem);
+}
+
+.confirmCardFieldLabel {
+  color:            var(--pa-text-muted);
+}
+
+.confirmCardFieldValue {
+  color:            var(--pa-text);
+  font-weight:      var(--visa-weight-medium, 500);
+  text-align:       right;
+}
+
+.confirmCardActions {
+  display:          flex;
+  gap:              8px;
+  justify-content:  flex-end;
+}
+
+.confirmCancelBtn {
+  padding:          6px 14px;
+  border-radius:    var(--pa-radius-full);
+  border:           1px solid var(--pa-border);
+  background:       transparent;
+  color:            var(--pa-text-muted);
+  font-size:        var(--visa-text-xs, 0.75rem);
+  font-weight:      var(--visa-weight-medium, 500);
+  cursor:           pointer;
+  font-family:      var(--pa-font);
+  transition:       background-color 150ms ease;
+}
+.confirmCancelBtn:hover {
+  background: color-mix(in srgb, white 10%, transparent);
+}
+.confirmCancelBtn:focus-visible {
+  outline: 2px solid var(--pa-brand);
+  outline-offset: 2px;
+}
+
+.confirmProceedBtn {
+  padding:          6px 14px;
+  border-radius:    var(--pa-radius-full);
+  border:           none;
+  background:       var(--pa-brand);
+  color:            var(--pa-text);
+  font-size:        var(--visa-text-xs, 0.75rem);
+  font-weight:      var(--visa-weight-semibold, 600);
+  cursor:           pointer;
+  font-family:      var(--pa-font);
+  display:          flex;
+  align-items:      center;
+  gap:              4px;
+  transition:       background-color 150ms ease, transform 150ms ease;
+}
+.confirmProceedBtn:hover {
+  background: var(--pa-brand-mid);
+  transform: scale(1.02);
+}
+.confirmProceedBtn:focus-visible {
+  outline: 2px solid var(--pa-brand);
+  outline-offset: 2px;
+}
+.confirmProceedBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.cancelledChip {
+  display:          inline-flex;
+  align-items:      center;
+  gap:              4px;
+  padding:          3px 10px;
+  border-radius:    var(--pa-radius-full);
+  background:       color-mix(in srgb, var(--pa-error) 12%, transparent);
+  color:            var(--pa-error);
+  font-size:        var(--visa-text-xs, 0.75rem);
+  font-weight:      var(--visa-weight-semibold, 600);
+  border:           1px solid color-mix(in srgb, var(--pa-error) 25%, transparent);
+  align-self:       flex-end;
+}
+
+/* ─── Quick Chips ─────────────────────────────────────────────────────────────── */
+.quickChipsContainer {
+  padding:          10px 16px;
+  border-top:       1px solid var(--pa-border);
+  overflow-x:       auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width:  none;
+  flex-shrink:      0;
+}
+.quickChipsContainer::-webkit-scrollbar { display: none; }
+
+.quickChipsList {
+  display:          flex;
+  gap:              6px;
+  white-space:      nowrap;
+  width:            max-content;
+}
+
+.quickChip {
+  display:          inline-flex;
+  align-items:      center;
+  gap:              5px;
+  padding:          5px 12px;
+  border-radius:    var(--pa-radius-full);
+  background:       color-mix(in srgb, white 7%, transparent);
+  border:           1px solid var(--pa-border);
+  color:            var(--pa-text-muted);
+  font-size:        var(--visa-text-xs, 0.75rem);
+  font-weight:      var(--visa-weight-medium, 500);
+  cursor:           pointer;
+  white-space:      nowrap;
+  font-family:      var(--pa-font);
+  transition:       background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+
+.quickChip:hover {
+  background:       color-mix(in srgb, var(--pa-brand) 15%, transparent);
+  color:            var(--pa-text);
+  border-color:     color-mix(in srgb, var(--pa-brand) 40%, transparent);
+}
+
+.quickChip:focus-visible {
+  outline:        2px solid var(--pa-brand);
+  outline-offset: 2px;
+}
+
+/* ─── Input Bar ──────────────────────────────────────────────────────────────── */
+.inputBarWrapper {
+  padding:          10px 14px 14px;
+  border-top:       1px solid var(--pa-border);
+  flex-shrink:      0;
+}
+
+.inputPill {
+  display:          flex;
+  align-items:      flex-end;
+  gap:              0;
+  background:       var(--pa-bg-input);
+  border-radius:    var(--pa-radius-full);
+  border:           1.5px solid var(--pa-border);
+  padding:          8px 8px 8px 14px;
+  position:         relative;
+  transition:       border-color 200ms ease;
+  min-height:       52px;
+}
+
+.inputPill:focus-within {
+  border-color:     var(--pa-brand);
+  animation:        borderTrace 400ms ease forwards;
+}
+
+@keyframes borderTrace {
+  from { box-shadow: 0 0 0 0 color-mix(in srgb, var(--pa-brand) 0%, transparent); }
+  to   { box-shadow: 0 0 0 3px color-mix(in srgb, var(--pa-brand) 20%, transparent); }
+}
+
+.inputIconRow {
+  display:          flex;
+  align-items:      center;
+  gap:              2px;
+  flex-shrink:      0;
+  padding-right:    10px;
+  padding-bottom:   2px;
+}
+
+.inputIconBtn {
+  width:            28px;
+  height:           28px;
+  display:          flex;
+  align-items:      center;
+  justify-content:  center;
+  border:           none;
+  background:       transparent;
+  color:            var(--pa-text-dim);
+  cursor:           pointer;
+  border-radius:    var(--pa-radius-sm);
+  transition:       color 150ms ease, background-color 150ms ease;
+  flex-shrink:      0;
+}
+.inputIconBtn:hover {
+  color:    var(--pa-text-muted);
+  background: color-mix(in srgb, white 8%, transparent);
+}
+.inputIconBtn:focus-visible {
+  outline: 2px solid var(--pa-brand);
+  outline-offset: 1px;
+}
+
+.inputDivider {
+  width:            1px;
+  height:           18px;
+  background:       var(--pa-border);
+  margin:           0 4px 2px;
+  flex-shrink:      0;
+}
+
+.inputTextarea {
+  flex:             1;
+  background:       transparent;
+  border:           none;
+  outline:          none;
+  resize:           none;
+  color:            var(--pa-text);
+  font-size:        var(--visa-text-sm, 0.875rem);
+  font-family:      var(--pa-font);
+  line-height:      var(--visa-leading-normal, 1.5);
+  padding:          3px 0;
+  min-height:       24px;
+  max-height:       96px;
+  overflow-y:       auto;
+  scrollbar-width:  none;
+}
+
+.inputTextarea::-webkit-scrollbar { display: none; }
+.inputTextarea::placeholder { color: var(--pa-text-dim); }
+
+.inputMicBtn {
+  width:            34px;
+  height:           34px;
+  border-radius:    var(--pa-radius-full);
+  background:       var(--pa-text);
+  border:           none;
+  color:            var(--pa-bg);
+  cursor:           pointer;
+  display:          flex;
+  align-items:      center;
+  justify-content:  center;
+  flex-shrink:      0;
+  align-self:       flex-end;
+  transition:       transform 150ms ease, background-color 200ms ease;
+}
+.inputMicBtn:hover {
+  transform: scale(1.05);
+}
+.inputMicBtn:focus-visible {
+  outline: 2px solid var(--pa-brand);
+  outline-offset: 2px;
+}
+
+.inputSendBtn {
+  width:            34px;
+  height:           34px;
+  border-radius:    var(--pa-radius-full);
+  background:       var(--pa-brand);
+  border:           none;
+  color:            var(--pa-text);
+  cursor:           pointer;
+  display:          flex;
+  align-items:      center;
+  justify-content:  center;
+  flex-shrink:      0;
+  align-self:       flex-end;
+  transition:       transform 150ms ease, background-color 200ms ease;
+}
+.inputSendBtn:hover {
+  background: var(--pa-brand-mid);
+  transform: scale(1.05);
+}
+.inputSendBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+.inputSendBtn:focus-visible {
+  outline: 2px solid var(--pa-brand);
+  outline-offset: 2px;
+}
+
+/* ─── Error Banner ───────────────────────────────────────────────────────────── */
+.errorBanner {
+  display:          flex;
+  align-items:      center;
+  justify-content:  space-between;
+  gap:              8px;
+  padding:          8px 12px;
+  background:       color-mix(in srgb, var(--pa-error) 12%, transparent);
+  border-left:      3px solid var(--pa-error);
+  font-size:        var(--visa-text-xs, 0.75rem);
+  color:            var(--pa-error);
+  flex-shrink:      0;
+}
+
+.errorRetryBtn {
+  padding:          3px 10px;
+  border-radius:    var(--pa-radius-full);
+  border:           1px solid var(--pa-error);
+  background:       transparent;
+  color:            var(--pa-error);
+  font-size:        var(--visa-text-xs, 0.75rem);
+  cursor:           pointer;
+  font-family:      var(--pa-font);
+  white-space:      nowrap;
+  transition:       background-color 150ms ease;
+}
+.errorRetryBtn:hover {
+  background: color-mix(in srgb, var(--pa-error) 12%, transparent);
+}
+
+/* ─── Elapsed timer ──────────────────────────────────────────────────────────── */
+.elapsedMsg {
+  text-align:       center;
+  font-size:        var(--visa-text-xs, 0.75rem);
+  color:            var(--pa-text-dim);
+  padding:          4px 0;
+}
+
+/* ─── Mobile breakpoint ──────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .panel {
+    right:  12px;
+    width:  calc(100vw - 24px);
+    bottom: 100px;
+  }
+
+  .fab {
+    bottom: 20px;
+    right:  20px;
+  }
+}

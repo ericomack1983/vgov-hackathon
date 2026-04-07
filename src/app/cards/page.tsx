@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle, Loader2, Wifi, ChevronDown, ShieldCheck, ToggleLeft, ToggleRight, CreditCard } from 'lucide-react';
+import { CheckCircle, Loader2, Wifi, ChevronDown, ShieldCheck, ToggleLeft, ToggleRight, CreditCard, ShieldOff, Shield } from 'lucide-react';
 import { useProcurement } from '@/context/ProcurementContext';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -78,16 +78,18 @@ interface IssuedCard {
   allowOnline: boolean;
   allowIntl: boolean;
   allowRecurring: boolean;
+  blocked?: boolean;
 }
 
 // Live card preview
-function CardPreview({ holderName, brand, type, usageType, flipped, issuedLast4 }: {
+function CardPreview({ holderName, brand, type, usageType, flipped, issuedLast4, blocked }: {
   holderName: string;
   brand: Brand;
   type: CardType;
   usageType: UsageType;
   flipped: boolean;
   issuedLast4?: string;
+  blocked?: boolean;
 }) {
   const displayName = holderName.trim() || 'CARD HOLDER';
   const now = new Date();
@@ -98,6 +100,7 @@ function CardPreview({ holderName, brand, type, usageType, flipped, issuedLast4 
       animate={{ rotateY: flipped ? 0 : 0, scale: flipped ? 1.03 : 1 }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
       className={`relative w-full max-w-sm mx-auto h-48 rounded-2xl bg-gradient-to-br ${BRAND_BG[brand]} overflow-hidden shadow-2xl select-none`}
+      style={blocked ? { filter: 'saturate(0.18) brightness(0.72)' } : undefined}
     >
       {/* Decorative circles */}
       <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/10" />
@@ -154,6 +157,51 @@ function CardPreview({ holderName, brand, type, usageType, flipped, issuedLast4 
           <p className="text-white text-xs font-semibold capitalize">{type}</p>
         </div>
       </div>
+
+      {/* Blocked overlay — animates in */}
+      <AnimatePresence>
+        {blocked && (
+          <motion.div
+            key="blocked-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.35, ease: 'easeOut' }}
+            className="absolute inset-0 flex flex-col items-center justify-center gap-2"
+            style={{
+              background: 'linear-gradient(135deg, rgba(0,0,0,0.52) 0%, rgba(0,0,0,0.38) 100%)',
+              backdropFilter: 'blur(1.5px)',
+            }}
+          >
+            {/* Diagonal stripe texture */}
+            <div
+              className="absolute inset-0 opacity-[0.07]"
+              style={{
+                backgroundImage: 'repeating-linear-gradient(135deg, #fff 0px, #fff 1px, transparent 1px, transparent 10px)',
+              }}
+            />
+            <motion.div
+              initial={{ scale: 0.7, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.1, duration: 0.3, ease: [0.34, 1.56, 0.64, 1] }}
+              className="relative z-10 flex flex-col items-center gap-1.5"
+            >
+              <div
+                className="w-10 h-10 rounded-full flex items-center justify-center"
+                style={{ background: 'rgba(255,255,255,0.12)', border: '1.5px solid rgba(255,255,255,0.22)' }}
+              >
+                <ShieldOff size={18} className="text-white" strokeWidth={1.8} />
+              </div>
+              <span
+                className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/90"
+                style={{ textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}
+              >
+                Blocked
+              </span>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
@@ -940,6 +988,49 @@ export default function CardsPage() {
   const [isRequesting, setIsRequesting]       = useState(false);
   const [issuedCard, setIssuedCard]           = useState<IssuedCard | null>(null);
   const [sdkIssuancePayload, setSdkIssuancePayload] = useState<SDKIssuancePayload | null>(null);
+  const [isBlocking, setIsBlocking]           = useState(false);
+
+  // Listen for card events fired from the AI chat widget
+  useEffect(() => {
+    const blockHandler = () => {
+      setIssuedCard(prev => prev ? { ...prev, blocked: true } : prev);
+    };
+    const unblockHandler = () => {
+      setIssuedCard(prev => prev ? { ...prev, blocked: false } : prev);
+    };
+    const issuedHandler = (e: Event) => {
+      const { data, params } = (e as CustomEvent<{
+        data: { accounts: { accountNumber: string; expiryDate: string }[]; responseCode: string };
+        params: { supplierName?: string; amount?: number; startDate?: string; endDate?: string };
+      }>).detail;
+      const account = data?.accounts?.[0];
+      if (!account) return;
+      const last4 = account.accountNumber.slice(-4);
+      const expiry = account.expiryDate ?? '';
+      const supplierName = String(params?.supplierName ?? 'Supplier');
+      setIssuedCard({
+        holderName: supplierName,
+        brand: 'Visa',
+        type: 'credit',
+        usageType: 'single-use',
+        supplierName,
+        last4,
+        expiry,
+        spendLimit: params?.amount ? String(params.amount) : undefined,
+        allowOnline: false,
+        allowIntl: false,
+        allowRecurring: false,
+      });
+    };
+    window.addEventListener('vgov:card-blocked', blockHandler);
+    window.addEventListener('vgov:card-unblocked', unblockHandler);
+    window.addEventListener('vgov:card-issued', issuedHandler);
+    return () => {
+      window.removeEventListener('vgov:card-blocked', blockHandler);
+      window.removeEventListener('vgov:card-unblocked', unblockHandler);
+      window.removeEventListener('vgov:card-issued', issuedHandler);
+    };
+  }, []);
 
   const inputClass = 'w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1434CB] focus:border-[#1434CB] bg-white text-slate-800 placeholder:text-slate-400 transition';
 
@@ -1008,6 +1099,19 @@ export default function CardsPage() {
     setAllowIntl(false);
     setAllowRecurring(false);
     setIssuedCard(null);
+    setIsBlocking(false);
+  }
+
+  async function handleBlockCard() {
+    if (!issuedCard || isBlocking) return;
+    setIsBlocking(true);
+    try {
+      await vpcService.Rules.blockAccount('VPC-ACCT-' + issuedCard.last4);
+    } catch {
+      // sandbox — continue regardless
+    }
+    setIssuedCard(prev => prev ? { ...prev, blocked: true } : prev);
+    setIsBlocking(false);
   }
 
   return (
@@ -1066,6 +1170,7 @@ export default function CardsPage() {
                     usageType={issuedCard.usageType}
                     flipped
                     issuedLast4={issuedCard.last4}
+                    blocked={issuedCard.blocked}
                   />
                   {/* Issued details */}
                   <motion.div
@@ -1105,12 +1210,32 @@ export default function CardsPage() {
                         ))}
                       </div>
                     </div>
-                    <button
-                      onClick={resetForm}
-                      className="w-full mt-2 text-sm text-[#1434CB] hover:text-[#0B1E8A] font-semibold transition-colors pt-2 border-t border-slate-100"
-                    >
-                      Issue another VCN
-                    </button>
+                    <div className="pt-2 border-t border-slate-100 flex items-center gap-3">
+                      <button
+                        onClick={resetForm}
+                        className="flex-1 text-sm text-[#1434CB] hover:text-[#0B1E8A] font-semibold transition-colors text-left"
+                      >
+                        Issue another VCN
+                      </button>
+                      {!issuedCard.blocked ? (
+                        <button
+                          onClick={handleBlockCard}
+                          disabled={isBlocking}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 border border-red-100 transition-colors disabled:opacity-50"
+                        >
+                          {isBlocking ? <Loader2 size={12} className="animate-spin" /> : <ShieldOff size={12} />}
+                          {isBlocking ? 'Blocking…' : 'Block card'}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => setIssuedCard(prev => prev ? { ...prev, blocked: false } : prev)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-500 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 border border-slate-200 hover:border-emerald-200 transition-colors"
+                        >
+                          <Shield size={12} />
+                          Unblock
+                        </button>
+                      )}
+                    </div>
                   </motion.div>
                 </motion.div>
               ) : (

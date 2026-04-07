@@ -6,6 +6,7 @@ import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { useUI } from '@/context/UIContext';
 import { useAuth } from '@/context/AuthContext';
+import { ProcurementAssistant } from '@/components/ProcurementAssistant';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -42,6 +43,7 @@ export function AppShell({ children }: AppShellProps) {
       <main className="ml-64 mt-16 p-8 min-h-screen">
         {isSwitchingRole ? null : children}
       </main>
+      <ProcurementAssistant />
     </div>
   );
 }
