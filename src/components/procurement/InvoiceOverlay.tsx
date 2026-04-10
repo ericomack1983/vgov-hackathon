@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import {
   FileText, Building2, Shield, CheckCircle2,
   CreditCard, Zap, Clock,
 } from 'lucide-react';
+import { usePayment } from '@/context/PaymentContext';
 
 type Phase = 'generating' | 'sending' | 'verifying' | 'done';
 
@@ -69,12 +70,15 @@ interface Props {
   rfpId: string;
   amount: number;
   supplierName: string;
+  rfpTitle?: string;
   onClose: () => void;
 }
 
-export function InvoiceOverlay({ rfpId, amount, supplierName, onClose }: Props) {
+export function InvoiceOverlay({ rfpId, amount, supplierName, rfpTitle, onClose }: Props) {
   const router = useRouter();
+  const { addNotification } = usePayment();
   const [phase, setPhase] = useState<Phase>('generating');
+  const notifiedRef = useRef(false);
   const invoiceNo = `INV-${rfpId.toUpperCase().replace('rfp-','')}-2026`;
 
   /* ── Auto-start sequence on mount ────────────────────────────── */
@@ -84,6 +88,28 @@ export function InvoiceOverlay({ rfpId, amount, supplierName, onClose }: Props) 
     const t3 = setTimeout(() => setPhase('done'),      2800);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, []);
+
+  /* ── Fire notification when verification completes ───────────── */
+  useEffect(() => {
+    if (phase === 'done' && !notifiedRef.current) {
+      notifiedRef.current = true;
+      addNotification({
+        id: `invoice-${rfpId}-${Date.now()}`,
+        type: 'procurement',
+        title: `Invoice Verified — ${invoiceNo}`,
+        message: `${supplierName} · ${fmt(amount)} · Validated via Visa B2B rails`,
+        timestamp: new Date().toISOString(),
+        read: false,
+        emailType: 'invoice-verified',
+        invoiceNo,
+        amount,
+        supplierName,
+        rfpTitle,
+        orderId: rfpId,
+      });
+    }
+  }, [phase, rfpId, invoiceNo, amount, supplierName, rfpTitle, addNotification]);
+
 
   const handleProceed = () => {
     onClose();

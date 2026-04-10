@@ -155,6 +155,7 @@ export default function RfpDetailPage({ params }: { params: Promise<{ id: string
             rfpId={rfp.id}
             amount={winnerScoredBid.bid.amount}
             supplierName={winnerScoredBid.supplier.name}
+            rfpTitle={rfp.title}
             onClose={() => setShowInvoiceOverlay(false)}
           />
         )}

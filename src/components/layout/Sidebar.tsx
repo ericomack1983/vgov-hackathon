@@ -7,9 +7,11 @@ import {
   Bot, CheckCircle2, ArrowRight, Upload,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useUI } from '@/context/UIContext';
 import { useSidebarActions, SidebarAction } from '@/context/SidebarActionsContext';
+import { usePayment } from '@/context/PaymentContext';
 import {
   itemVariants, backVariants, glowVariants, sharedTransition,
 } from '@/components/ui/glow-menu';
@@ -147,13 +149,28 @@ function ProcurementActions({ actions }: { actions: SidebarAction[] }) {
 export function Sidebar({ currentPath }: SidebarProps) {
   const { role } = useUI();
   const { actions } = useSidebarActions();
+  const { unreadCount } = usePayment();
   const items = NAV_ITEMS[role] || NAV_ITEMS.gov;
+
+  const prevCountRef = useRef(unreadCount);
+  const [bellBump, setBellBump] = useState(false);
+
+  useEffect(() => {
+    if (unreadCount > prevCountRef.current) {
+      setBellBump(true);
+      const t = setTimeout(() => setBellBump(false), 700);
+      prevCountRef.current = unreadCount;
+      return () => clearTimeout(t);
+    }
+    prevCountRef.current = unreadCount;
+  }, [unreadCount]);
 
   return (
     <aside className="fixed left-0 top-16 w-64 h-[calc(100vh-4rem)] bg-slate-900 border-r border-slate-800 z-20 flex flex-col">
       <nav className="p-3 space-y-0.5 flex-1">
         {items.map((item) => {
           const isActive = item.href === currentPath;
+          const isNotifications = item.href === '/notifications';
           const Icon = item.icon;
           const style = NAV_STYLE[item.href] ?? {
             gradient: 'radial-gradient(circle, rgba(99,102,241,0.2) 0%, transparent 100%)',
@@ -192,13 +209,57 @@ export function Sidebar({ currentPath }: SidebarProps) {
                     isActive ? 'text-white' : 'text-slate-400',
                   )}
                 >
-                  <Icon
-                    className={cn(
-                      'w-4 h-4 shrink-0 transition-colors duration-300',
-                      isActive ? 'text-white' : style.iconColor,
-                    )}
-                  />
+                  {/* Bell icon gets shake + badge for notifications */}
+                  {isNotifications ? (
+                    <span className="relative shrink-0">
+                      <motion.span
+                        animate={bellBump ? { rotate: [0, -18, 18, -12, 12, -6, 6, 0] } : { rotate: 0 }}
+                        transition={{ duration: 0.6, ease: 'easeInOut' }}
+                        className="block"
+                      >
+                        <Icon
+                          className={cn(
+                            'w-4 h-4 transition-colors duration-300',
+                            isActive ? 'text-white' : style.iconColor,
+                          )}
+                        />
+                      </motion.span>
+                      <AnimatePresence mode="popLayout">
+                        {unreadCount > 0 && (
+                          <motion.span
+                            key={unreadCount}
+                            initial={{ scale: 0, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0, opacity: 0 }}
+                            transition={{ type: 'spring', stiffness: 500, damping: 18 }}
+                            className="absolute -top-1.5 -right-1.5 bg-red-500 text-white font-bold min-w-[14px] h-[14px] px-0.5 rounded-full flex items-center justify-center leading-none"
+                            style={{ fontSize: 8 }}
+                          >
+                            {unreadCount > 9 ? '9+' : unreadCount}
+                          </motion.span>
+                        )}
+                      </AnimatePresence>
+                    </span>
+                  ) : (
+                    <Icon
+                      className={cn(
+                        'w-4 h-4 shrink-0 transition-colors duration-300',
+                        isActive ? 'text-white' : style.iconColor,
+                      )}
+                    />
+                  )}
                   {item.label}
+                  {/* Inline pill badge on the label row */}
+                  {isNotifications && unreadCount > 0 && (
+                    <motion.span
+                      initial={{ scale: 0.7, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      className="ml-auto bg-red-500 text-white font-bold rounded-full px-1.5 py-0.5 leading-none"
+                      style={{ fontSize: 9 }}
+                    >
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </motion.span>
+                  )}
                 </motion.div>
               </Link>
 

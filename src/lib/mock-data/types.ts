@@ -133,4 +133,7 @@ export interface Notification {
   fundMethod?: string;
   paymentStatus?: 'pending' | 'settled';
   paymentMode?: 'cnp' | 'card-present';
+  emailType?: 'invoice-verified';
+  invoiceNo?: string;
+  rfpTitle?: string;
 }

@@ -992,22 +992,14 @@ export default function CardsPage() {
 
   // Listen for card events fired from the AI chat widget
   useEffect(() => {
-    const blockHandler = () => {
-      setIssuedCard(prev => prev ? { ...prev, blocked: true } : prev);
-    };
-    const unblockHandler = () => {
-      setIssuedCard(prev => prev ? { ...prev, blocked: false } : prev);
-    };
-    const issuedHandler = (e: Event) => {
-      const { data, params } = (e as CustomEvent<{
-        data: { accounts: { accountNumber: string; expiryDate: string }[]; responseCode: string };
-        params: { supplierName?: string; amount?: number; startDate?: string; endDate?: string };
-      }>).detail;
-      const account = data?.accounts?.[0];
+    function applyIssuedPayload(payload: {
+      data: { accounts: { accountNumber: string; expiryDate: string }[] };
+      params: { supplierName?: string; amount?: number };
+    }) {
+      const account = payload.data?.accounts?.[0];
       if (!account) return;
       const last4 = account.accountNumber.slice(-4);
-      const expiry = account.expiryDate ?? '';
-      const supplierName = String(params?.supplierName ?? 'Supplier');
+      const supplierName = String(payload.params?.supplierName ?? 'Supplier');
       setIssuedCard({
         holderName: supplierName,
         brand: 'Visa',
@@ -1015,13 +1007,29 @@ export default function CardsPage() {
         usageType: 'single-use',
         supplierName,
         last4,
-        expiry,
-        spendLimit: params?.amount ? String(params.amount) : undefined,
+        expiry: account.expiryDate ?? '',
+        spendLimit: payload.params?.amount ? String(payload.params.amount) : undefined,
         allowOnline: false,
         allowIntl: false,
         allowRecurring: false,
       });
+    }
+
+    // Pick up card issued before this page mounted (user was on another page)
+    const pending = sessionStorage.getItem('vgov:pending-card');
+    if (pending) {
+      try { applyIssuedPayload(JSON.parse(pending)); } catch { /* ignore */ }
+      sessionStorage.removeItem('vgov:pending-card');
+    }
+
+    const blockHandler = () => setIssuedCard(prev => prev ? { ...prev, blocked: true } : prev);
+    const unblockHandler = () => setIssuedCard(prev => prev ? { ...prev, blocked: false } : prev);
+    const issuedHandler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      applyIssuedPayload(detail);
+      sessionStorage.removeItem('vgov:pending-card');
     };
+
     window.addEventListener('vgov:card-blocked', blockHandler);
     window.addEventListener('vgov:card-unblocked', unblockHandler);
     window.addEventListener('vgov:card-issued', issuedHandler);

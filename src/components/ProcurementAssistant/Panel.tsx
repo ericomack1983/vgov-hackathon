@@ -185,9 +185,10 @@ export function Panel({ onClose }: PanelProps) {
         }
         // Notify cards page when a VCN is issued via chat
         if (toolName === 'vcn_issue_virtual_card' && result.data?.accounts) {
-          window.dispatchEvent(new CustomEvent('vgov:card-issued', {
-            detail: { data: result.data, params: confirmationParams },
-          }));
+          const payload = { data: result.data, params: confirmationParams };
+          // Persist so cards page picks it up even if not currently mounted
+          sessionStorage.setItem('vgov:pending-card', JSON.stringify(payload));
+          window.dispatchEvent(new CustomEvent('vgov:card-issued', { detail: payload }));
         }
         const summary = buildToolSummary(toolName, result.data ?? {});
         conv.addToolResultMessage(summary, toolName, result.data ?? {});

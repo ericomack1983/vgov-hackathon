@@ -41,7 +41,8 @@ export default function NotificationsPage() {
         </div>
         <div className="space-y-3">
           {notifications.map((notification) =>
-            notification.type === 'payment' && notification.amount && notification.paymentMode !== 'cnp'
+            (notification.emailType === 'invoice-verified') ||
+            (notification.type === 'payment' && notification.amount && notification.paymentMode !== 'cnp')
               ? <MailInboxItem key={notification.id} notification={notification} onMarkRead={markNotificationRead} />
               : <NotificationItem key={notification.id} notification={notification} onMarkRead={markNotificationRead} />
           )}
