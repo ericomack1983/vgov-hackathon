@@ -7,6 +7,7 @@ import { Header } from './Header';
 import { useUI } from '@/context/UIContext';
 import { useAuth } from '@/context/AuthContext';
 import { ProcurementAssistant } from '@/components/ProcurementAssistant';
+import { VisaFooter } from './VisaFooter';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -40,9 +41,10 @@ export function AppShell({ children }: AppShellProps) {
     <div className="min-h-screen bg-white">
       <Header />
       <Sidebar currentPath={pathname} />
-      <main className="ml-64 mt-16 p-8 min-h-screen">
+      <main className="ml-64 mt-16 p-8 min-h-[calc(100vh-4rem)]">
         {isSwitchingRole ? null : children}
       </main>
+      <VisaFooter />
       <ProcurementAssistant />
     </div>
   );

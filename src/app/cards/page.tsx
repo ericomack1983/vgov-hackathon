@@ -96,15 +96,33 @@ function CardPreview({ holderName, brand, type, usageType, flipped, issuedLast4,
   const expiry = `${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getFullYear() + 3).slice(-2)}`;
 
   return (
+    <div className="w-full max-w-sm mx-auto" style={{ perspective: '900px' }}>
     <motion.div
-      animate={{ rotateY: flipped ? 0 : 0, scale: flipped ? 1.03 : 1 }}
-      transition={{ duration: 0.5, ease: 'easeOut' }}
-      className={`relative w-full max-w-sm mx-auto h-48 rounded-2xl bg-gradient-to-br ${BRAND_BG[brand]} overflow-hidden shadow-2xl select-none`}
-      style={blocked ? { filter: 'saturate(0.18) brightness(0.72)' } : undefined}
+      animate={blocked ? { rotateY: 0, rotateX: 0, y: 0 } : {
+        rotateY: [-5, 5, -5],
+        rotateX: [2.5, -2.5, 2.5],
+        y: [0, -10, 0],
+      }}
+      transition={blocked ? {} : { duration: 7, repeat: Infinity, ease: 'easeInOut' }}
+      className={`relative w-full h-48 rounded-2xl bg-gradient-to-br ${BRAND_BG[brand]} overflow-hidden select-none`}
+      style={{
+        transformStyle: 'preserve-3d',
+        boxShadow: blocked
+          ? '0 8px 24px rgba(0,0,0,0.25)'
+          : '0 28px 64px rgba(0,0,0,0.45), 0 8px 24px rgba(20,52,203,0.35)',
+        filter: blocked ? 'saturate(0.18) brightness(0.72)' : undefined,
+      }}
     >
-      {/* Decorative circles */}
-      <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/10" />
-      <div className="absolute -bottom-12 -left-6 w-48 h-48 rounded-full bg-white/5" />
+      {/* Top-left gloss reflection — no circles */}
+      <div
+        className="absolute inset-0 rounded-2xl pointer-events-none"
+        style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.14) 0%, transparent 45%)' }}
+      />
+      {/* Subtle diagonal stripe texture (Visa ribbon motif) */}
+      <div
+        className="absolute inset-0 rounded-2xl pointer-events-none"
+        style={{ background: 'repeating-linear-gradient(135deg, transparent, transparent 22px, rgba(255,255,255,0.022) 22px, rgba(255,255,255,0.022) 23px)' }}
+      />
 
       {/* VCN badge */}
       <div className="absolute top-3 left-6">
@@ -203,6 +221,7 @@ function CardPreview({ holderName, brand, type, usageType, flipped, issuedLast4,
         )}
       </AnimatePresence>
     </motion.div>
+    </div>
   );
 }
 
@@ -308,8 +327,9 @@ function CardBuildAnimation({ currentIdx, done }: { currentIdx: number; done: bo
           clipPath: `inset(0 0 ${100 - scanPct}% 0 round 16px)`,
           background: 'linear-gradient(135deg, #1434CB 0%, #1e44e8 55%, #0a1f8f 100%)',
         }}>
-          <div className="absolute -top-8 -right-8 w-36 h-36 rounded-full bg-white/10" />
-          <div className="absolute -bottom-10 -left-6 w-40 h-40 rounded-full bg-white/5" />
+          {/* Gloss reflection instead of circles */}
+          <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 45%)' }} />
+          <div className="absolute inset-0 pointer-events-none" style={{ background: 'repeating-linear-gradient(135deg, transparent, transparent 22px, rgba(255,255,255,0.022) 22px, rgba(255,255,255,0.022) 23px)' }} />
 
           {/* Chip */}
           {chipVisible && (
@@ -333,8 +353,8 @@ function CardBuildAnimation({ currentIdx, done }: { currentIdx: number; done: bo
           {logoVisible && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }}
               className="absolute" style={{ top: 12, right: 16 }}>
-              <svg viewBox="0 0 72 24" style={{ height: 14, width: 'auto' }}>
-                <path fill="white" d="M27.5 1.2l-4.7 21.6h-5L22.4 1.2h5.1zm19.4 14l2.6-7.2 1.5 7.2h-4.1zm5.6 7.6h4.6L53 1.2h-4.2c-.9 0-1.7.5-2.1 1.3L39.3 22.8h5l1-2.7h6.1l.6 2.7zm-12.5-7c0-4.9-6.8-5.2-6.7-7.4 0-.7.6-1.4 2-1.5 1.3-.1 2.7.1 3.9.7l.7-3.3C38.7 3.8 37.2 3.5 35.7 3.5c-4.7 0-8 2.5-8 6 0 2.6 2.3 4.1 4.1 4.9 1.8.9 2.4 1.5 2.4 2.3 0 1.2-1.4 1.8-2.8 1.8-2.3 0-3.6-.6-4.7-1.1l-.8 3.5c1.1.5 3 .9 5.1.9 4.8 0 8-2.4 8-6.1zm-17.2-14.6L16.4 22.8h-5.1L8.4 4.9C8.2 4 7.7 3.2 6.8 2.8 5.3 2.1 3.5 1.6 1.9 1.3L2 1.2h8.1c1.1 0 2 .7 2.3 1.8l2.1 11.1 5.3-12.9h5.1z"/>
+              <svg viewBox="0 0 71 23" fill="none" style={{ height: 14, width: 'auto' }}>
+                <path fill="white" fillRule="evenodd" clipRule="evenodd" d="M50.6986 15.3377C50.7123 11.8369 47.8134 10.3152 45.4937 9.09755C43.9358 8.27981 42.6393 7.59921 42.6617 6.54843C42.6781 5.75329 43.4371 4.90557 45.0931 4.692C47.0325 4.5045 48.9864 4.8451 50.7479 5.67771L51.7566 0.985714C50.0419 0.341244 48.2261 0.00745647 46.3943 0C40.7429 0 36.7376 3.013 36.7014 7.33043C36.6653 10.5143 39.5501 12.3017 41.7286 13.363C43.9629 14.4473 44.7153 15.1439 44.7054 16.1164C44.7054 17.6049 42.9213 18.2587 41.2751 18.285C38.4794 18.3296 36.8224 17.5564 35.5085 16.9434L35.3839 16.8853L34.3357 21.7416C35.6763 22.3593 38.1504 22.8949 40.7166 22.9211C46.7393 22.9211 50.6821 19.9443 50.7019 15.3377H50.6986ZM26.9429 0.404143L17.6541 22.5729H11.592L7.02157 4.88257C6.74229 3.79171 6.50243 3.39414 5.658 2.93414C4.27143 2.18829 2.00429 1.48514 0 1.04814L0.138 0.391H9.89329C11.2059 0.396383 12.3201 1.35458 12.5219 2.65157L14.9369 15.4823L20.9234 0.404143H26.9429ZM70.9714 22.5663H65.6683L64.975 19.2641H57.6183L56.4223 22.5729H50.4029L59.0016 2.03057C59.409 1.04254 60.3741 0.399575 61.4429 0.404143H66.3419L70.9714 22.5663ZM59.2677 14.72L62.2873 6.394L64.0254 14.72H59.2677ZM30.3994 22.5729L35.1571 0.404143H29.4071L24.6626 22.5729H30.3994Z"/>
               </svg>
             </motion.div>
           )}
@@ -549,8 +569,8 @@ function IssuanceOverlay({ brand, onDone, sdkPayload }: {
         {/* ── Header ── */}
         <div className="px-5 pt-4 pb-3 flex items-center gap-3 border-b border-white/6">
           <div className="w-8 h-8 rounded-lg bg-[#1434CB] flex items-center justify-center shrink-0">
-            <svg viewBox="0 0 72 24" className="h-3.5 w-auto">
-              <path fill="white" d="M27.5 1.2l-4.7 21.6h-5L22.4 1.2h5.1zm19.4 14l2.6-7.2 1.5 7.2h-4.1zm5.6 7.6h4.6L53 1.2h-4.2c-.9 0-1.7.5-2.1 1.3L39.3 22.8h5l1-2.7h6.1l.6 2.7zm-12.5-7c0-4.9-6.8-5.2-6.7-7.4 0-.7.6-1.4 2-1.5 1.3-.1 2.7.1 3.9.7l.7-3.3C38.7 3.8 37.2 3.5 35.7 3.5c-4.7 0-8 2.5-8 6 0 2.6 2.3 4.1 4.1 4.9 1.8.9 2.4 1.5 2.4 2.3 0 1.2-1.4 1.8-2.8 1.8-2.3 0-3.6-.6-4.7-1.1l-.8 3.5c1.1.5 3 .9 5.1.9 4.8 0 8-2.4 8-6.1zm-17.2-14.6L16.4 22.8h-5.1L8.4 4.9C8.2 4 7.7 3.2 6.8 2.8 5.3 2.1 3.5 1.6 1.9 1.3L2 1.2h8.1c1.1 0 2 .7 2.3 1.8l2.1 11.1 5.3-12.9h5.1z"/>
+            <svg viewBox="0 0 71 23" fill="none" className="h-3.5 w-auto">
+              <path fill="white" fillRule="evenodd" clipRule="evenodd" d="M50.6986 15.3377C50.7123 11.8369 47.8134 10.3152 45.4937 9.09755C43.9358 8.27981 42.6393 7.59921 42.6617 6.54843C42.6781 5.75329 43.4371 4.90557 45.0931 4.692C47.0325 4.5045 48.9864 4.8451 50.7479 5.67771L51.7566 0.985714C50.0419 0.341244 48.2261 0.00745647 46.3943 0C40.7429 0 36.7376 3.013 36.7014 7.33043C36.6653 10.5143 39.5501 12.3017 41.7286 13.363C43.9629 14.4473 44.7153 15.1439 44.7054 16.1164C44.7054 17.6049 42.9213 18.2587 41.2751 18.285C38.4794 18.3296 36.8224 17.5564 35.5085 16.9434L35.3839 16.8853L34.3357 21.7416C35.6763 22.3593 38.1504 22.8949 40.7166 22.9211C46.7393 22.9211 50.6821 19.9443 50.7019 15.3377H50.6986ZM26.9429 0.404143L17.6541 22.5729H11.592L7.02157 4.88257C6.74229 3.79171 6.50243 3.39414 5.658 2.93414C4.27143 2.18829 2.00429 1.48514 0 1.04814L0.138 0.391H9.89329C11.2059 0.396383 12.3201 1.35458 12.5219 2.65157L14.9369 15.4823L20.9234 0.404143H26.9429ZM70.9714 22.5663H65.6683L64.975 19.2641H57.6183L56.4223 22.5729H50.4029L59.0016 2.03057C59.409 1.04254 60.3741 0.399575 61.4429 0.404143H66.3419L70.9714 22.5663ZM59.2677 14.72L62.2873 6.394L64.0254 14.72H59.2677ZM30.3994 22.5729L35.1571 0.404143H29.4071L24.6626 22.5729H30.3994Z"/>
             </svg>
           </div>
           <div className="flex-1">
@@ -602,8 +622,8 @@ function IssuanceOverlay({ brand, onDone, sdkPayload }: {
                 {step.visaLogo && (
                   <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] font-bold shrink-0"
                     style={{ color: '#93bbff', background: 'rgba(20,52,203,0.25)', border: '1px solid rgba(74,123,255,0.3)' }}>
-                    <svg viewBox="0 0 72 24" className="h-2 w-auto shrink-0">
-                      <path fill="currentColor" d="M27.5 1.2l-4.7 21.6h-5L22.4 1.2h5.1zm19.4 14l2.6-7.2 1.5 7.2h-4.1zm5.6 7.6h4.6L53 1.2h-4.2c-.9 0-1.7.5-2.1 1.3L39.3 22.8h5l1-2.7h6.1l.6 2.7zm-12.5-7c0-4.9-6.8-5.2-6.7-7.4 0-.7.6-1.4 2-1.5 1.3-.1 2.7.1 3.9.7l.7-3.3C38.7 3.8 37.2 3.5 35.7 3.5c-4.7 0-8 2.5-8 6 0 2.6 2.3 4.1 4.1 4.9 1.8.9 2.4 1.5 2.4 2.3 0 1.2-1.4 1.8-2.8 1.8-2.3 0-3.6-.6-4.7-1.1l-.8 3.5c1.1.5 3 .9 5.1.9 4.8 0 8-2.4 8-6.1zm-17.2-14.6L16.4 22.8h-5.1L8.4 4.9C8.2 4 7.7 3.2 6.8 2.8 5.3 2.1 3.5 1.6 1.9 1.3L2 1.2h8.1c1.1 0 2 .7 2.3 1.8l2.1 11.1 5.3-12.9h5.1z"/>
+                    <svg viewBox="0 0 71 23" fill="none" className="h-2 w-auto shrink-0">
+                      <path fill="currentColor" fillRule="evenodd" clipRule="evenodd" d="M50.6986 15.3377C50.7123 11.8369 47.8134 10.3152 45.4937 9.09755C43.9358 8.27981 42.6393 7.59921 42.6617 6.54843C42.6781 5.75329 43.4371 4.90557 45.0931 4.692C47.0325 4.5045 48.9864 4.8451 50.7479 5.67771L51.7566 0.985714C50.0419 0.341244 48.2261 0.00745647 46.3943 0C40.7429 0 36.7376 3.013 36.7014 7.33043C36.6653 10.5143 39.5501 12.3017 41.7286 13.363C43.9629 14.4473 44.7153 15.1439 44.7054 16.1164C44.7054 17.6049 42.9213 18.2587 41.2751 18.285C38.4794 18.3296 36.8224 17.5564 35.5085 16.9434L35.3839 16.8853L34.3357 21.7416C35.6763 22.3593 38.1504 22.8949 40.7166 22.9211C46.7393 22.9211 50.6821 19.9443 50.7019 15.3377H50.6986ZM26.9429 0.404143L17.6541 22.5729H11.592L7.02157 4.88257C6.74229 3.79171 6.50243 3.39414 5.658 2.93414C4.27143 2.18829 2.00429 1.48514 0 1.04814L0.138 0.391H9.89329C11.2059 0.396383 12.3201 1.35458 12.5219 2.65157L14.9369 15.4823L20.9234 0.404143H26.9429ZM70.9714 22.5663H65.6683L64.975 19.2641H57.6183L56.4223 22.5729H50.4029L59.0016 2.03057C59.409 1.04254 60.3741 0.399575 61.4429 0.404143H66.3419L70.9714 22.5663ZM59.2677 14.72L62.2873 6.394L64.0254 14.72H59.2677ZM30.3994 22.5729L35.1571 0.404143H29.4071L24.6626 22.5729H30.3994Z"/>
                     </svg>
                     API
                   </span>
@@ -633,8 +653,7 @@ function IssuanceOverlay({ brand, onDone, sdkPayload }: {
               <div className="mx-4 mb-4 rounded-xl overflow-hidden">
                 {/* Mini card preview */}
                 <div className={`relative h-24 bg-gradient-to-br ${BRAND_BG[brand]} overflow-hidden`}>
-                  <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/10" />
-                  <div className="absolute -bottom-8 -left-4 w-28 h-28 rounded-full bg-white/5" />
+                  <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 45%)' }} />
                   {/* Scan beam done flash */}
                   <motion.div
                     className="absolute inset-0 bg-emerald-400/20"
@@ -652,8 +671,8 @@ function IssuanceOverlay({ brand, onDone, sdkPayload }: {
                     <span className="text-white/70 text-[9px] font-bold font-mono uppercase tracking-widest">VCN Issued</span>
                   </div>
                   <div className="absolute top-3 right-4">
-                    <svg viewBox="0 0 72 24" className="h-4 w-auto opacity-90">
-                      <path fill="white" d="M27.5 1.2l-4.7 21.6h-5L22.4 1.2h5.1zm19.4 14l2.6-7.2 1.5 7.2h-4.1zm5.6 7.6h4.6L53 1.2h-4.2c-.9 0-1.7.5-2.1 1.3L39.3 22.8h5l1-2.7h6.1l.6 2.7zm-12.5-7c0-4.9-6.8-5.2-6.7-7.4 0-.7.6-1.4 2-1.5 1.3-.1 2.7.1 3.9.7l.7-3.3C38.7 3.8 37.2 3.5 35.7 3.5c-4.7 0-8 2.5-8 6 0 2.6 2.3 4.1 4.1 4.9 1.8.9 2.4 1.5 2.4 2.3 0 1.2-1.4 1.8-2.8 1.8-2.3 0-3.6-.6-4.7-1.1l-.8 3.5c1.1.5 3 .9 5.1.9 4.8 0 8-2.4 8-6.1zm-17.2-14.6L16.4 22.8h-5.1L8.4 4.9C8.2 4 7.7 3.2 6.8 2.8 5.3 2.1 3.5 1.6 1.9 1.3L2 1.2h8.1c1.1 0 2 .7 2.3 1.8l2.1 11.1 5.3-12.9h5.1z"/>
+                    <svg viewBox="0 0 71 23" fill="none" className="h-4 w-auto opacity-90">
+                      <path fill="white" fillRule="evenodd" clipRule="evenodd" d="M50.6986 15.3377C50.7123 11.8369 47.8134 10.3152 45.4937 9.09755C43.9358 8.27981 42.6393 7.59921 42.6617 6.54843C42.6781 5.75329 43.4371 4.90557 45.0931 4.692C47.0325 4.5045 48.9864 4.8451 50.7479 5.67771L51.7566 0.985714C50.0419 0.341244 48.2261 0.00745647 46.3943 0C40.7429 0 36.7376 3.013 36.7014 7.33043C36.6653 10.5143 39.5501 12.3017 41.7286 13.363C43.9629 14.4473 44.7153 15.1439 44.7054 16.1164C44.7054 17.6049 42.9213 18.2587 41.2751 18.285C38.4794 18.3296 36.8224 17.5564 35.5085 16.9434L35.3839 16.8853L34.3357 21.7416C35.6763 22.3593 38.1504 22.8949 40.7166 22.9211C46.7393 22.9211 50.6821 19.9443 50.7019 15.3377H50.6986ZM26.9429 0.404143L17.6541 22.5729H11.592L7.02157 4.88257C6.74229 3.79171 6.50243 3.39414 5.658 2.93414C4.27143 2.18829 2.00429 1.48514 0 1.04814L0.138 0.391H9.89329C11.2059 0.396383 12.3201 1.35458 12.5219 2.65157L14.9369 15.4823L20.9234 0.404143H26.9429ZM70.9714 22.5663H65.6683L64.975 19.2641H57.6183L56.4223 22.5729H50.4029L59.0016 2.03057C59.409 1.04254 60.3741 0.399575 61.4429 0.404143H66.3419L70.9714 22.5663ZM59.2677 14.72L62.2873 6.394L64.0254 14.72H59.2677ZM30.3994 22.5729L35.1571 0.404143H29.4071L24.6626 22.5729H30.3994Z"/>
                     </svg>
                   </div>
                   <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between">
@@ -959,8 +978,8 @@ function IPCPanel({ purpose, mccCode, spendLimit, allowOnline, allowIntl, allowR
 
       {/* Footer */}
       <div className="px-4 pb-3 flex items-center gap-1.5">
-        <svg viewBox="0 0 72 24" className="h-2.5 w-auto opacity-20">
-          <path fill="white" d="M27.5 1.2l-4.7 21.6h-5L22.4 1.2h5.1zm19.4 14l2.6-7.2 1.5 7.2h-4.1zm5.6 7.6h4.6L53 1.2h-4.2c-.9 0-1.7.5-2.1 1.3L39.3 22.8h5l1-2.7h6.1l.6 2.7zm-12.5-7c0-4.9-6.8-5.2-6.7-7.4 0-.7.6-1.4 2-1.5 1.3-.1 2.7.1 3.9.7l.7-3.3C38.7 3.8 37.2 3.5 35.7 3.5c-4.7 0-8 2.5-8 6 0 2.6 2.3 4.1 4.1 4.9 1.8.9 2.4 1.5 2.4 2.3 0 1.2-1.4 1.8-2.8 1.8-2.3 0-3.6-.6-4.7-1.1l-.8 3.5c1.1.5 3 .9 5.1.9 4.8 0 8-2.4 8-6.1zm-17.2-14.6L16.4 22.8h-5.1L8.4 4.9C8.2 4 7.7 3.2 6.8 2.8 5.3 2.1 3.5 1.6 1.9 1.3L2 1.2h8.1c1.1 0 2 .7 2.3 1.8l2.1 11.1 5.3-12.9h5.1z"/>
+        <svg viewBox="0 0 71 23" fill="none" className="h-2.5 w-auto opacity-20">
+          <path fill="white" fillRule="evenodd" clipRule="evenodd" d="M50.6986 15.3377C50.7123 11.8369 47.8134 10.3152 45.4937 9.09755C43.9358 8.27981 42.6393 7.59921 42.6617 6.54843C42.6781 5.75329 43.4371 4.90557 45.0931 4.692C47.0325 4.5045 48.9864 4.8451 50.7479 5.67771L51.7566 0.985714C50.0419 0.341244 48.2261 0.00745647 46.3943 0C40.7429 0 36.7376 3.013 36.7014 7.33043C36.6653 10.5143 39.5501 12.3017 41.7286 13.363C43.9629 14.4473 44.7153 15.1439 44.7054 16.1164C44.7054 17.6049 42.9213 18.2587 41.2751 18.285C38.4794 18.3296 36.8224 17.5564 35.5085 16.9434L35.3839 16.8853L34.3357 21.7416C35.6763 22.3593 38.1504 22.8949 40.7166 22.9211C46.7393 22.9211 50.6821 19.9443 50.7019 15.3377H50.6986ZM26.9429 0.404143L17.6541 22.5729H11.592L7.02157 4.88257C6.74229 3.79171 6.50243 3.39414 5.658 2.93414C4.27143 2.18829 2.00429 1.48514 0 1.04814L0.138 0.391H9.89329C11.2059 0.396383 12.3201 1.35458 12.5219 2.65157L14.9369 15.4823L20.9234 0.404143H26.9429ZM70.9714 22.5663H65.6683L64.975 19.2641H57.6183L56.4223 22.5729H50.4029L59.0016 2.03057C59.409 1.04254 60.3741 0.399575 61.4429 0.404143H66.3419L70.9714 22.5663ZM59.2677 14.72L62.2873 6.394L64.0254 14.72H59.2677ZM30.3994 22.5729L35.1571 0.404143H29.4071L24.6626 22.5729H30.3994Z"/>
         </svg>
         <span className="text-[8px] text-white/15 font-mono">IPC · Intent → VPCRule[] · Gen-AI model</span>
       </div>
@@ -1040,7 +1059,11 @@ export default function CardsPage() {
     };
   }, []);
 
-  const inputClass = 'w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1434CB] focus:border-[#1434CB] bg-white text-slate-800 placeholder:text-slate-400 transition';
+  const inputClass = 'w-full rounded-xl px-3.5 py-2.5 text-sm focus:outline-none bg-white transition'
+    + ' placeholder:text-[#9CA3AF]'
+    + ' [border:1px_solid_rgba(0,0,0,0.12)]'
+    + ' [color:#000000]'
+    + ' focus:[border-color:#1434CB] focus:[box-shadow:0_0_0_3px_rgba(20,52,203,0.10)]';
 
   // single-use VCNs shouldn't allow recurring charges
   useEffect(() => {
@@ -1135,21 +1158,25 @@ export default function CardsPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, ease: 'easeOut' }}
       >
-        <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between gap-6">
           <div>
-            <h1 className="text-xl font-semibold text-slate-900">Virtual Card Issuance</h1>
-            <p className="mt-1 text-sm text-slate-500">
+            <h1 className="text-lg font-semibold" style={{ color: '#000000' }}>Virtual Card Issuance</h1>
+            <p className="mt-0.5 text-sm" style={{ color: '#4a4a4a' }}>
               Issue a VCN — a single-use or limited-use credential tied to a specific supplier, amount, and time window.
             </p>
           </div>
-          <div className="flex gap-2 mt-0.5 shrink-0">
+          <div className="flex gap-2 mt-0.5 shrink-0 flex-wrap justify-end">
             {[
-              { label: 'Supplier-locked', color: 'bg-[#EEF1FD] text-[#1434CB]' },
-              { label: 'Amount-bound',    color: 'bg-violet-50 text-violet-600' },
-              { label: 'Time-bound',      color: 'bg-sky-50 text-sky-600'       },
-              { label: 'MCC-controlled',  color: 'bg-emerald-50 text-emerald-600' },
-            ].map(({ label, color }) => (
-              <span key={label} className={`hidden lg:inline-flex text-[10px] font-semibold px-2 py-1 rounded-full ${color}`}>
+              { label: 'Supplier-locked', bg: '#EEF2FF', color: '#1434CB' },
+              { label: 'Amount-bound',    bg: '#F5F3FF', color: '#7e22ce' },
+              { label: 'Time-bound',      bg: '#EFF6FF', color: '#1d4ed8' },
+              { label: 'MCC-controlled',  bg: '#F0FDF4', color: '#2C6849' },
+            ].map(({ label, bg, color }) => (
+              <span
+                key={label}
+                className="hidden lg:inline-flex text-[10px] font-semibold px-2.5 py-1 rounded-full"
+                style={{ background: bg, color, border: `1px solid ${color}22` }}
+              >
                 {label}
               </span>
             ))}
@@ -1160,7 +1187,7 @@ export default function CardsPage() {
 
           {/* Left — Live card preview */}
           <div className="flex flex-col items-center gap-6">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider self-start">Preview</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider self-start" style={{ color: '#4a4a4a' }}>Preview</p>
             <AnimatePresence mode="wait">
               {issuedCard ? (
                 <motion.div

@@ -185,31 +185,25 @@ export default function RfpDetailPage({ params }: { params: Promise<{ id: string
         <RFPStatusTimeline currentStatus={rfp.status} />
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-        <h2 className="text-sm font-semibold text-slate-700 mb-2">Description</h2>
-        <p className="text-sm text-slate-700">{rfp.description}</p>
+      <div
+        className="bg-white rounded-2xl p-5"
+        style={{ border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 1px 3px 0 rgba(0,0,0,0.05)' }}
+      >
+        <h2 className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: '#4a4a4a' }}>Description</h2>
+        <p className="text-sm" style={{ color: '#000000' }}>{rfp.description}</p>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-          <div>
-            <p className="text-xs text-slate-500">Category</p>
-            <p className="text-sm font-medium text-slate-900">{rfp.category}</p>
-          </div>
-          <div>
-            <p className="text-xs text-slate-500">Budget</p>
-            <p className="text-sm font-medium text-slate-900">${rfp.budgetCeiling.toLocaleString()}</p>
-          </div>
-          <div>
-            <p className="text-xs text-slate-500">Deadline</p>
-            <p className="text-sm font-medium text-slate-900">
-              {format(new Date(rfp.deadline), 'MMM d, yyyy')}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-slate-500">Created</p>
-            <p className="text-sm font-medium text-slate-900">
-              {format(new Date(rfp.createdAt), 'MMM d, yyyy')}
-            </p>
-          </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+          {[
+            { label: 'Category', value: rfp.category },
+            { label: 'Budget',   value: `$${rfp.budgetCeiling.toLocaleString()}` },
+            { label: 'Deadline', value: format(new Date(rfp.deadline), 'MMM d, yyyy') },
+            { label: 'Created',  value: format(new Date(rfp.createdAt), 'MMM d, yyyy') },
+          ].map(({ label, value }) => (
+            <div key={label}>
+              <p className="text-[10px] font-semibold uppercase tracking-wider mb-0.5" style={{ color: '#4a4a4a' }}>{label}</p>
+              <p className="text-sm font-medium" style={{ color: '#000000' }}>{value}</p>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -381,43 +375,62 @@ export default function RfpDetailPage({ params }: { params: Promise<{ id: string
 
       <div className="mt-6">
         <div className="flex items-center gap-2 mb-4">
-          <FileText size={18} className="text-slate-500" />
-          <h2 className="text-lg font-semibold text-slate-900">Submitted Bids</h2>
-          <span className="bg-slate-100 text-slate-600 text-xs font-semibold px-2 py-0.5 rounded-full">
+          <FileText size={16} style={{ color: '#4a4a4a' }} />
+          <h2 className="text-base font-semibold" style={{ color: '#000000' }}>Submitted Bids</h2>
+          <span
+            className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+            style={{ background: '#F5F5F5', color: '#4a4a4a' }}
+          >
             {rfp.bids.length}
           </span>
         </div>
 
         {rfp.bids.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 text-center">
-            <p className="text-sm text-slate-500">No bids submitted yet</p>
+          <div
+            className="bg-white rounded-2xl p-6 text-center"
+            style={{ border: '1px solid rgba(0,0,0,0.08)' }}
+          >
+            <p className="text-sm" style={{ color: '#4a4a4a' }}>No bids submitted yet</p>
           </div>
         ) : (
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div
+            className="bg-white rounded-2xl overflow-hidden"
+            style={{ border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 1px 3px 0 rgba(0,0,0,0.05)' }}
+          >
             <table className="w-full">
               <thead>
-                <tr className="bg-slate-50 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  <th className="px-4 py-3 text-left">Supplier</th>
-                  <th className="px-4 py-3 text-left">Amount</th>
-                  <th className="px-4 py-3 text-left">Delivery</th>
-                  <th className="px-4 py-3 text-left">Notes</th>
-                  <th className="px-4 py-3 text-left">Submitted</th>
+                <tr style={{ background: '#F5F5F5', borderBottom: '1px solid rgba(0,0,0,0.07)' }}>
+                  {['Supplier','Amount','Delivery','Notes','Submitted'].map((h) => (
+                    <th
+                      key={h}
+                      className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider"
+                      style={{ color: '#4a4a4a' }}
+                    >
+                      {h}
+                    </th>
+                  ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
-                {rfp.bids.map((bid) => (
-                  <tr key={bid.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-4 py-3 text-sm font-medium text-slate-900">
+              <tbody>
+                {rfp.bids.map((bid, i) => (
+                  <tr
+                    key={bid.id}
+                    className="transition-colors"
+                    style={{ borderTop: i > 0 ? '1px solid rgba(0,0,0,0.05)' : undefined }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = '#F9FAFB'; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = ''; }}
+                  >
+                    <td className="px-4 py-3.5 text-sm font-medium" style={{ color: '#000000' }}>
                       {bid.supplierName}
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-600">
+                    <td className="px-4 py-3.5 text-sm font-medium tabular-nums" style={{ color: '#000000' }}>
                       ${bid.amount.toLocaleString()}
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-600">{bid.deliveryDays} days</td>
-                    <td className="px-4 py-3 text-sm text-slate-600 max-w-xs truncate">
+                    <td className="px-4 py-3.5 text-sm" style={{ color: '#4a4a4a' }}>{bid.deliveryDays} days</td>
+                    <td className="px-4 py-3.5 text-sm max-w-xs truncate" style={{ color: '#4a4a4a' }}>
                       {bid.notes}
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-600">
+                    <td className="px-4 py-3.5 text-sm" style={{ color: '#4a4a4a' }}>
                       {format(new Date(bid.submittedAt), 'MMM d, yyyy')}
                     </td>
                   </tr>
@@ -444,14 +457,18 @@ export default function RfpDetailPage({ params }: { params: Promise<{ id: string
           {/* AI Results Section */}
           {evaluationResults && evaluationResults.length > 0 && winnerScoredBid && (
             <div className="space-y-6">
-              <div className="flex items-center gap-2">
-                <Bot size={20} className="text-[#1434CB]" />
-                <h2 className="text-xl font-semibold text-slate-900">AI Evaluation Results</h2>
+              <div className="flex items-center gap-2.5">
+                <div
+                  className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                  style={{ background: '#1434CB' }}
+                >
+                  <Bot size={14} className="text-white" />
+                </div>
+                <h2 className="text-base font-semibold" style={{ color: '#000000' }}>AI Evaluation Results</h2>
               </div>
 
-              {/* Ranked supplier list */}
               {rfp.status === 'Evaluating' && (
-                <p className="text-xs text-slate-400">
+                <p className="text-xs" style={{ color: '#4a4a4a' }}>
                   Click a supplier to select them as the award recipient. The AI best value is pre-selected.
                 </p>
               )}
@@ -478,7 +495,10 @@ export default function RfpDetailPage({ params }: { params: Promise<{ id: string
                         } : undefined}
                       />
                       {rfp.overrideWinnerId && scoredBid.supplier.id === rfp.overrideWinnerId && (
-                        <span className="absolute top-4 right-24 inline-flex items-center gap-1 bg-amber-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                        <span
+                          className="absolute top-4 right-24 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold"
+                          style={{ background: '#ffef99', color: '#875903' }}
+                        >
                           Manually Selected
                         </span>
                       )}

@@ -16,20 +16,9 @@ import {
   itemVariants, backVariants, glowVariants, sharedTransition,
 } from '@/components/ui/glow-menu';
 
-/* ── Per-item glow + icon colour config ──────────────────────────────── */
-const NAV_STYLE: Record<string, { gradient: string; iconColor: string }> = {
-  '/dashboard':      { gradient: 'radial-gradient(circle, rgba(59,130,246,0.22) 0%, rgba(37,99,235,0.08) 50%, transparent 100%)',  iconColor: 'text-blue-400'   },
-  '/cards':          { gradient: 'radial-gradient(circle, rgba(167,139,250,0.22) 0%, rgba(124,58,237,0.08) 50%, transparent 100%)', iconColor: 'text-violet-400' },
-  '/suppliers':      { gradient: 'radial-gradient(circle, rgba(34,211,238,0.22) 0%, rgba(6,182,212,0.08) 50%, transparent 100%)',   iconColor: 'text-cyan-400'   },
-  '/rfp':            { gradient: 'radial-gradient(circle, rgba(99,102,241,0.22) 0%, rgba(79,70,229,0.08) 50%, transparent 100%)',   iconColor: 'text-indigo-400' },
-  '/payment':        { gradient: 'radial-gradient(circle, rgba(52,211,153,0.22) 0%, rgba(16,185,129,0.08) 50%, transparent 100%)',  iconColor: 'text-emerald-400'},
-  '/reconciliation': { gradient: 'radial-gradient(circle, rgba(251,191,36,0.22) 0%, rgba(245,158,11,0.08) 50%, transparent 100%)',  iconColor: 'text-amber-400'  },
-  '/transactions':   { gradient: 'radial-gradient(circle, rgba(251,146,60,0.22) 0%, rgba(234,88,12,0.08) 50%, transparent 100%)',   iconColor: 'text-orange-400' },
-  '/audit':          { gradient: 'radial-gradient(circle, rgba(251,113,133,0.22) 0%, rgba(225,29,72,0.08) 50%, transparent 100%)',  iconColor: 'text-rose-400'   },
-  '/notifications':  { gradient: 'radial-gradient(circle, rgba(56,189,248,0.22) 0%, rgba(14,165,233,0.08) 50%, transparent 100%)',  iconColor: 'text-sky-400'    },
-  '/bids':           { gradient: 'radial-gradient(circle, rgba(99,102,241,0.22) 0%, rgba(79,70,229,0.08) 50%, transparent 100%)',   iconColor: 'text-indigo-400' },
-  '/sdk-logs':       { gradient: 'radial-gradient(circle, rgba(20,200,150,0.22) 0%, rgba(16,185,129,0.08) 50%, transparent 100%)',  iconColor: 'text-teal-400'   },
-};
+/* ── Glow gradients — nova .v-alternate palette (blue surface + gold active) */
+const GLOW_ACTIVE  = 'radial-gradient(ellipse at center, rgba(252,192,21,0.28) 0%, rgba(252,192,21,0.08) 55%, transparent 100%)';
+const GLOW_HOVER   = 'radial-gradient(ellipse at center, rgba(255,255,255,0.12) 0%, transparent 65%)';
 
 const NAV_ITEMS: Record<string, Array<{ label: string; href: string; icon: React.ComponentType<{ className?: string }> }>> = {
   gov: [
@@ -79,9 +68,9 @@ function ProcurementActions({ actions }: { actions: SidebarAction[] }) {
           className="px-3 overflow-hidden"
         >
           {/* divider */}
-          <div className="h-px bg-gradient-to-r from-transparent via-slate-600 to-transparent mb-3" />
+          <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-3" />
 
-          <p className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.15em] mb-2 px-1">
+          <p className="text-[10px] font-semibold text-white/60 uppercase tracking-[0.14em] mb-2 px-1">
             Procurement Actions
           </p>
 
@@ -139,7 +128,7 @@ function ProcurementActions({ actions }: { actions: SidebarAction[] }) {
             })}
           </div>
 
-          <div className="h-px bg-gradient-to-r from-transparent via-slate-600 to-transparent mt-3" />
+          <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mt-3" />
         </motion.div>
       )}
     </AnimatePresence>
@@ -166,16 +155,12 @@ export function Sidebar({ currentPath }: SidebarProps) {
   }, [unreadCount]);
 
   return (
-    <aside className="fixed left-0 top-16 w-64 h-[calc(100vh-4rem)] bg-slate-900 border-r border-slate-800 z-20 flex flex-col">
+    <aside className="fixed left-0 top-16 w-64 h-[calc(100vh-4rem)] bg-[#1434CB] border-r border-white/[0.15] z-20 flex flex-col">
       <nav className="p-3 space-y-0.5 flex-1">
         {items.map((item) => {
           const isActive = item.href === currentPath;
           const isNotifications = item.href === '/notifications';
           const Icon = item.icon;
-          const style = NAV_STYLE[item.href] ?? {
-            gradient: 'radial-gradient(circle, rgba(99,102,241,0.2) 0%, transparent 100%)',
-            iconColor: 'text-slate-400',
-          };
 
           return (
             <motion.div
@@ -190,12 +175,12 @@ export function Sidebar({ currentPath }: SidebarProps) {
                 className="absolute inset-0 pointer-events-none rounded-lg z-0"
                 variants={glowVariants}
                 animate={isActive ? 'hover' : 'initial'}
-                style={{ background: style.gradient }}
+                style={{ background: isActive ? GLOW_ACTIVE : GLOW_HOVER }}
               />
 
-              {/* Active solid pill (behind glow) */}
+              {/* Active solid pill — gold accent (nova .v-alternate active) */}
               {isActive && (
-                <div className="absolute inset-0 rounded-lg bg-[#1434CB]/80 z-0" />
+                <div className="absolute inset-0 rounded-lg bg-[#fcc015] z-0" />
               )}
 
               {/* ── FRONT FACE ── */}
@@ -205,8 +190,8 @@ export function Sidebar({ currentPath }: SidebarProps) {
                   transition={sharedTransition}
                   style={{ transformStyle: 'preserve-3d', transformOrigin: 'center bottom' }}
                   className={cn(
-                    'flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium',
-                    isActive ? 'text-white' : 'text-slate-400',
+                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] tracking-[0.01em]',
+                    isActive ? 'text-[#1A1F71] font-bold' : 'text-white/90 font-medium',
                   )}
                 >
                   {/* Bell icon gets shake + badge for notifications */}
@@ -220,7 +205,7 @@ export function Sidebar({ currentPath }: SidebarProps) {
                         <Icon
                           className={cn(
                             'w-4 h-4 transition-colors duration-300',
-                            isActive ? 'text-white' : style.iconColor,
+                            isActive ? 'text-[#1A1F71]' : 'text-white/80',
                           )}
                         />
                       </motion.span>
@@ -244,7 +229,7 @@ export function Sidebar({ currentPath }: SidebarProps) {
                     <Icon
                       className={cn(
                         'w-4 h-4 shrink-0 transition-colors duration-300',
-                        isActive ? 'text-white' : style.iconColor,
+                        isActive ? 'text-[#1A1F71]' : 'text-white/80',
                       )}
                     />
                   )}
@@ -274,13 +259,8 @@ export function Sidebar({ currentPath }: SidebarProps) {
                 }}
                 className="absolute inset-0 z-10 pointer-events-none"
               >
-                <div
-                  className={cn(
-                    'flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold h-full',
-                    isActive ? 'text-white' : 'text-white',
-                  )}
-                >
-                  <Icon className={cn('w-4 h-4 shrink-0', style.iconColor)} />
+                <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-semibold h-full text-white">
+                  <Icon className="w-4 h-4 shrink-0 text-white/70" />
                   {item.label}
                 </div>
               </motion.div>
@@ -302,7 +282,7 @@ export function Sidebar({ currentPath }: SidebarProps) {
           >
             {/* ── Front face ── */}
             <div
-              className="absolute inset-0 rounded-2xl overflow-hidden bg-gradient-to-br from-[#1434CB] to-[#0a1f8f] shadow-2xl select-none"
+              className="absolute inset-0 rounded-2xl overflow-hidden bg-gradient-to-br from-[#1A1F71] to-[#0d1060] shadow-2xl select-none"
               style={{ backfaceVisibility: 'hidden' }}
             >
               {/* Decorative circles — same as cards page */}
@@ -331,8 +311,8 @@ export function Sidebar({ currentPath }: SidebarProps) {
 
               {/* Visa wordmark */}
               <div className="absolute top-3 right-3">
-                <svg viewBox="0 0 72 24" className="h-3 w-auto">
-                  <path fill="white" d="M27.5 1.2l-4.7 21.6h-5L22.4 1.2h5.1zm19.4 14l2.6-7.2 1.5 7.2h-4.1zm5.6 7.6h4.6L53 1.2h-4.2c-.9 0-1.7.5-2.1 1.3L39.3 22.8h5l1-2.7h6.1l.6 2.7zm-12.5-7c0-4.9-6.8-5.2-6.7-7.4 0-.7.6-1.4 2-1.5 1.3-.1 2.7.1 3.9.7l.7-3.3C38.7 3.8 37.2 3.5 35.7 3.5c-4.7 0-8 2.5-8 6 0 2.6 2.3 4.1 4.1 4.9 1.8.9 2.4 1.5 2.4 2.3 0 1.2-1.4 1.8-2.8 1.8-2.3 0-3.6-.6-4.7-1.1l-.8 3.5c1.1.5 3 .9 5.1.9 4.8 0 8-2.4 8-6.1zm-17.2-14.6L16.4 22.8h-5.1L8.4 4.9C8.2 4 7.7 3.2 6.8 2.8 5.3 2.1 3.5 1.6 1.9 1.3L2 1.2h8.1c1.1 0 2 .7 2.3 1.8l2.1 11.1 5.3-12.9h5.1z"/>
+                <svg viewBox="0 0 71 23" className="h-3 w-auto" fill="none">
+                  <path fill="white" fillRule="evenodd" clipRule="evenodd" d="M50.6986 15.3377C50.7123 11.8369 47.8134 10.3152 45.4937 9.09755C43.9358 8.27981 42.6393 7.59921 42.6617 6.54843C42.6781 5.75329 43.4371 4.90557 45.0931 4.692C47.0325 4.5045 48.9864 4.8451 50.7479 5.67771L51.7566 0.985714C50.0419 0.341244 48.2261 0.00745647 46.3943 0C40.7429 0 36.7376 3.013 36.7014 7.33043C36.6653 10.5143 39.5501 12.3017 41.7286 13.363C43.9629 14.4473 44.7153 15.1439 44.7054 16.1164C44.7054 17.6049 42.9213 18.2587 41.2751 18.285C38.4794 18.3296 36.8224 17.5564 35.5085 16.9434L35.3839 16.8853L34.3357 21.7416C35.6763 22.3593 38.1504 22.8949 40.7166 22.9211C46.7393 22.9211 50.6821 19.9443 50.7019 15.3377H50.6986ZM26.9429 0.404143L17.6541 22.5729H11.592L7.02157 4.88257C6.74229 3.79171 6.50243 3.39414 5.658 2.93414C4.27143 2.18829 2.00429 1.48514 0 1.04814L0.138 0.391H9.89329C11.2059 0.396383 12.3201 1.35458 12.5219 2.65157L14.9369 15.4823L20.9234 0.404143H26.9429ZM70.9714 22.5663H65.6683L64.975 19.2641H57.6183L56.4223 22.5729H50.4029L59.0016 2.03057C59.409 1.04254 60.3741 0.399575 61.4429 0.404143H66.3419L70.9714 22.5663ZM59.2677 14.72L62.2873 6.394L64.0254 14.72H59.2677ZM30.3994 22.5729L35.1571 0.404143H29.4071L24.6626 22.5729H30.3994Z"/>
                 </svg>
               </div>
 
@@ -374,8 +354,8 @@ export function Sidebar({ currentPath }: SidebarProps) {
               </p>
               {/* Visa on back */}
               <div className="absolute bottom-2.5 right-3">
-                <svg viewBox="0 0 72 24" className="h-2.5 w-auto opacity-40">
-                  <path fill="white" d="M27.5 1.2l-4.7 21.6h-5L22.4 1.2h5.1zm19.4 14l2.6-7.2 1.5 7.2h-4.1zm5.6 7.6h4.6L53 1.2h-4.2c-.9 0-1.7.5-2.1 1.3L39.3 22.8h5l1-2.7h6.1l.6 2.7zm-12.5-7c0-4.9-6.8-5.2-6.7-7.4 0-.7.6-1.4 2-1.5 1.3-.1 2.7.1 3.9.7l.7-3.3C38.7 3.8 37.2 3.5 35.7 3.5c-4.7 0-8 2.5-8 6 0 2.6 2.3 4.1 4.1 4.9 1.8.9 2.4 1.5 2.4 2.3 0 1.2-1.4 1.8-2.8 1.8-2.3 0-3.6-.6-4.7-1.1l-.8 3.5c1.1.5 3 .9 5.1.9 4.8 0 8-2.4 8-6.1zm-17.2-14.6L16.4 22.8h-5.1L8.4 4.9C8.2 4 7.7 3.2 6.8 2.8 5.3 2.1 3.5 1.6 1.9 1.3L2 1.2h8.1c1.1 0 2 .7 2.3 1.8l2.1 11.1 5.3-12.9h5.1z"/>
+                <svg viewBox="0 0 71 23" className="h-2.5 w-auto opacity-40" fill="none">
+                  <path fill="white" fillRule="evenodd" clipRule="evenodd" d="M50.6986 15.3377C50.7123 11.8369 47.8134 10.3152 45.4937 9.09755C43.9358 8.27981 42.6393 7.59921 42.6617 6.54843C42.6781 5.75329 43.4371 4.90557 45.0931 4.692C47.0325 4.5045 48.9864 4.8451 50.7479 5.67771L51.7566 0.985714C50.0419 0.341244 48.2261 0.00745647 46.3943 0C40.7429 0 36.7376 3.013 36.7014 7.33043C36.6653 10.5143 39.5501 12.3017 41.7286 13.363C43.9629 14.4473 44.7153 15.1439 44.7054 16.1164C44.7054 17.6049 42.9213 18.2587 41.2751 18.285C38.4794 18.3296 36.8224 17.5564 35.5085 16.9434L35.3839 16.8853L34.3357 21.7416C35.6763 22.3593 38.1504 22.8949 40.7166 22.9211C46.7393 22.9211 50.6821 19.9443 50.7019 15.3377H50.6986ZM26.9429 0.404143L17.6541 22.5729H11.592L7.02157 4.88257C6.74229 3.79171 6.50243 3.39414 5.658 2.93414C4.27143 2.18829 2.00429 1.48514 0 1.04814L0.138 0.391H9.89329C11.2059 0.396383 12.3201 1.35458 12.5219 2.65157L14.9369 15.4823L20.9234 0.404143H26.9429ZM70.9714 22.5663H65.6683L64.975 19.2641H57.6183L56.4223 22.5729H50.4029L59.0016 2.03057C59.409 1.04254 60.3741 0.399575 61.4429 0.404143H66.3419L70.9714 22.5663ZM59.2677 14.72L62.2873 6.394L64.0254 14.72H59.2677ZM30.3994 22.5729L35.1571 0.404143H29.4071L24.6626 22.5729H30.3994Z"/>
                 </svg>
               </div>
             </div>

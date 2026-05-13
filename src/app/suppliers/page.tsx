@@ -253,8 +253,8 @@ function VisaApiLoader({ supplierCount }: { supplierCount: number }) {
         <div className="px-6 pt-5 pb-4 flex items-center gap-3 border-b border-white/6">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-[#1434CB] flex items-center justify-center shrink-0">
-              <svg viewBox="0 0 72 24" aria-label="Visa" className="h-3.5 w-auto">
-                <path fill="white" d="M27.5 1.2l-4.7 21.6h-5L22.4 1.2h5.1zm19.4 14l2.6-7.2 1.5 7.2h-4.1zm5.6 7.6h4.6L53 1.2h-4.2c-.9 0-1.7.5-2.1 1.3L39.3 22.8h5l1-2.7h6.1l.6 2.7zm-12.5-7c0-4.9-6.8-5.2-6.7-7.4 0-.7.6-1.4 2-1.5 1.3-.1 2.7.1 3.9.7l.7-3.3C38.7 3.8 37.2 3.5 35.7 3.5c-4.7 0-8 2.5-8 6 0 2.6 2.3 4.1 4.1 4.9 1.8.9 2.4 1.5 2.4 2.3 0 1.2-1.4 1.8-2.8 1.8-2.3 0-3.6-.6-4.7-1.1l-.8 3.5c1.1.5 3 .9 5.1.9 4.8 0 8-2.4 8-6.1zm-17.2-14.6L16.4 22.8h-5.1L8.4 4.9C8.2 4 7.7 3.2 6.8 2.8 5.3 2.1 3.5 1.6 1.9 1.3L2 1.2h8.1c1.1 0 2 .7 2.3 1.8l2.1 11.1 5.3-12.9h5.1z"/>
+              <svg viewBox="0 0 71 23" fill="none" aria-label="Visa" className="h-3.5 w-auto">
+                <path fill="white" fillRule="evenodd" clipRule="evenodd" d="M50.6986 15.3377C50.7123 11.8369 47.8134 10.3152 45.4937 9.09755C43.9358 8.27981 42.6393 7.59921 42.6617 6.54843C42.6781 5.75329 43.4371 4.90557 45.0931 4.692C47.0325 4.5045 48.9864 4.8451 50.7479 5.67771L51.7566 0.985714C50.0419 0.341244 48.2261 0.00745647 46.3943 0C40.7429 0 36.7376 3.013 36.7014 7.33043C36.6653 10.5143 39.5501 12.3017 41.7286 13.363C43.9629 14.4473 44.7153 15.1439 44.7054 16.1164C44.7054 17.6049 42.9213 18.2587 41.2751 18.285C38.4794 18.3296 36.8224 17.5564 35.5085 16.9434L35.3839 16.8853L34.3357 21.7416C35.6763 22.3593 38.1504 22.8949 40.7166 22.9211C46.7393 22.9211 50.6821 19.9443 50.7019 15.3377H50.6986ZM26.9429 0.404143L17.6541 22.5729H11.592L7.02157 4.88257C6.74229 3.79171 6.50243 3.39414 5.658 2.93414C4.27143 2.18829 2.00429 1.48514 0 1.04814L0.138 0.391H9.89329C11.2059 0.396383 12.3201 1.35458 12.5219 2.65157L14.9369 15.4823L20.9234 0.404143H26.9429ZM70.9714 22.5663H65.6683L64.975 19.2641H57.6183L56.4223 22.5729H50.4029L59.0016 2.03057C59.409 1.04254 60.3741 0.399575 61.4429 0.404143H66.3419L70.9714 22.5663ZM59.2677 14.72L62.2873 6.394L64.0254 14.72H59.2677ZM30.3994 22.5729L35.1571 0.404143H29.4071L24.6626 22.5729H30.3994Z"/>
               </svg>
             </div>
             <div>
@@ -380,18 +380,19 @@ type SortKey = 'rating-desc' | 'rating-asc' | 'delivery-asc' | 'risk-asc';
 
 const COMPLIANCE_OPTIONS: ComplianceFilter[] = ['All', 'Compliant', 'Pending Review', 'Non-Compliant'];
 
-const COMPLIANCE_STYLES: Record<ComplianceFilter, string> = {
-  All:             'bg-slate-100 text-slate-600 hover:bg-slate-200',
-  Compliant:       'bg-emerald-50 text-emerald-700 hover:bg-emerald-100',
-  'Pending Review':'bg-amber-50 text-amber-700 hover:bg-amber-100',
-  'Non-Compliant': 'bg-red-50 text-red-700 hover:bg-red-100',
+/* nova-styles palette tokens — inactive / active pill colours */
+const COMPLIANCE_STYLES: Record<ComplianceFilter, React.CSSProperties> = {
+  All:             { background: '#F5F5F5',          color: '#4a4a4a' },
+  Compliant:       { background: '#d6f2c4',          color: '#2C6849' },
+  'Pending Review':{ background: '#ffef99',          color: '#875903' },
+  'Non-Compliant': { background: '#ffd6e9',          color: '#AD2929' },
 };
 
-const COMPLIANCE_ACTIVE: Record<ComplianceFilter, string> = {
-  All:             'bg-slate-800 text-white',
-  Compliant:       'bg-emerald-600 text-white',
-  'Pending Review':'bg-amber-500 text-white',
-  'Non-Compliant': 'bg-red-600 text-white',
+const COMPLIANCE_ACTIVE: Record<ComplianceFilter, React.CSSProperties> = {
+  All:             { background: '#1434CB',          color: '#ffffff' },
+  Compliant:       { background: '#2C6849',          color: '#ffffff' },
+  'Pending Review':{ background: '#875903',          color: '#ffffff' },
+  'Non-Compliant': { background: '#AD2929',          color: '#ffffff' },
 };
 
 const SORT_OPTIONS: { value: SortKey; label: string }[] = [
@@ -459,44 +460,59 @@ export default function SuppliersPage() {
       transition={{ duration: 0.3, ease: 'easeOut' }}
     >
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex items-center justify-between mb-5">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">Supplier Registry</h1>
-          <p className="mt-1 text-sm text-slate-500">Browse and manage registered suppliers.</p>
+          <h1 className="text-lg font-semibold" style={{ color: '#000000' }}>Supplier Registry</h1>
+          <p className="mt-0.5 text-sm" style={{ color: '#4a4a4a' }}>Browse and manage registered suppliers.</p>
         </div>
-        <span className="text-xs text-slate-400 mt-1 font-medium">
-          {filtered.length} of {suppliers.length}
+        <span
+          className="text-xs font-medium px-2.5 py-1 rounded-lg"
+          style={{ background: '#F5F5F5', color: '#4a4a4a' }}
+        >
+          {filtered.length} / {suppliers.length}
         </span>
       </div>
 
       {/* Search + Sort bar */}
-      <div className="mt-5 flex items-center gap-3">
+      <div className="flex items-center gap-3 mb-4">
         <div className="relative flex-1">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: '#4a4a4a' }} />
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search suppliers…"
-            className="w-full pl-9 pr-9 py-2.5 text-sm bg-white border border-slate-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-[#1434CB] focus:border-[#1434CB] placeholder:text-slate-400 transition"
+            className="w-full pl-9 pr-9 py-2 text-sm bg-white rounded-xl focus:outline-none focus:ring-2 transition"
+            style={{
+              border: '1px solid rgba(0,0,0,0.12)',
+              color: '#000000',
+              boxShadow: '0 1px 2px 0 rgba(0,0,0,0.04)',
+            }}
+            onFocus={(e) => { e.currentTarget.style.borderColor = '#1434CB'; }}
+            onBlur={(e)  => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.12)'; }}
           />
           {query && (
             <button
               onClick={() => setQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
+              className="absolute right-3 top-1/2 -translate-y-1/2 transition"
+              style={{ color: '#4a4a4a' }}
             >
-              <X size={14} />
+              <X size={13} />
             </button>
           )}
         </div>
 
-        {/* Sort */}
         <div className="relative">
-          <SlidersHorizontal size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <SlidersHorizontal size={13} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: '#4a4a4a' }} />
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as SortKey)}
-            className="pl-8 pr-4 py-2.5 text-sm bg-white border border-slate-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-[#1434CB] appearance-none cursor-pointer text-slate-700 font-medium transition"
+            className="pl-8 pr-4 py-2 text-sm bg-white rounded-xl focus:outline-none appearance-none cursor-pointer font-medium transition"
+            style={{
+              border: '1px solid rgba(0,0,0,0.12)',
+              color: '#000000',
+              boxShadow: '0 1px 2px 0 rgba(0,0,0,0.04)',
+            }}
           >
             {SORT_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>{o.label}</option>
@@ -506,14 +522,13 @@ export default function SuppliersPage() {
       </div>
 
       {/* Compliance filter pills */}
-      <div className="mt-3 flex items-center gap-2 flex-wrap">
+      <div className="flex items-center gap-2 flex-wrap mb-2">
         {COMPLIANCE_OPTIONS.map((opt) => (
           <button
             key={opt}
             onClick={() => setCompliance(opt)}
-            className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
-              compliance === opt ? COMPLIANCE_ACTIVE[opt] : COMPLIANCE_STYLES[opt]
-            }`}
+            className="px-3 py-1 rounded-full text-xs font-semibold transition-all"
+            style={compliance === opt ? COMPLIANCE_ACTIVE[opt] : COMPLIANCE_STYLES[opt]}
           >
             {opt}
           </button>
@@ -528,7 +543,8 @@ export default function SuppliersPage() {
               exit={{ opacity: 0, scale: 0.85 }}
               transition={{ duration: 0.15 }}
               onClick={clearFilters}
-              className="ml-auto flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium text-slate-500 hover:text-red-500 hover:bg-red-50 border border-slate-200 transition"
+              className="ml-auto flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition"
+              style={{ color: '#AD2929', background: '#ffd6e9', border: '1px solid rgba(173,41,41,0.2)' }}
             >
               <X size={11} />
               Clear
@@ -542,19 +558,21 @@ export default function SuppliersPage() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="mt-10 bg-white rounded-xl border border-slate-200 p-10 text-center"
+          className="mt-10 bg-white rounded-2xl p-10 text-center"
+          style={{ border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 1px 3px 0 rgba(0,0,0,0.05)' }}
         >
-          <p className="text-sm font-semibold text-slate-800">No suppliers match your filters</p>
-          <p className="mt-1 text-xs text-slate-400">Try adjusting your search or clearing the filters.</p>
+          <p className="text-sm font-semibold" style={{ color: '#000000' }}>No suppliers match your filters</p>
+          <p className="mt-1 text-xs" style={{ color: '#4a4a4a' }}>Try adjusting your search or clearing the filters.</p>
           <button
             onClick={clearFilters}
-            className="mt-4 text-xs text-[#1434CB] hover:text-[#0B1E8A] font-medium transition"
+            className="mt-4 text-xs font-semibold transition"
+            style={{ color: '#1434CB' }}
           >
             Clear all filters
           </button>
         </motion.div>
       ) : (
-        <motion.div layout className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <motion.div layout className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           <AnimatePresence mode="popLayout">
             {filtered.map((supplier) => (
               <motion.div

@@ -87,47 +87,70 @@ export default function RfpPage() {
       </AnimatePresence>
 
       {rfps.length === 0 ? (
-        <div className="mt-8 bg-white rounded-xl shadow-sm border border-slate-200 p-8 text-center">
-          <p className="text-base font-semibold text-slate-900">No procurement requests yet</p>
-          <p className="mt-2 text-sm text-slate-500">
+        <div
+          className="mt-8 bg-white rounded-2xl p-10 text-center"
+          style={{ border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 1px 3px 0 rgba(0,0,0,0.05)' }}
+        >
+          <p className="text-sm font-semibold" style={{ color: '#000000' }}>No procurement requests yet</p>
+          <p className="mt-1 text-xs" style={{ color: '#4a4a4a' }}>
             Create your first RFP to start the procurement process.
           </p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mt-6">
+        <div
+          className="bg-white rounded-2xl overflow-hidden mt-6"
+          style={{ border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 1px 3px 0 rgba(0,0,0,0.05)' }}
+        >
           <table className="w-full">
             <thead>
-              <tr className="bg-slate-50 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                <th className="px-4 py-3 text-left">Title</th>
-                <th className="px-4 py-3 text-left">Category</th>
-                <th className="px-4 py-3 text-left">Budget</th>
-                <th className="px-4 py-3 text-left">Deadline</th>
-                <th className="px-4 py-3 text-left">Status</th>
-                <th className="px-4 py-3 text-left">Bids</th>
+              <tr style={{ background: '#F5F5F5', borderBottom: '1px solid rgba(0,0,0,0.07)' }}>
+                {['Title','Category','Budget','Deadline','Status','Bids'].map((h) => (
+                  <th
+                    key={h}
+                    className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider"
+                    style={{ color: '#4a4a4a' }}
+                  >
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
-              {rfps.map((rfp) => (
-                <tr key={rfp.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-4 py-3">
+            <tbody>
+              {rfps.map((rfp, i) => (
+                <tr
+                  key={rfp.id}
+                  className="transition-colors"
+                  style={{ borderTop: i > 0 ? '1px solid rgba(0,0,0,0.05)' : undefined }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = '#F9FAFB'; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = ''; }}
+                >
+                  <td className="px-4 py-3.5">
                     <Link
                       href={`/rfp/${rfp.id}`}
-                      className="text-sm font-medium text-[#1434CB] hover:text-[#0B1E8A]"
+                      className="text-sm font-medium transition-colors"
+                      style={{ color: '#1434CB' }}
                     >
                       {rfp.title}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-sm text-slate-600">{rfp.category}</td>
-                  <td className="px-4 py-3 text-sm text-slate-600">
+                  <td className="px-4 py-3.5 text-sm" style={{ color: '#4a4a4a' }}>{rfp.category}</td>
+                  <td className="px-4 py-3.5 text-sm font-medium tabular-nums" style={{ color: '#000000' }}>
                     ${rfp.budgetCeiling.toLocaleString()}
                   </td>
-                  <td className="px-4 py-3 text-sm text-slate-600">
+                  <td className="px-4 py-3.5 text-sm" style={{ color: '#4a4a4a' }}>
                     {format(new Date(rfp.deadline), 'MMM d, yyyy')}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3.5">
                     <StatusBadge status={rfp.status} variant={statusVariant[rfp.status]} />
                   </td>
-                  <td className="px-4 py-3 text-sm text-slate-600">{rfp.bids.length}</td>
+                  <td className="px-4 py-3.5">
+                    <span
+                      className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                      style={{ background: '#F5F5F5', color: '#4a4a4a' }}
+                    >
+                      {rfp.bids.length}
+                    </span>
+                  </td>
                 </tr>
               ))}
             </tbody>
