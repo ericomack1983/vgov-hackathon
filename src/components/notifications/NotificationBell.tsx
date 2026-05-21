@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Bell } from 'lucide-react';
+import { VisaNotificationsLow } from '@visa/nova-icons-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePayment } from '@/context/PaymentContext';
 import Link from 'next/link';
@@ -25,13 +25,14 @@ export function NotificationBell() {
     <Link
       href="/notifications"
       aria-label="Notifications"
-      className="relative text-slate-400 hover:text-slate-50 transition-colors"
+      style={{ position: 'relative', display: 'inline-flex', color: 'white' }}
     >
       <motion.div
         animate={bump ? { rotate: [0, -18, 18, -12, 12, -6, 6, 0] } : { rotate: 0 }}
         transition={{ duration: 0.55, ease: 'easeInOut' }}
+        style={{ display: 'flex' }}
       >
-        <Bell className="w-5 h-5" />
+        <VisaNotificationsLow style={{ width: 20, height: 20 }} />
       </motion.div>
 
       <AnimatePresence mode="popLayout">
@@ -42,7 +43,15 @@ export function NotificationBell() {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 500, damping: 18 }}
-            className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center leading-none"
+            style={{
+              position: 'absolute', top: -6, right: -6,
+              background: '#de3730', color: 'white',
+              fontSize: 9, fontWeight: 700,
+              minWidth: 16, height: 16, padding: '0 3px',
+              borderRadius: 9999, display: 'flex',
+              alignItems: 'center', justifyContent: 'center', lineHeight: 1,
+              border: '2px solid #1434CB',
+            }}
           >
             {unreadCount > 9 ? '9+' : unreadCount}
           </motion.span>

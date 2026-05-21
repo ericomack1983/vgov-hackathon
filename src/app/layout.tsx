@@ -1,13 +1,9 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import { AppProviders } from "@/context/AppProviders";
 import { AppShell } from "@/components/layout/AppShell";
+import "@visa/nova-styles/styles.css";
+import "@visa/nova-styles/themes/visa/index.css";
 import "./globals.css";
-
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "600"],
-});
 
 export const metadata: Metadata = {
   title: "VGov - Procurement",
@@ -20,7 +16,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={inter.className}>
+    <html lang="en">
       <body suppressHydrationWarning>
         <AppProviders>
           <AppShell>{children}</AppShell>

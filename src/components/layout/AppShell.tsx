@@ -38,10 +38,10 @@ export function AppShell({ children }: AppShellProps) {
   if (loading || !user) return null;
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="v-flex v-flex-col v-min-h-screen" style={{ background: 'var(--v-color-background, #f9fafb)' }}>
       <Header />
       <Sidebar currentPath={pathname} />
-      <main className="ml-64 mt-16 p-8 min-h-[calc(100vh-4rem)]">
+      <main style={{ marginLeft: '16rem', marginTop: '4rem', padding: '2rem', minHeight: 'calc(100vh - 4rem)' }}>
         {isSwitchingRole ? null : children}
       </main>
       <VisaFooter />

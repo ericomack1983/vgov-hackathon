@@ -57,7 +57,7 @@
 
   /* Visa uses "Visa Dialect UI" (proprietary WOFF2). Fallback chain mirrors
      Visa's own font stack on platforms where the custom font isn't loaded. */
-  --visa-font-sans:     "Visa Dialect UI", ui-sans-serif, system-ui, -apple-system,
+  --visa-font-sans:     "visa-font-regular", "Open Sans", ui-sans-serif, system-ui, -apple-system,
                         BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
                         Arial, sans-serif;
   --visa-font-mono:     ui-monospace, SFMono-Regular, "SF Mono", Consolas,
