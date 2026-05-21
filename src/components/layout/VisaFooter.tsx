@@ -1,49 +1,65 @@
-import { Footer, VisaLogo, Typography } from '@visa/nova-react';
+import { Footer, VisaLogo } from '@visa/nova-react';
 
 const FOOTER_LINKS = ['Privacy Policy', 'Terms of Service', 'Accessibility', 'Contact Support'];
 
+const textStyle: React.CSSProperties = {
+  fontFamily: 'var(--visa-font-sans)',
+  fontSize: 13,
+  color: 'var(--visa-gray-500)',
+  whiteSpace: 'nowrap',
+};
+
+const sepStyle: React.CSSProperties = {
+  width: 1,
+  height: 14,
+  background: 'var(--visa-gray-200)',
+  flexShrink: 0,
+};
+
 export function VisaFooter() {
   return (
-    /* display:block + padding:0 disables .v-footer's built-in flex layout
-       so children stack vertically and the bar sits flush at the top edge */
-    <Footer style={{ marginLeft: '16rem', display: 'block', padding: 0 }}>
-
-      {/* Visa brand tricolor bar — blue / gold / dark */}
-      <div style={{ display: 'flex', height: 4 }}>
-        <div style={{ flex: 2,   background: '#1434CB' }} />
-        <div style={{ flex: 0.9, background: '#f7b600' }} />
-        <div style={{ flex: 2.5, background: '#4a5568' }} />
-      </div>
-
-      {/* Content row */}
+    <Footer style={{ marginLeft: '16rem', display: 'block', padding: 0, background: '#fff', borderTop: 'none' }}>
+      {/* Visa brand tricolor — gradient feels less chunky than hard blocks */}
       <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        gap: 24, padding: '16px 32px',
+        height: 3,
+        background: 'linear-gradient(to right, #1434CB 0%, #1434CB 54%, #f7b600 54%, #f7b600 72%, #1a1f71 72%, #1a1f71 100%)',
+      }} />
+
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '14px 32px',
+        gap: 24,
       }}>
-        {/* Left — logo + tagline + copyright */}
+        {/* Left — logo · app name · copyright */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
-          <VisaLogo />
-          <div style={{ width: 1, height: 16, background: '#e5e7eb', flexShrink: 0 }} />
-          <Typography tag="span" className="v-typography-body-2" style={{ color: '#6b7280', whiteSpace: 'nowrap' }}>
-            Government Procurement Portal
-          </Typography>
-          <div style={{ width: 1, height: 16, background: '#e5e7eb', flexShrink: 0 }} />
-          <Typography tag="span" className="v-typography-body-2" style={{ color: '#6b7280', whiteSpace: 'nowrap' }}>
-            © 2026 Visa Inc. All rights reserved.
-          </Typography>
+          <VisaLogo style={{ height: 20 }} />
+          <div style={sepStyle} />
+          <span style={textStyle}>Government Procurement Portal</span>
+          <div style={sepStyle} />
+          <span style={textStyle}>© 2026 Visa Inc. All rights reserved.</span>
         </div>
 
         {/* Right — legal links */}
-        <nav style={{ display: 'flex', alignItems: 'center', gap: 20, flexShrink: 0 }} aria-label="Footer">
-          {FOOTER_LINKS.map((label) => (
-            <Typography
-              key={label}
-              tag="span"
-              className="v-typography-body-2"
-              style={{ color: '#6b7280', cursor: 'pointer', whiteSpace: 'nowrap' }}
-            >
-              {label}
-            </Typography>
+        <nav style={{ display: 'flex', alignItems: 'center', gap: 0 }} aria-label="Footer navigation">
+          {FOOTER_LINKS.map((label, i) => (
+            <span key={label} style={{ display: 'flex', alignItems: 'center' }}>
+              {i > 0 && <div style={sepStyle} />}
+              <a
+                href="#"
+                style={{
+                  ...textStyle,
+                  textDecoration: 'none',
+                  padding: i === 0 ? '0 16px 0 0' : '0 16px',
+                  transition: 'color 0.15s',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.color = 'var(--visa-blue)')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'var(--visa-gray-500)')}
+              >
+                {label}
+              </a>
+            </span>
           ))}
         </nav>
       </div>
