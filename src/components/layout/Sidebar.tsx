@@ -16,16 +16,18 @@ import {
   VisaLogCompletedLow,
   VisaFileUploadLow,
   VisaArrowForwardTiny,
+  VisaArrowBackTiny,
+  VisaCartLow,
 } from '@visa/nova-icons-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { useUI } from '@/context/UIContext';
 import { useSidebarActions, SidebarAction } from '@/context/SidebarActionsContext';
 import { usePayment } from '@/context/PaymentContext';
+import { SidebarCard } from './SidebarCard';
 
 type NovaIcon = React.ComponentType<{ style?: React.CSSProperties; 'aria-hidden'?: boolean }>;
 
-/* Icon color CSS vars — drives fill via .v-icon-primary { fill: var(--v-icon-primary) } */
 const ICON_WHITE  = { '--v-icon-primary': 'rgba(255,255,255,0.8)', '--v-icon-secondary': 'rgba(255,255,255,0.55)' } as React.CSSProperties;
 const ICON_BRIGHT = { '--v-icon-primary': 'white',                 '--v-icon-secondary': 'white'                 } as React.CSSProperties;
 const ICON_GOLD   = { '--v-icon-primary': '#f7b600',               '--v-icon-secondary': '#f7b600'               } as React.CSSProperties;
@@ -36,6 +38,7 @@ const NAV_ITEMS: Record<string, Array<{ label: string; href: string; icon: NovaI
     { label: 'Cards',          href: '/cards',          icon: VisaCardGenericLow    },
     { label: 'Suppliers',      href: '/suppliers',      icon: VisaGlobalLow         },
     { label: 'Procurement',    href: '/rfp',            icon: VisaDocumentLow       },
+    { label: 'Petty Cash',     href: '/petty-cash',     icon: VisaCartLow           },
     { label: 'Payments',       href: '/payment',        icon: VisaWalletLow         },
     { label: 'Reconciliation', href: '/reconciliation', icon: VisaCheckmarkLow      },
     { label: 'Transactions',   href: '/transactions',   icon: VisaTransactionsLow   },
@@ -68,13 +71,14 @@ const ACTION_STYLES: Record<string, { gradient: string; border: string }> = {
   upload:  { gradient: 'linear-gradient(135deg,#0ea5e9,#6366f1)', border: 'rgba(14,165,233,0.5)'  },
 };
 
-/* Radar ring delays — 3 rings staggered to create a continuous pulse */
 const RING_DELAYS = [0, 0.7, 1.4];
 
-function ProcurementActions({ actions }: { actions: SidebarAction[] }) {
+const EASE = [0.4, 0, 0.2, 1] as const;
+
+function ProcurementActions({ actions, collapsed }: { actions: SidebarAction[]; collapsed: boolean }) {
   return (
     <AnimatePresence>
-      {actions.length > 0 && (
+      {actions.length > 0 && !collapsed && (
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
@@ -93,7 +97,6 @@ function ProcurementActions({ actions }: { actions: SidebarAction[] }) {
               const Icon = ACTION_ICON_MAP[action.variant] ?? VisaDocumentLow;
 
               const btn = (
-                /* Outer wrapper — overflow visible so radar rings escape the button edge */
                 <motion.div
                   key={action.id}
                   initial={{ x: -16, opacity: 0 }}
@@ -102,7 +105,6 @@ function ProcurementActions({ actions }: { actions: SidebarAction[] }) {
                   transition={{ delay: i * 0.07, duration: 0.3, ease: [0.33, 1, 0.68, 1] }}
                   style={{ position: 'relative', width: '100%' }}
                 >
-                  {/* ── Radar pulse rings ── */}
                   {RING_DELAYS.map((delay, ri) => (
                     <motion.div
                       key={ri}
@@ -116,7 +118,6 @@ function ProcurementActions({ actions }: { actions: SidebarAction[] }) {
                     />
                   ))}
 
-                  {/* ── Button surface (overflow hidden keeps gradient clipped) ── */}
                   <motion.div
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.97 }}
@@ -127,7 +128,6 @@ function ProcurementActions({ actions }: { actions: SidebarAction[] }) {
                       ...ICON_WHITE,
                     }}
                   >
-                    {/* Animated gradient bg */}
                     <motion.div
                       style={{ position: 'absolute', inset: 0, background: cfg.gradient }}
                       animate={{ opacity: [0.12, 0.28, 0.12] }}
@@ -168,7 +168,7 @@ function ProcurementActions({ actions }: { actions: SidebarAction[] }) {
 }
 
 function NavItem({
-  href, label, icon: Icon, isActive, badge, bellBump,
+  href, label, icon: Icon, isActive, badge, bellBump, collapsed,
 }: {
   href: string;
   label: string;
@@ -176,26 +176,31 @@ function NavItem({
   isActive: boolean;
   badge?: number;
   bellBump?: boolean;
+  collapsed?: boolean;
 }) {
   const [hovered, setHovered] = useState(false);
   const isNotifications = href === '/notifications';
-
   const iconVars = isActive ? ICON_GOLD : hovered ? ICON_BRIGHT : ICON_WHITE;
 
   return (
     <Link
       href={href}
+      title={collapsed ? label : undefined}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        display: 'flex', alignItems: 'center', gap: 12,
-        padding: '10px 14px', borderRadius: 8, marginBottom: 2,
+        display: 'flex', alignItems: 'center',
+        justifyContent: collapsed ? 'center' : 'flex-start',
+        gap: collapsed ? 0 : 12,
+        padding: collapsed ? '10px 0' : '10px 14px',
+        borderRadius: 8, marginBottom: 2,
         fontSize: 13, fontWeight: isActive ? 700 : 500,
         color: isActive ? '#f7b600' : (hovered ? 'white' : 'rgba(255,255,255,0.85)'),
         textDecoration: 'none', position: 'relative',
         borderLeft: isActive ? '3px solid #f7b600' : '3px solid transparent',
         background: isActive ? 'rgba(247,182,0,0.12)' : hovered ? 'rgba(255,255,255,0.07)' : 'transparent',
         transition: 'color 0.15s, background 0.15s',
+        overflow: 'hidden',
         ...iconVars,
       }}
     >
@@ -225,24 +230,48 @@ function NavItem({
         <Icon style={{ width: 18, height: 18, flexShrink: 0 }} aria-hidden />
       )}
 
-      {label}
+      <AnimatePresence initial={false}>
+        {!collapsed && (
+          <motion.span
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15, ease: 'easeInOut' }}
+            style={{ whiteSpace: 'nowrap', overflow: 'hidden' }}
+          >
+            {label}
+          </motion.span>
+        )}
+      </AnimatePresence>
 
-      {isNotifications && (badge ?? 0) > 0 && (
-        <span style={{
-          marginLeft: 'auto', background: '#de3730', color: 'white',
-          fontSize: 9, fontWeight: 700, borderRadius: 9999,
-          padding: '2px 6px', lineHeight: 1,
-        }}>
-          {(badge ?? 0) > 9 ? '9+' : badge}
-        </span>
-      )}
+      <AnimatePresence initial={false}>
+        {!collapsed && isNotifications && (badge ?? 0) > 0 && (
+          <motion.span
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            style={{
+              marginLeft: 'auto', background: '#de3730', color: 'white',
+              fontSize: 9, fontWeight: 700, borderRadius: 9999,
+              padding: '2px 6px', lineHeight: 1, whiteSpace: 'nowrap',
+            }}
+          >
+            {(badge ?? 0) > 9 ? '9+' : badge}
+          </motion.span>
+        )}
+      </AnimatePresence>
     </Link>
   );
 }
 
-interface SidebarProps { currentPath: string }
+interface SidebarProps {
+  currentPath: string;
+  collapsed: boolean;
+  onToggle: () => void;
+}
 
-export function Sidebar({ currentPath }: SidebarProps) {
+export function Sidebar({ currentPath, collapsed, onToggle }: SidebarProps) {
   const { role } = useUI();
   const { actions } = useSidebarActions();
   const { unreadCount } = usePayment();
@@ -262,16 +291,19 @@ export function Sidebar({ currentPath }: SidebarProps) {
   }, [unreadCount]);
 
   return (
-    <aside style={{
-      position: 'fixed', left: 0, top: '4rem',
-      width: '16rem', height: 'calc(100vh - 4rem)',
-      background: '#1434CB',
-      borderRight: '1px solid rgba(255,255,255,0.15)',
-      zIndex: 20, display: 'flex', flexDirection: 'column',
-      overflowY: 'auto',
-      /* Default icon color for entire sidebar — overridden per-item */
-      ...ICON_WHITE,
-    }}>
+    <motion.aside
+      animate={{ width: collapsed ? 64 : 256 }}
+      transition={{ duration: 0.38, ease: EASE }}
+      style={{
+        position: 'fixed', left: 0, top: '4rem',
+        height: 'calc(100vh - 4rem)',
+        background: '#1434CB',
+        borderRight: '1px solid rgba(255,255,255,0.15)',
+        zIndex: 20, display: 'flex', flexDirection: 'column',
+        overflowY: 'auto', overflowX: 'hidden',
+        ...ICON_WHITE,
+      }}
+    >
       <nav style={{ padding: '8px', flex: 1 }}>
         {items.map((item) => (
           <NavItem
@@ -282,11 +314,57 @@ export function Sidebar({ currentPath }: SidebarProps) {
             isActive={item.href === currentPath}
             badge={item.href === '/notifications' ? unreadCount : undefined}
             bellBump={item.href === '/notifications' ? bellBump : undefined}
+            collapsed={collapsed}
           />
         ))}
-        {/* Procurement actions sit directly below the last nav item */}
-        <ProcurementActions actions={actions} />
+        <ProcurementActions actions={actions} collapsed={collapsed} />
       </nav>
-    </aside>
+
+      {/* Premium floating Visa card — brand accent */}
+      <AnimatePresence initial={false}>
+        {!collapsed && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3, ease: EASE }}
+            style={{ overflow: 'hidden', flexShrink: 0 }}
+          >
+            <SidebarCard />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Toggle button */}
+      <div style={{
+        padding: collapsed ? '12px 0' : '12px 8px',
+        display: 'flex',
+        justifyContent: collapsed ? 'center' : 'flex-end',
+        borderTop: '1px solid rgba(255,255,255,0.08)',
+      }}>
+        <motion.button
+          onClick={onToggle}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          whileHover={{ scale: 1.1, backgroundColor: 'rgba(255,255,255,0.14)' }}
+          whileTap={{ scale: 0.95 }}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: 30, height: 30, borderRadius: '50%',
+            background: 'rgba(255,255,255,0.07)',
+            border: '1px solid rgba(255,255,255,0.12)',
+            cursor: 'pointer', flexShrink: 0,
+            ...ICON_WHITE,
+          }}
+        >
+          <motion.span
+            animate={{ rotate: collapsed ? 180 : 0 }}
+            transition={{ duration: 0.38, ease: EASE }}
+            style={{ display: 'flex' }}
+          >
+            <VisaArrowBackTiny style={{ width: 12, height: 12 }} aria-hidden />
+          </motion.span>
+        </motion.button>
+      </div>
+    </motion.aside>
   );
 }

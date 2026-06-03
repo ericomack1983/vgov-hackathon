@@ -8,16 +8,17 @@ import { useSettlement, SettlementCompleteData } from '@/hooks/useSettlement';
 import { SettlementAnimation } from '@/components/payment/SettlementAnimation';
 import {
   ArrowLeft, ArrowRight, CheckCircle, CreditCard,
-  DollarSign, Coins, Bell, ShieldCheck, CheckCircle2, XCircle, AlertCircle,
+  DollarSign, Coins, Bell, CheckCircle2, XCircle, AlertCircle,
   Clock, Mail,
 } from 'lucide-react';
 import Link from 'next/link';
 import { v4 as uuidv4 } from 'uuid';
+import { authenticateWithBiometrics } from '@/lib/biometricAuth';
 import type { PaymentMethod, PaymentCard } from '@/lib/mock-data/types';
 import { b2bService, vpaService } from '@/lib/visa-sdk';
 
 // ─── types ────────────────────────────────────────────────────────────────────
-type Step = 'card-select' | 'card-confirm' | 'fund-select' | 'auth' | 'processing' | 'done';
+type Step = 'card-select' | 'card-confirm' | 'fund-select' | 'processing' | 'done';
 type FundMethod = 'USD' | 'USDC';
 
 interface SelectableCard extends Pick<PaymentCard, 'id' | 'brand' | 'last4' | 'type' | 'holderName' | 'status' | 'expiry' | 'usageType'> {
@@ -25,7 +26,7 @@ interface SelectableCard extends Pick<PaymentCard, 'id' | 'brand' | 'last4' | 't
 }
 
 // ─── constants ────────────────────────────────────────────────────────────────
-const STEPS: Step[] = ['card-select', 'card-confirm', 'fund-select', 'auth', 'processing', 'done'];
+const STEPS: Step[] = ['card-select', 'card-confirm', 'fund-select', 'processing', 'done'];
 
 const BRAND_BG: Record<PaymentCard['brand'], string> = {
   Visa:       'from-[#1434CB] to-[#0a1f8f]',
@@ -41,7 +42,7 @@ const BRAND_LABEL: Record<PaymentCard['brand'], string> = {
 
 // ─── step indicator ───────────────────────────────────────────────────────────
 function StepDots({ current }: { current: Step }) {
-  const visible: Step[] = ['card-select', 'card-confirm', 'fund-select', 'auth', 'processing'];
+  const visible: Step[] = ['card-select', 'card-confirm', 'fund-select', 'processing'];
   const idx = visible.indexOf(current);
   return (
     <div className="flex items-center justify-center gap-2 mb-8">
@@ -80,88 +81,6 @@ function CardVisual({ card }: { card: SelectableCard }) {
           <p className="text-[9px] text-white/50 uppercase tracking-widest">Type</p>
           <p className="text-white text-sm font-semibold capitalize">{card.type}</p>
         </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── push notification simulation ─────────────────────────────────────────────
-function PushAuthStep({ amount, supplier, onApprove, onDeny }: {
-  amount: number; supplier: string; onApprove: () => void; onDeny: () => void;
-}) {
-  const [notifVisible, setNotifVisible] = useState(false);
-  useEffect(() => { const t = setTimeout(() => setNotifVisible(true), 600); return () => clearTimeout(t); }, []);
-
-  return (
-    <div className="flex flex-col items-center gap-6">
-      <div className="text-center">
-        <p className="text-base font-semibold text-slate-900">Authenticate Payment</p>
-        <p className="text-sm text-slate-500 mt-1">A push notification has been sent to your registered device.</p>
-      </div>
-
-      {/* Phone mockup */}
-      <div className="relative w-56">
-        <div className="bg-slate-900 rounded-[2.5rem] p-2 shadow-2xl border-4 border-slate-800">
-          <div className="bg-slate-100 rounded-[2rem] overflow-hidden h-96 relative flex flex-col">
-            {/* Status bar */}
-            <div className="bg-slate-900 px-5 py-2 flex items-center justify-between">
-              <span className="text-white text-[10px] font-medium">9:41</span>
-              <div className="w-16 h-4 bg-slate-700 rounded-full" />
-              <div className="flex gap-1">
-                <div className="w-3 h-2 rounded-sm bg-white/60" />
-                <div className="w-1 h-2 rounded-sm bg-white/40" />
-              </div>
-            </div>
-            {/* Screen */}
-            <div className="flex-1 bg-gradient-to-b from-slate-800 to-slate-900 flex items-start justify-center pt-6 px-3">
-              <AnimatePresence>
-                {notifVisible && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -30, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-                    className="w-full bg-white/95 backdrop-blur rounded-2xl p-3 shadow-lg"
-                  >
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-6 h-6 rounded-md bg-[#1434CB] flex items-center justify-center">
-                        <Bell size={12} className="text-white" />
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-bold text-slate-900">VGov · Payment</p>
-                        <p className="text-[9px] text-slate-400">now</p>
-                      </div>
-                    </div>
-                    <p className="text-[11px] font-semibold text-slate-800">Approve Payment?</p>
-                    <p className="text-[10px] text-slate-500 mt-0.5">
-                      ${amount.toLocaleString()} → {supplier}
-                    </p>
-                    <div className="flex gap-2 mt-3">
-                      <button
-                        onClick={onDeny}
-                        className="flex-1 py-1.5 rounded-lg text-[10px] font-bold bg-red-50 text-red-600 border border-red-100"
-                      >
-                        Deny
-                      </button>
-                      <button
-                        onClick={onApprove}
-                        className="flex-1 py-1.5 rounded-lg text-[10px] font-bold bg-[#1434CB] text-white"
-                      >
-                        Approve
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
-        </div>
-        {/* Notch */}
-        <div className="absolute top-3 left-1/2 -translate-x-1/2 w-16 h-4 bg-slate-800 rounded-full z-10" />
-      </div>
-
-      <div className="flex items-center gap-1.5 text-xs text-slate-400">
-        <ShieldCheck size={13} className="text-[#1434CB]" />
-        Secured by VGov Authentication
       </div>
     </div>
   );
@@ -687,25 +606,18 @@ export default function PaymentCheckoutPage({ params }: { params: Promise<{ rfpI
                 Back
               </button>
               <button
-                onClick={() => setStep('auth')}
+                onClick={async () => {
+                  // Native biometric (Touch ID / Windows Hello). Payment only
+                  // proceeds once the user actually authenticates.
+                  const ok = await authenticateWithBiometrics(`Payment · $${bidAmount.toLocaleString()}`);
+                  if (ok) { setStep('processing'); handleStart(paymentMethod, orderId); }
+                }}
                 disabled={!fundMethod || (fundMethod === 'USD' && !usdSubMethod)}
                 className="flex-1 py-2.5 rounded-xl bg-[#1434CB] hover:bg-[#0F27B0] text-white text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-colors inline-flex items-center justify-center gap-2"
               >
                 Authenticate <ArrowRight size={15} />
               </button>
             </div>
-          </motion.div>
-        )}
-
-        {/* ── Step 4: Push Auth ── */}
-        {step === 'auth' && (
-          <motion.div key="auth" {...slideProps}>
-            <PushAuthStep
-              amount={bidAmount}
-              supplier={winner?.name ?? ''}
-              onApprove={() => { setStep('processing'); handleStart(paymentMethod, orderId); }}
-              onDeny={() => setStep('fund-select')}
-            />
           </motion.div>
         )}
 

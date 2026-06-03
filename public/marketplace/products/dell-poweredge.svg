@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300" role="img" aria-label="Rack server">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1a1340"/><stop offset="1" stop-color="#0a0716"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="16%" r="72%">
+      <stop offset="0" stop-color="#1434cb" stop-opacity="0.45"/><stop offset="1" stop-color="#1434cb" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="rack" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#262044"/><stop offset="1" stop-color="#141029"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#bg)"/>
+  <rect width="400" height="300" fill="url(#glow)"/>
+  <ellipse cx="200" cy="256" rx="120" ry="14" fill="#000" opacity="0.35"/>
+  <rect x="128" y="50" width="144" height="206" rx="12" fill="url(#rack)" stroke="#5a4f86" stroke-width="1.5"/>
+  <!-- server units -->
+  <g>
+    <g>
+      <rect x="142" y="66" width="116" height="30" rx="5" fill="#0e1430"/>
+      <circle cx="156" cy="81" r="4" fill="#2dd4bf"/><rect x="170" y="77" width="44" height="8" rx="3" fill="#39507f"/>
+      <rect x="226" y="74" width="22" height="14" rx="2" fill="#1b4dff" opacity="0.5"/>
+    </g>
+    <g transform="translate(0,40)">
+      <rect x="142" y="66" width="116" height="30" rx="5" fill="#0e1430"/>
+      <circle cx="156" cy="81" r="4" fill="#22d3ee"/><rect x="170" y="77" width="44" height="8" rx="3" fill="#39507f"/>
+      <rect x="226" y="74" width="22" height="14" rx="2" fill="#1434cb" opacity="0.5"/>
+    </g>
+    <g transform="translate(0,80)">
+      <rect x="142" y="66" width="116" height="30" rx="5" fill="#0e1430"/>
+      <circle cx="156" cy="81" r="4" fill="#2dd4bf"/><rect x="170" y="77" width="44" height="8" rx="3" fill="#39507f"/>
+      <rect x="226" y="74" width="22" height="14" rx="2" fill="#1b4dff" opacity="0.5"/>
+    </g>
+    <g transform="translate(0,120)">
+      <rect x="142" y="66" width="116" height="30" rx="5" fill="#0e1430"/>
+      <circle cx="156" cy="81" r="4" fill="#ff2d55"/><rect x="170" y="77" width="44" height="8" rx="3" fill="#39507f"/>
+      <rect x="226" y="74" width="22" height="14" rx="2" fill="#1434cb" opacity="0.5"/>
+    </g>
+  </g>
+</svg>

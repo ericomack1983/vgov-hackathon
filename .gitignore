@@ -47,3 +47,18 @@ next-env.d.ts
 # claude internal
 .claude/
 .planning/
+
+# Local scratch media & artifacts (not for the repo)
+/*.mov
+/*.m4a
+/*.webp
+/*.pdf
+/*.jpg
+/*.jpeg
+/*.png
+/*.html
+.venv-invoice-ai/
+chroma_db/
+/bash
+/claude
+/govprocure-ai-tmp@0.1.0

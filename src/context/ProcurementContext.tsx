@@ -16,7 +16,8 @@ type ProcurementAction =
   | { type: 'ADD_BID'; payload: { rfpId: string; bid: Bid } }
   | { type: 'SET_EVALUATION'; payload: { rfpId: string; results: ScoredBid[] } }
   | { type: 'SET_OVERRIDE'; payload: { rfpId: string; winnerId: string; justification: string } }
-  | { type: 'ADD_CARD_TO_SUPPLIER'; payload: { supplierId: string; card: PaymentCard } };
+  | { type: 'ADD_CARD_TO_SUPPLIER'; payload: { supplierId: string; card: PaymentCard } }
+  | { type: 'ADD_SUPPLIER'; payload: Supplier };
 
 function procurementReducer(state: ProcurementState, action: ProcurementAction): ProcurementState {
   switch (action.type) {
@@ -70,9 +71,19 @@ function procurementReducer(state: ProcurementState, action: ProcurementAction):
             : s
         ),
       };
+    case 'ADD_SUPPLIER':
+      return { ...state, suppliers: [...state.suppliers, action.payload] };
     default:
       return state;
   }
+}
+
+function getStoredSuppliers(): Supplier[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem('govpay_registered_suppliers');
+    return raw ? (JSON.parse(raw) as Supplier[]) : [];
+  } catch { return []; }
 }
 
 interface ProcurementContextValue {
@@ -84,15 +95,16 @@ interface ProcurementContextValue {
   setEvaluation: (rfpId: string, results: ScoredBid[]) => void;
   setOverride: (rfpId: string, winnerId: string, justification: string) => void;
   addCardToSupplier: (supplierId: string, card: PaymentCard) => void;
+  addSupplier: (supplier: Supplier) => void;
 }
 
 const ProcurementContext = createContext<ProcurementContextValue | undefined>(undefined);
 
 export function ProcurementProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(procurementReducer, {
-    suppliers: MOCK_SUPPLIERS,
+  const [state, dispatch] = useReducer(procurementReducer, undefined, () => ({
+    suppliers: [...MOCK_SUPPLIERS, ...getStoredSuppliers()],
     rfps: MOCK_RFPS,
-  });
+  }));
 
   const addRFP = useCallback((rfp: RFP) => {
     dispatch({ type: 'ADD_RFP', payload: rfp });
@@ -118,6 +130,10 @@ export function ProcurementProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'ADD_CARD_TO_SUPPLIER', payload: { supplierId, card } });
   }, []);
 
+  const addSupplier = useCallback((supplier: Supplier) => {
+    dispatch({ type: 'ADD_SUPPLIER', payload: supplier });
+  }, []);
+
   const value = useMemo(() => ({
     suppliers: state.suppliers,
     rfps: state.rfps,
@@ -127,7 +143,8 @@ export function ProcurementProvider({ children }: { children: ReactNode }) {
     setEvaluation,
     setOverride,
     addCardToSupplier,
-  }), [state.suppliers, state.rfps, addRFP, updateRFP, addBid, setEvaluation, setOverride, addCardToSupplier]);
+    addSupplier,
+  }), [state.suppliers, state.rfps, addRFP, updateRFP, addBid, setEvaluation, setOverride, addCardToSupplier, addSupplier]);
 
   return (
     <ProcurementContext.Provider value={value}>

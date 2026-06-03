@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300" role="img" aria-label="Office printer">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0a2540"/><stop offset="1" stop-color="#070d1a"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="16%" r="72%">
+      <stop offset="0" stop-color="#22d3ee" stop-opacity="0.42"/><stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#243250"/><stop offset="1" stop-color="#141d33"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#bg)"/>
+  <rect width="400" height="300" fill="url(#glow)"/>
+  <ellipse cx="200" cy="248" rx="130" ry="16" fill="#000" opacity="0.35"/>
+  <!-- top scanner -->
+  <rect x="120" y="78" width="160" height="34" rx="8" fill="url(#body)" stroke="#46557e" stroke-width="1.5"/>
+  <rect x="136" y="90" width="92" height="8" rx="4" fill="#22d3ee" opacity="0.5"/>
+  <circle cx="262" cy="95" r="5" fill="#2dd4bf"/>
+  <!-- mid output slot -->
+  <rect x="108" y="118" width="184" height="40" rx="8" fill="#1a2440" stroke="#46557e" stroke-width="1.5"/>
+  <rect x="128" y="150" width="144" height="8" rx="3" fill="#0c1326"/>
+  <rect x="150" y="138" width="100" height="14" rx="2" fill="#cdd8f5" opacity="0.85"/>
+  <!-- body -->
+  <rect x="108" y="158" width="184" height="74" rx="10" fill="url(#body)" stroke="#46557e" stroke-width="1.5"/>
+  <rect x="128" y="176" width="60" height="34" rx="6" fill="#0c1326"/>
+  <rect x="136" y="184" width="44" height="6" rx="3" fill="#1434cb" opacity="0.7"/>
+  <rect x="136" y="196" width="30" height="6" rx="3" fill="#39507f"/>
+  <!-- paper tray -->
+  <rect x="146" y="232" width="108" height="12" rx="4" fill="#1a2440" stroke="#46557e" stroke-width="1.5"/>
+</svg>

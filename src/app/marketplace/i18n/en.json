@@ -1,0 +1,253 @@
+{
+  "nav": {
+    "portal": "PanamaCompra",
+    "sub": "Republic of Panama",
+    "poweredBy": "Powered by Visa",
+    "signIn": "Sign In",
+    "register": "Register Company",
+    "lang": "ES"
+  },
+  "hero": {
+    "badge": "Public procurement — simple, efficient and transparent",
+    "badgeStatus": "Live system",
+    "headline": "Government procurement,",
+    "headlineAccent": "in real time.",
+    "sub": "PanamaCompra, the Electronic Public Procurement System of the Republic of Panama — now with supplier settlement in hours, not months, powered by Visa.",
+    "ctaPrimary": "Enter the portal",
+    "ctaSecondary": "Sell to the government",
+    "searchPlaceholder": "Search category, supplier, or tender number…",
+    "searchBtn": "Search",
+    "tagsLabel": "Popular categories:",
+    "tags": ["Technology", "Health", "Infrastructure", "Professional Services"],
+    "stats": [
+      { "value": "18,400+", "label": "Registered suppliers" },
+      { "value": "$2.1B", "label": "Processed annually" },
+      { "value": "142", "label": "Active government entities" },
+      { "value": "24h", "label": "Average settlement" }
+    ],
+    "featuresTitle": "Everything you need to sell to the government",
+    "features": [
+      { "icon": "document", "title": "Active Tenders", "desc": "Find open contracting opportunities for your company across the government." },
+      { "icon": "card-generic", "title": "VCN Purchase Orders", "desc": "Receive payments via Virtual Visa Card in minutes, not weeks or months." },
+      { "icon": "analytics", "title": "Spend Analytics", "desc": "Real-time dashboards of government spend by entity and category." }
+    ],
+    "featureMore": "Learn more",
+    "ctaTitle": "Ready to grow with the public sector?",
+    "ctaSub": "Join thousands of suppliers who trust PanamaCompra",
+    "ctaPrimaryBtn": "Register now",
+    "ctaSecondaryBtn": "View demo",
+    "trustTitle": "Backed by the institutions of the Republic of Panama",
+    "trustBadges": [
+      { "title": "DGCP", "desc": "Regulated by the General Directorate of Public Procurement" },
+      { "title": "Qualified Electronic Signature", "desc": "Validated with Panama's Public Registry · AES-256 encryption" },
+      { "title": "ANTAI Transparency", "desc": "Digital Public Procurement Observatory · Law No. 93" }
+    ],
+    "compliance": "Panama Law 22/2006  ·  Visa Commercial Ready  ·  AES-256  ·  Full Audit Trail"
+  },
+  "featured": {
+    "title": "Featured Products",
+    "subtitle": "Top-selling products from verified government vendors.",
+    "viewMore": "View more",
+    "addToCart": "Add to cart",
+    "prev": "Previous",
+    "next": "Next",
+    "products": [
+      { "category": "Networking Equipment", "name": "Cisco Catalyst 9300", "price": "B/.8,499" },
+      { "category": "IT Equipment", "name": "Lenovo ThinkPad X1 Carbon", "price": "B/.2,199" },
+      { "category": "Office Furniture", "name": "Herman Miller Ergonomic Chair", "price": "B/.1,495" },
+      { "category": "Cybersecurity", "name": "Fortinet FortiGate 600F", "price": "B/.12,999" },
+      { "category": "Office Equipment", "name": "Canon imageRUNNER Multifunction", "price": "B/.4,299" },
+      { "category": "IT Infrastructure", "name": "Dell PowerEdge R750 Server", "price": "B/.15,999" }
+    ]
+  },
+  "signIn": {
+    "tagline": "The marketplace where government and business meet.",
+    "sub": "Sell to over 847 government entities. Accept Institutional Payment Cards. Receive funds in 48 hours.",
+    "title": "Sign In to PanamaCompra",
+    "formSub": "Access your supplier or institution account",
+    "roleSupplier": "Supplier",
+    "roleEntity": "Government Entity",
+    "email": "Email Address",
+    "emailPlaceholder": "company@supplier.pa",
+    "password": "Password",
+    "passwordPlaceholder": "••••••••••••",
+    "forgotPassword": "Forgot your password?",
+    "remember": "Remember me for 30 days",
+    "submit": "Sign In Securely",
+    "submitting": "Authenticating…",
+    "sso": "Sign In with Digital ID / Institutional SSO",
+    "noAccount": "New supplier?",
+    "register": "Register my company",
+    "back": "Back to home",
+    "entityInfoTitle": "Institutional Portal",
+    "entityInfoDesc": "The procurement portal for government entities. Click below to sign in.",
+    "entityLink": "Open Institutional Portal →",
+    "error": "Incorrect credentials. Please verify your email and password.",
+    "trust": ["DGI-certified infrastructure", "RPE and Comptroller General integrated", "WCAG 2.1 AA Accessibility"]
+  },
+  "signUp": {
+    "tagline": "Start selling to the Panamanian government today.",
+    "sub": "Over 1,200 verified suppliers. Free registration. No fees.",
+    "title": "Register Supplier Company",
+    "avgTime": "Average registration time: 8 minutes",
+    "steps": ["Company Details", "Product Catalog", "Card Payments", "Create Account"],
+    "next": "Continue",
+    "backPrev": "Previous step",
+    "backSignIn": "Back to sign in",
+    "submit": "Create Supplier Account",
+    "submitting": "Creating account…",
+    "benefits": [
+      { "title": "Free Registration", "body": "Free sign-up. No monthly fees or setup charges." },
+      { "title": "Institutional Card Payments", "body": "Accept Visa Institutional Payment Cards (IPC) immediately." },
+      { "title": "Tender Advantage", "body": "MYPE, Women-Owned and Indigenous certifications unlock reserved contracts." },
+      { "title": "Automatic Compliance", "body": "RPE, DGI and Comptroller General verified automatically — no manual management." }
+    ],
+    "step1": {
+      "razonSocial": "Company Legal Name",
+      "ruc": "RUC (Tax Registration Number)",
+      "ciudad": "City / Corregimiento",
+      "provincia": "Province",
+      "certs": "Special Certifications (optional)"
+    },
+    "step2": {
+      "info": "Register your main product. Government entities search suppliers by catalog. A well-described product automatically increases your visibility in tenders.",
+      "nombre": "Product Name",
+      "desc": "Short Description",
+      "precio": "Base Price (B/.)",
+      "entrega": "Delivery Time (days)",
+      "unspsc": "UNSPSC Code"
+    },
+    "step3": {
+      "info": "Government entities pay with Visa Institutional Payment Cards (IPC). Register your MCC and payment processor to receive payments immediately.",
+      "mcc": "MCC Code (Merchant Category Code)",
+      "procesador": "Card Processor",
+      "categoria": "Main Product Category"
+    },
+    "step4": {
+      "nombre": "Contact Name",
+      "correo": "Corporate Email",
+      "telefono": "Phone",
+      "clave": "Password",
+      "claveC": "Confirm Password",
+      "terms": "I accept the Terms of Service, Privacy Policy and the Government Supplier Agreement. I certify that the information provided is truthful."
+    }
+  },
+  "portal": {
+    "nav": {
+      "panel": "Dashboard",
+      "ventas": "Sales History",
+      "licitaciones": "Tenders",
+      "catalogo": "Product Catalog",
+      "perfil": "My Profile",
+      "signOut": "Sign Out",
+      "collapse": "Collapse menu"
+    },
+    "panel": {
+      "tag": "Supplier Dashboard",
+      "welcomePrefix": "Welcome,",
+      "monthlyChart": "Monthly Revenue (B/.)",
+      "onboarding": "Onboarding Status",
+      "recentSales": "Recent Sales",
+      "openTenders": "Open Tenders",
+      "months": ["Jul", "Aug", "Sep", "Oct", "Nov"],
+      "incomeTotal": "Total Revenue",
+      "incomeSub": "+18% vs last month",
+      "settled": "Settled",
+      "settledSub": "transactions",
+      "inProcess": "In Process / Pending",
+      "inProcessSub": "orders",
+      "cardPayments": "Card Payments",
+      "cardPaymentsSub": "Petty purchases"
+    },
+    "ventas": {
+      "title": "Sales History",
+      "sub": "All purchase orders received from government entities",
+      "filterLabel": "Filter",
+      "all": "All",
+      "cols": ["Sale #", "Buying Entity", "Items", "Amount", "Payment Method", "Status", "Settlement Date"],
+      "total": "Total:",
+      "record": "record",
+      "records": "records"
+    },
+    "licitaciones": {
+      "title": "Tender Board",
+      "sub": "Matches for: Electronics, Computing Hardware, IT Equipment",
+      "open": "Open",
+      "closing": "Closing Soon",
+      "closed": "Closed",
+      "matchSuffix": "% match",
+      "back": "Back to board",
+      "budgetLabel": "Estimated budget",
+      "published": "Published:",
+      "closeDate": "Closing:",
+      "descTitle": "Description",
+      "reqTitle": "Requirements Check",
+      "submitBtn": "Submit Proposal",
+      "submitClosed": "Bidding Period Closed",
+      "matchScore": "Match Score",
+      "excellent": "Excellent Match",
+      "good": "Good Match",
+      "partial": "Partial Match",
+      "summaryTitle": "Summary",
+      "summaryKeys": ["Category", "Entity", "Budget", "Deadline", "Requirements"],
+      "meets": "✓ Meets",
+      "missing": "✗ Missing"
+    },
+    "catalogo": {
+      "title": "Product Catalog",
+      "sub": "Manage the products and services you offer to government entities",
+      "addBtn": "Add Product",
+      "publishBtn": "Publish Product",
+      "cancelBtn": "Cancel",
+      "newTitle": "New Product",
+      "autoFillHint": "Click any field to auto-fill the demo",
+      "kpiLabels": ["Total Products", "Active Products", "Average Price", "Categories"],
+      "kpiSubs": ["active", "visible on PanamaCompra", "per product", "distinct categories"],
+      "rowFields": ["Price", "Delivery", "UNSPSC", "Views"],
+      "nombre": "Product Name",
+      "desc": "Short Description",
+      "precio": "Base Price (B/.)",
+      "entrega": "Delivery Time (days)",
+      "categoria": "Category",
+      "unspsc": "UNSPSC Code"
+    },
+    "perfil": {
+      "title": "My Profile",
+      "editBtn": "Edit Profile",
+      "saveBtn": "Save Profile",
+      "adminRole": "Supplier Administrator",
+      "docsTitle": "Compliance Documents",
+      "replaceBtn": "Replace",
+      "ratingTitle": "Rating",
+      "ratingBased": "Based on {n} completed orders",
+      "certsTitle": "Certifications",
+      "actionsTitle": "Quick Actions",
+      "actions": ["Update Catalog", "Download DGI Forms", "Contact Support", "View Public Profile"],
+      "fields": ["RUC", "MCC", "Size", "RPE Status", "Insurance Policy", "Level III Data", "Registered Since", "Accepts IPC", "Categories"],
+      "ordenes": "Orders",
+      "ingresos": "Revenue",
+      "promOrden": "Avg. Order",
+      "desde": "Since"
+    },
+    "status": {
+      "Liquidado": "Settled",
+      "En Proceso": "In Process",
+      "Pendiente": "Pending",
+      "Activo": "Active",
+      "Borrador": "Draft",
+      "Pausado": "Paused",
+      "rpeActivo": "RPE Active",
+      "Abierta": "Open",
+      "Por Cerrar": "Closing Soon",
+      "Cerrada": "Closed"
+    },
+    "onboarding": [
+      "Company registration submitted",
+      "RUC verified with DGI",
+      "MCC confirmed with processor",
+      "Tax clearance uploaded",
+      "Bank account linked",
+      "First sale completed"
+    ]
+  }
+}

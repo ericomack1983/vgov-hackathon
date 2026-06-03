@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @source "./src";
+@source "../**/*.{js,jsx,ts,tsx}";
 
 /* ─────────────────────────────────────────────────────────────────────────────
    VISA DESIGN SYSTEM — CSS Custom Properties

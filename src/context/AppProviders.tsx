@@ -7,6 +7,7 @@ import { PaymentProvider } from './PaymentContext';
 import { AuthProvider } from './AuthContext';
 import { SidebarActionsProvider } from './SidebarActionsContext';
 import { AILedgerProvider } from './AILedgerContext';
+import { CardsProvider } from './CardsContext';
 
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
@@ -15,9 +16,11 @@ export function AppProviders({ children }: { children: ReactNode }) {
         <SidebarActionsProvider>
           <ProcurementProvider>
             <PaymentProvider>
-              <AILedgerProvider>
-                {children}
-              </AILedgerProvider>
+              <CardsProvider>
+                <AILedgerProvider>
+                  {children}
+                </AILedgerProvider>
+              </CardsProvider>
             </PaymentProvider>
           </ProcurementProvider>
         </SidebarActionsProvider>

@@ -6,6 +6,7 @@ import { Search, X, SlidersHorizontal, ShieldCheck } from 'lucide-react';
 import { useProcurement } from '@/context/ProcurementContext';
 import { SupplierCard } from '@/components/procurement/SupplierCard';
 import type { Supplier } from '@/lib/mock-data/types';
+import { wasPageRefreshed } from '@/lib/playOnRefresh';
 import createGlobe from 'cobe';
 
 // ── Globe markers ──────────────────────────────────────────────────────────────
@@ -357,7 +358,7 @@ function VisaApiLoader({ supplierCount }: { supplierCount: number }) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-white text-sm font-bold leading-tight">
-                  <AnimatedCount target={supplierCount} /> suppliers matched &amp; verified
+                  <AnimatedCount target={supplierCount} />{' '}suppliers matched &amp; verified
                 </p>
                 <p className="text-emerald-400/70 text-[10px] font-mono mt-0.5">
                   Visa Network eligibility confirmed · VSMS scores computed
@@ -419,12 +420,21 @@ export default function SuppliersPage() {
   const [query, setQuery]           = useState('');
   const [compliance, setCompliance] = useState<ComplianceFilter>('All');
   const [sort, setSort]             = useState<SortKey>('rating-desc');
-  const [showLoader, setShowLoader] = useState(true);
+  // Play the Visa intelligence loader only on a hard refresh (Ctrl/Cmd+R)
+  // of this page — not on in-app navigation.
+  const [showLoader, setShowLoader] = useState(false);
 
   useEffect(() => {
+    if (wasPageRefreshed()) setShowLoader(true);
+  }, []);
+
+  // Auto-dismiss after the animation completes. Tied to `showLoader` so
+  // StrictMode's effect re-run can't drop the close timer.
+  useEffect(() => {
+    if (!showLoader) return;
     const t = setTimeout(() => setShowLoader(false), CLOSE_DELAY);
     return () => clearTimeout(t);
-  }, []);
+  }, [showLoader]);
 
   const filtered = useMemo(() => {
     let list = suppliers;

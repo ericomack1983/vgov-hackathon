@@ -1,0 +1,253 @@
+{
+  "nav": {
+    "portal": "PanamaCompra",
+    "sub": "República de Panamá",
+    "poweredBy": "Powered by Visa",
+    "signIn": "Iniciar Sesión",
+    "register": "Registrar Empresa",
+    "lang": "EN"
+  },
+  "hero": {
+    "badge": "Compras públicas, simples, eficaces y transparentes",
+    "badgeStatus": "Sistema en vivo",
+    "headline": "Las compras del Estado,",
+    "headlineAccent": "en tiempo real.",
+    "sub": "PanamaCompra, el Sistema Electrónico de Contrataciones Públicas de la República de Panamá — ahora con liquidación a proveedores en horas, no en meses, impulsada por Visa.",
+    "ctaPrimary": "Acceder al portal",
+    "ctaSecondary": "Vender al Estado",
+    "searchPlaceholder": "Buscar categoría, proveedor o número de licitación…",
+    "searchBtn": "Buscar",
+    "tagsLabel": "Categorías populares:",
+    "tags": ["Tecnología", "Salud", "Infraestructura", "Servicios Profesionales"],
+    "stats": [
+      { "value": "18,400+", "label": "Proveedores registrados" },
+      { "value": "$2.1B", "label": "Procesado anualmente" },
+      { "value": "142", "label": "Entidades del Estado activas" },
+      { "value": "24h", "label": "Liquidación promedio" }
+    ],
+    "featuresTitle": "Todo lo que necesitas para vender al Estado",
+    "features": [
+      { "icon": "document", "title": "Licitaciones Activas", "desc": "Encuentra oportunidades de contratación abiertas para tu empresa en todo el Estado." },
+      { "icon": "card-generic", "title": "Órdenes de Compra VCN", "desc": "Recibe pagos con Tarjeta Virtual Visa en minutos, no en semanas o meses." },
+      { "icon": "analytics", "title": "Análisis de Gasto", "desc": "Tableros en tiempo real del gasto gubernamental por entidad y categoría." }
+    ],
+    "featureMore": "Más información",
+    "ctaTitle": "¿Listo para crecer con el sector público?",
+    "ctaSub": "Únase a miles de proveedores que confían en PanamaCompra",
+    "ctaPrimaryBtn": "Registrarse Ahora",
+    "ctaSecondaryBtn": "Ver Demo",
+    "trustTitle": "Respaldado por las instituciones de la República de Panamá",
+    "trustBadges": [
+      { "title": "DGCP", "desc": "Regulado por la Dirección General de Contrataciones Públicas" },
+      { "title": "Firma Electrónica Calificada", "desc": "Validación con el Registro Público de Panamá · cifrado AES-256" },
+      { "title": "Transparencia ANTAI", "desc": "Observatorio Digital de Contrataciones Públicas · Ley No. 93" }
+    ],
+    "compliance": "Panamá Ley 22/2006  ·  Visa Commercial Ready  ·  AES-256  ·  Auditoría completa"
+  },
+  "featured": {
+    "title": "Productos Destacados",
+    "subtitle": "Los productos más solicitados de proveedores verificados del Estado.",
+    "viewMore": "Ver más",
+    "addToCart": "Agregar al carrito",
+    "prev": "Anterior",
+    "next": "Siguiente",
+    "products": [
+      { "category": "Equipo de Red", "name": "Cisco Catalyst 9300", "price": "B/.8,499" },
+      { "category": "Equipo de TI", "name": "Lenovo ThinkPad X1 Carbon", "price": "B/.2,199" },
+      { "category": "Mobiliario de Oficina", "name": "Silla Ergonómica Herman Miller", "price": "B/.1,495" },
+      { "category": "Ciberseguridad", "name": "Fortinet FortiGate 600F", "price": "B/.12,999" },
+      { "category": "Equipo de Oficina", "name": "Canon imageRUNNER Multifunción", "price": "B/.4,299" },
+      { "category": "Infraestructura de TI", "name": "Servidor Dell PowerEdge R750", "price": "B/.15,999" }
+    ]
+  },
+  "signIn": {
+    "tagline": "El mercado donde el Estado y la empresa se encuentran.",
+    "sub": "Vende a más de 847 entidades gubernamentales. Acepta Tarjetas de Pago Institucional. Recibe tus fondos en 48 horas.",
+    "title": "Ingresar a PanamaCompra",
+    "formSub": "Accede a tu cuenta de proveedor o entidad",
+    "roleSupplier": "Proveedor",
+    "roleEntity": "Entidad del Estado",
+    "email": "Correo Electrónico",
+    "emailPlaceholder": "empresa@proveedor.pa",
+    "password": "Contraseña",
+    "passwordPlaceholder": "••••••••••••",
+    "forgotPassword": "¿Olvidó su contraseña?",
+    "remember": "Recordarme por 30 días",
+    "submit": "Ingresar de Forma Segura",
+    "submitting": "Autenticando…",
+    "sso": "Ingresar con Cédula Digital / SSO Institucional",
+    "noAccount": "¿Nuevo proveedor?",
+    "register": "Registrar mi empresa",
+    "back": "Volver al inicio",
+    "entityInfoTitle": "Portal Institucional",
+    "entityInfoDesc": "El portal de compras para entidades del Estado. Haga clic abajo para iniciar sesión.",
+    "entityLink": "Abrir Portal Institucional →",
+    "error": "Credenciales incorrectas. Verifique su correo y contraseña.",
+    "trust": ["Infraestructura certificada DGI", "RPE y Contraloría General integrados", "Accesibilidad WCAG 2.1 AA"]
+  },
+  "signUp": {
+    "tagline": "Empieza a vender al Estado panameño hoy mismo.",
+    "sub": "Más de 1,200 proveedores verificados. Registro gratuito. Sin cuotas.",
+    "title": "Registrar Empresa Proveedora",
+    "avgTime": "Tiempo promedio de registro: 8 minutos",
+    "steps": ["Datos de Empresa", "Catálogo de Productos", "Pago con Tarjeta", "Crear Cuenta"],
+    "next": "Continuar",
+    "backPrev": "Paso anterior",
+    "backSignIn": "Volver al inicio de sesión",
+    "submit": "Crear Cuenta de Proveedor",
+    "submitting": "Creando cuenta…",
+    "benefits": [
+      { "title": "Sin Costo de Registro", "body": "Alta gratuita. Sin cuotas mensuales ni cobros de configuración." },
+      { "title": "Cobro con Tarjeta Institucional", "body": "Acepta Tarjetas de Pago Institucional (TPI) de Visa de forma inmediata." },
+      { "title": "Ventaja en Licitaciones", "body": "Certificaciones MYPE, Empresa Femenina e Indígena desbloquean contratos reservados." },
+      { "title": "Cumplimiento Automático", "body": "RPE, DGI y Contraloría General verificados automáticamente — sin gestión manual." }
+    ],
+    "step1": {
+      "razonSocial": "Razón Social",
+      "ruc": "RUC (Registro Único del Contribuyente)",
+      "ciudad": "Ciudad / Corregimiento",
+      "provincia": "Provincia",
+      "certs": "Certificaciones Especiales (opcional)"
+    },
+    "step2": {
+      "info": "Registra tu producto principal. Las entidades del Estado buscan proveedores por catálogo. Un producto bien descrito aumenta tu visibilidad en licitaciones automáticamente.",
+      "nombre": "Nombre del Producto",
+      "desc": "Descripción Corta",
+      "precio": "Precio Base (B/.)",
+      "entrega": "Plazo de Entrega (días)",
+      "unspsc": "Código UNSPSC"
+    },
+    "step3": {
+      "info": "Las entidades del Estado pagan con Tarjeta de Pago Institucional (TPI) de Visa. Registra tu MCC y procesador de pagos para recibir cobros de forma inmediata.",
+      "mcc": "Código MCC (Clasificación de Comercio)",
+      "procesador": "Procesador de Tarjetas",
+      "categoria": "Categoría Principal de Producto"
+    },
+    "step4": {
+      "nombre": "Nombre del Contacto",
+      "correo": "Correo Corporativo",
+      "telefono": "Teléfono",
+      "clave": "Contraseña",
+      "claveC": "Confirmar Contraseña",
+      "terms": "Acepto los Términos de Servicio, Política de Privacidad y el Acuerdo de Proveedor del Estado. Certifico que la información proporcionada es veraz."
+    }
+  },
+  "portal": {
+    "nav": {
+      "panel": "Panel Principal",
+      "ventas": "Historial de Ventas",
+      "licitaciones": "Licitaciones",
+      "catalogo": "Catálogo de Productos",
+      "perfil": "Mi Perfil",
+      "signOut": "Cerrar Sesión",
+      "collapse": "Colapsar menú"
+    },
+    "panel": {
+      "tag": "Panel de Proveedor",
+      "welcomePrefix": "Bienvenida,",
+      "monthlyChart": "Ingresos Mensuales (B/.)",
+      "onboarding": "Estado de Incorporación",
+      "recentSales": "Ventas Recientes",
+      "openTenders": "Licitaciones Abiertas",
+      "months": ["Jul", "Ago", "Sep", "Oct", "Nov"],
+      "incomeTotal": "Ingresos Totales",
+      "incomeSub": "+18% vs mes anterior",
+      "settled": "Liquidado",
+      "settledSub": "transacciones",
+      "inProcess": "En Proceso / Pendiente",
+      "inProcessSub": "órdenes",
+      "cardPayments": "Pagos con Tarjeta",
+      "cardPaymentsSub": "Compras menores"
+    },
+    "ventas": {
+      "title": "Historial de Ventas",
+      "sub": "Todas las órdenes de compra recibidas de entidades del Estado",
+      "filterLabel": "Filtrar",
+      "all": "Todas",
+      "cols": ["N° Venta", "Entidad Compradora", "Artículos", "Monto", "Método de Pago", "Estado", "F. Liquidación"],
+      "total": "Total:",
+      "record": "registro",
+      "records": "registros"
+    },
+    "licitaciones": {
+      "title": "Tablero de Licitaciones",
+      "sub": "Coincidencias con: Electrónica, Hardware de Cómputo, Equipos de TI",
+      "open": "Abiertas",
+      "closing": "Por Cerrar",
+      "closed": "Cerradas",
+      "matchSuffix": "% coincid.",
+      "back": "Volver al tablero",
+      "budgetLabel": "Presupuesto estimado",
+      "published": "Publicada:",
+      "closeDate": "Cierre:",
+      "descTitle": "Descripción",
+      "reqTitle": "Verificación de Requisitos",
+      "submitBtn": "Presentar Propuesta",
+      "submitClosed": "Período de Ofertas Cerrado",
+      "matchScore": "Puntaje de Coincidencia",
+      "excellent": "Coincidencia Excelente",
+      "good": "Buena Coincidencia",
+      "partial": "Coincidencia Parcial",
+      "summaryTitle": "Resumen",
+      "summaryKeys": ["Categoría", "Entidad", "Presupuesto", "Cierre", "Requisitos"],
+      "meets": "✓ Cumple",
+      "missing": "✗ Faltante"
+    },
+    "catalogo": {
+      "title": "Catálogo de Productos",
+      "sub": "Gestiona los productos y servicios que ofreces a entidades del Estado",
+      "addBtn": "Agregar Producto",
+      "publishBtn": "Publicar Producto",
+      "cancelBtn": "Cancelar",
+      "newTitle": "Nuevo Producto",
+      "autoFillHint": "Haz clic en cualquier campo para autocompletar el demo",
+      "kpiLabels": ["Total Productos", "Productos Activos", "Precio Promedio", "Categorías"],
+      "kpiSubs": ["activos", "visibles en PanamaCompra", "por producto", "categorías distintas"],
+      "rowFields": ["Precio", "Entrega", "UNSPSC", "Vistas"],
+      "nombre": "Nombre del Producto",
+      "desc": "Descripción Corta",
+      "precio": "Precio Base (B/.)",
+      "entrega": "Plazo de Entrega (días)",
+      "categoria": "Categoría",
+      "unspsc": "Código UNSPSC"
+    },
+    "perfil": {
+      "title": "Mi Perfil",
+      "editBtn": "Editar Perfil",
+      "saveBtn": "Guardar Perfil",
+      "adminRole": "Administrador Proveedor",
+      "docsTitle": "Documentos de Cumplimiento",
+      "replaceBtn": "Reemplazar",
+      "ratingTitle": "Calificación",
+      "ratingBased": "Basado en {n} órdenes completadas",
+      "certsTitle": "Certificaciones",
+      "actionsTitle": "Acciones Rápidas",
+      "actions": ["Actualizar Catálogo", "Descargar Formularios DGI", "Contactar Soporte", "Ver Perfil Público"],
+      "fields": ["RUC", "MCC", "Tamaño", "Estado RPE", "Póliza de Seguro", "Datos Nivel III", "Registrado Desde", "Acepta TPI", "Categorías"],
+      "ordenes": "Órdenes",
+      "ingresos": "Ingresos",
+      "promOrden": "Prom. Orden",
+      "desde": "Desde"
+    },
+    "status": {
+      "Liquidado": "Liquidado",
+      "En Proceso": "En Proceso",
+      "Pendiente": "Pendiente",
+      "Activo": "Activo",
+      "Borrador": "Borrador",
+      "Pausado": "Pausado",
+      "rpeActivo": "RPE Activo",
+      "Abierta": "Abierta",
+      "Por Cerrar": "Por Cerrar",
+      "Cerrada": "Cerrada"
+    },
+    "onboarding": [
+      "Registro de empresa enviado",
+      "RUC verificado con DGI",
+      "MCC confirmado con procesador",
+      "Paz y salvo fiscal subido",
+      "Cuenta bancaria vinculada",
+      "Primera venta completada"
+    ]
+  }
+}
