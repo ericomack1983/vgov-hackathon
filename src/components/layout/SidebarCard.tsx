@@ -58,23 +58,7 @@ export function SidebarCard() {
   } as React.CSSProperties;
 
   return (
-    <div style={{ ...vars, padding: '0 14px 14px', perspective: 900 }}>
-      <p
-        style={{
-          fontSize: 9, fontWeight: 700, letterSpacing: '0.18em',
-          textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)',
-          margin: '0 0 8px 2px', display: 'flex', alignItems: 'center', gap: 6,
-        }}
-      >
-        <span
-          style={{
-            width: 5, height: 5, borderRadius: '50%', background: '#34d8b0',
-            boxShadow: '0 0 8px #34d8b0',
-          }}
-        />
-        Visa Commercial
-      </p>
-
+    <div style={{ ...vars, padding: '20px 14px 14px', perspective: 900 }}>
       {/* Ambient float + slow autonomous 3D drift */}
       <motion.div
         animate={reduce ? undefined : {

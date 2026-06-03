@@ -33,7 +33,8 @@ export default function DashboardPage() {
 
   const metrics = useMemo(() => {
     const settled = transactions.filter((t) => t.status === 'Settled');
-    const usdSpent  = settled.filter((t) => t.method === 'USD').reduce((s, t) => s + t.amount, 0);
+    // Card payments (e.g. petty cash) settle in USD, so they count toward USD spend.
+    const usdSpent  = settled.filter((t) => t.method === 'USD' || t.method === 'Card').reduce((s, t) => s + t.amount, 0);
     const usdcSpent = settled.filter((t) => t.method === 'USDC').reduce((s, t) => s + t.amount, 0);
     const totalSpent = usdSpent + usdcSpent;
     const activeOrders    = transactions.filter((t) => t.status !== 'Settled').length;

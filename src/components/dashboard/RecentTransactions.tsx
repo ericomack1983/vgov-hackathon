@@ -47,6 +47,10 @@ export function RecentTransactions({ transactions, limit = 5 }: RecentTransactio
                     <span className="bg-[#D6DFFA] text-indigo-700 px-2 py-0.5 rounded text-xs font-semibold">
                       USD
                     </span>
+                  ) : tx.method === 'Card' ? (
+                    <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-xs font-semibold">
+                      Card
+                    </span>
                   ) : (
                     <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-semibold">
                       USDC
