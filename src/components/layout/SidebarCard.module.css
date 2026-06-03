@@ -1,0 +1,96 @@
+/*
+ * Autonomous (always-on) card motion driven by pure CSS keyframes.
+ *
+ * These animations were previously expressed as framer-motion infinite
+ * keyframe loops. Those loops run under `next dev --webpack` but freeze in
+ * the minified Turbopack production build, so the card sat motionless on
+ * Vercel. CSS @keyframes are bundler- and runtime-independent, so they animate
+ * identically in dev and prod. Interactive motion (cursor parallax, hover
+ * lift, glare) stays in framer-motion inside SidebarCard.tsx.
+ *
+ * GPU-only (transform/opacity) and silenced for reduced-motion users.
+ */
+
+/* Ambient float + slow autonomous 3D drift (outer wrapper). */
+.float {
+  transform-style: preserve-3d;
+  animation: sc-float 9s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes sc-float {
+  0% {
+    transform: translateY(0) rotateX(3.5deg) rotateY(-8deg) rotateZ(-0.8deg);
+  }
+  50% {
+    transform: translateY(-7px) rotateX(-3.5deg) rotateY(8deg) rotateZ(0.8deg);
+  }
+  100% {
+    transform: translateY(0) rotateX(3.5deg) rotateY(-8deg) rotateZ(-0.8deg);
+  }
+}
+
+/* Primary gloss sweep: crosses the face, then waits off-screen. */
+.sweep {
+  animation: sc-sweep 6s linear infinite;
+  will-change: transform;
+}
+
+@keyframes sc-sweep {
+  0% {
+    transform: translateX(-160%);
+    animation-timing-function: ease-in-out;
+  }
+  25% {
+    transform: translateX(260%);
+  }
+  100% {
+    transform: translateX(260%);
+  }
+}
+
+/* Secondary counter-sweep — softer, opposite direction, longer pause. */
+.counterSweep {
+  animation: sc-counter 8.1s linear infinite;
+  will-change: transform;
+}
+
+@keyframes sc-counter {
+  0% {
+    transform: translateX(320%);
+    animation-timing-function: ease-in-out;
+  }
+  26% {
+    transform: translateX(-200%);
+  }
+  100% {
+    transform: translateX(-200%);
+  }
+}
+
+/* Drifting holographic sheen — iridescent laminate. */
+.sheen {
+  animation: sc-sheen 8s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes sc-sheen {
+  0% {
+    transform: translate(-14%, -6%);
+  }
+  50% {
+    transform: translate(14%, 6%);
+  }
+  100% {
+    transform: translate(-14%, -6%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .float,
+  .sweep,
+  .counterSweep,
+  .sheen {
+    animation: none;
+  }
+}

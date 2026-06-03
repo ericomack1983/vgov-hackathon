@@ -9,6 +9,7 @@ import {
   useReducedMotion,
 } from 'framer-motion';
 import { VisaLogo } from '@visa/nova-react';
+import styles from './SidebarCard.module.css';
 
 /**
  * Premium floating Visa card — a laminated-glass payment card that gently
@@ -59,22 +60,10 @@ export function SidebarCard() {
 
   return (
     <div style={{ ...vars, padding: '20px 14px 14px', perspective: 900 }}>
-      {/* Ambient float + slow autonomous 3D drift */}
-      <motion.div
-        animate={reduce ? undefined : {
-          y: [0, -7, 0],
-          rotateY: [-8, 8, -8],
-          rotateX: [3.5, -3.5, 3.5],
-          rotateZ: [-0.8, 0.8, -0.8],
-        }}
-        transition={{
-          y:       { duration: 6,  repeat: Infinity, ease: 'easeInOut' },
-          rotateY: { duration: 9,  repeat: Infinity, ease: 'easeInOut' },
-          rotateX: { duration: 7,  repeat: Infinity, ease: 'easeInOut' },
-          rotateZ: { duration: 11, repeat: Infinity, ease: 'easeInOut' },
-        }}
-        style={{ transformStyle: 'preserve-3d' }}
-      >
+      {/* Ambient float + slow autonomous 3D drift (CSS keyframes — see
+          SidebarCard.module.css; reduced-motion handled there). */}
+      <div className={reduce ? undefined : styles.float}>
+
         {/* Card — cursor parallax + hover lift */}
         <motion.div
           ref={ref}
@@ -155,39 +144,36 @@ export function SidebarCard() {
             }}
           />
 
-          {/* Periodic gloss sweep */}
+          {/* Periodic gloss sweep (CSS keyframes) */}
           {!reduce && (
-            <motion.div
+            <div
+              className={styles.sweep}
               style={{
                 position: 'absolute', top: 0, bottom: 0, width: '45%',
                 pointerEvents: 'none', filter: 'blur(2px)',
                 background:
                   'linear-gradient(105deg, transparent 0%, rgba(255,255,255,0.55) 50%, transparent 100%)',
               }}
-              initial={{ x: '-160%' }}
-              animate={{ x: ['-160%', '260%'] }}
-              transition={{ duration: 1.5, ease: 'easeInOut', repeat: Infinity, repeatDelay: 4.5 }}
             />
           )}
 
-          {/* Secondary counter-sweep — softer, opposite direction */}
+          {/* Secondary counter-sweep — softer, opposite direction (CSS keyframes) */}
           {!reduce && (
-            <motion.div
+            <div
+              className={styles.counterSweep}
               style={{
                 position: 'absolute', top: 0, bottom: 0, width: '28%',
                 pointerEvents: 'none', filter: 'blur(3px)',
                 background:
                   'linear-gradient(75deg, transparent 0%, rgba(255,255,255,0.32) 50%, transparent 100%)',
               }}
-              initial={{ x: '320%' }}
-              animate={{ x: ['320%', '-200%'] }}
-              transition={{ duration: 2.1, ease: 'easeInOut', repeat: Infinity, repeatDelay: 6 }}
             />
           )}
 
-          {/* Drifting holographic sheen — iridescent laminate */}
+          {/* Drifting holographic sheen — iridescent laminate (CSS keyframes) */}
           {!reduce && (
-            <motion.div
+            <div
+              className={styles.sheen}
               style={{
                 position: 'absolute', inset: '-25%', pointerEvents: 'none',
                 mixBlendMode: 'screen', opacity: hovered ? 0.32 : 0.2,
@@ -195,8 +181,6 @@ export function SidebarCard() {
                 background:
                   'linear-gradient(115deg, transparent 28%, rgba(34,211,238,0.7) 44%, rgba(124,140,255,0.6) 54%, rgba(247,182,0,0.5) 64%, transparent 78%)',
               }}
-              animate={{ x: ['-14%', '14%', '-14%'], y: ['-6%', '6%', '-6%'] }}
-              transition={{ duration: 8, ease: 'easeInOut', repeat: Infinity }}
             />
           )}
 
@@ -249,7 +233,7 @@ export function SidebarCard() {
             }}
           />
         </motion.div>
-      </motion.div>
+      </div>
     </div>
   );
 }
