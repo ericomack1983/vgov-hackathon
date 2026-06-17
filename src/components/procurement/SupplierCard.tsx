@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ContentCard, ContentCardBody, Typography } from '@visa/nova-react';
+import { Typography } from '@visa/nova-react';
 import {
   VisaMapLocationTiny,
   VisaCardGenericTiny,
@@ -117,9 +117,15 @@ export function SupplierCard({ supplier }: { supplier: Supplier }) {
 
   return (
     <Link href={`/suppliers/${supplier.id}`} className="block h-full group">
-      <ContentCard
-        className="h-full transition-all duration-200 group-hover:-translate-y-0.5"
-        style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+      <div
+        className="h-full transition-all duration-200 group-hover:-translate-y-0.5 group-hover:shadow-md"
+        style={{
+          display: 'flex', flexDirection: 'column', overflow: 'hidden',
+          background: '#ffffff',
+          border: '1px solid rgba(0,0,0,0.08)',
+          borderRadius: 16,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+        }}
       >
         {/* Visa blue top accent — visible on hover */}
         <div
@@ -127,7 +133,7 @@ export function SupplierCard({ supplier }: { supplier: Supplier }) {
           style={{ height: 3, background: 'linear-gradient(to right, #1434CB, #6366f1)', flexShrink: 0 }}
         />
 
-        <ContentCardBody style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: 20 }}>
           {/* ── Header ── */}
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
             <div style={{
@@ -283,8 +289,8 @@ export function SupplierCard({ supplier }: { supplier: Supplier }) {
               </div>
             </div>
           </div>
-        </ContentCardBody>
-      </ContentCard>
+        </div>
+      </div>
     </Link>
   );
 }

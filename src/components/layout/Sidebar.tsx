@@ -38,7 +38,7 @@ const NAV_ITEMS: Record<string, Array<{ label: string; href: string; icon: NovaI
     { label: 'Cards',          href: '/cards',          icon: VisaCardGenericLow    },
     { label: 'Suppliers',      href: '/suppliers',      icon: VisaGlobalLow         },
     { label: 'Procurement',    href: '/rfp',            icon: VisaDocumentLow       },
-    { label: 'Petty Cash',     href: '/petty-cash',     icon: VisaCartLow           },
+    { label: 'Marketplace',    href: '/petty-cash',     icon: VisaCartLow           },
     { label: 'Payments',       href: '/payment',        icon: VisaWalletLow         },
     { label: 'Reconciliation', href: '/reconciliation', icon: VisaCheckmarkLow      },
     { label: 'Transactions',   href: '/transactions',   icon: VisaTransactionsLow   },

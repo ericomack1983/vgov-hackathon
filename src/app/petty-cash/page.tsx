@@ -5,7 +5,7 @@ import { useCards, IssuedCard } from '@/context/CardsContext';
 import { authenticateWithBiometrics } from '@/lib/biometricAuth';
 import { usePayment } from '@/context/PaymentContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, ShoppingCart, Minus, Plus, CreditCard, CheckCircle2, Package, Zap, Clock, AlertTriangle, ChevronRight, ShieldCheck } from 'lucide-react';
+import { Search, X, ShoppingCart, Minus, Plus, CreditCard, CheckCircle2, Package, Zap, Clock, AlertTriangle, ChevronRight, ShieldCheck, Store, ArrowRight } from 'lucide-react';
 import { VisaLogo } from '@visa/nova-react';
 import { wasPageRefreshed } from '@/lib/playOnRefresh';
 
@@ -781,11 +781,20 @@ function PaymentReceipt({ card, items, total, txId, onClose }: {
   );
 }
 
-function CartDrawer({ items, onClose, onQtyChange, onRemove }: {
+// Marketplace identity stamped onto each settled transaction so the dashboard and
+// reconciliation ledger attribute spend to the storefront it was purchased from.
+const CHECKOUT_MARKET: Record<MarketplaceId, { supplier: string; prefix: string }> = {
+  local:  { supplier: 'PanamaCompra',    prefix: 'PC'  },
+  amazon: { supplier: 'Amazon Business', prefix: 'AMZ' },
+  meli:   { supplier: 'Mercado Libre',   prefix: 'MLM' },
+};
+
+function CartDrawer({ items, onClose, onQtyChange, onRemove, marketplace }: {
   items: CartItem[];
   onClose: () => void;
   onQtyChange: (id: string, delta: number) => void;
   onRemove: (id: string) => void;
+  marketplace: MarketplaceId;
 }) {
   const { cards } = useCards();
   const { addTransaction, addNotification } = usePayment();
@@ -808,33 +817,35 @@ function CartDrawer({ items, onClose, onQtyChange, onRemove }: {
     setCheckout('processing');
     setTimeout(() => {
       // Push to PaymentContext so dashboard picks it up
+      const mk = CHECKOUT_MARKET[marketplace];
       addTransaction({
         id,
         rfpId: 'petty-cash',
-        supplierId: 'agency',
-        supplierName: 'Agency Petty Cash',
+        supplierId: marketplace,
+        supplierName: mk.supplier,
         amount: total,
         method: 'Card',
         status: 'Settled',
-        orderId: `PC-${Date.now().toString().slice(-6)}`,
+        orderId: `${mk.prefix}-${Date.now().toString().slice(-6)}`,
         createdAt: new Date().toISOString(),
         settledAt: new Date().toISOString(),
       });
       addNotification({
         id: `notif-${Date.now()}`,
         type: 'payment',
-        title: 'Petty Cash Payment Settled',
-        message: `$${total.toFixed(2)} charged to card ····${selectedCard?.last4 ?? ''}`,
+        title: `${mk.supplier} Payment Settled`,
+        message: `$${total.toFixed(2)} · ${mk.supplier} · card ····${selectedCard?.last4 ?? ''}`,
         timestamp: new Date().toISOString(),
         read: false,
         amount: total,
         cardLast4: selectedCard?.last4,
         cardBrand: selectedCard?.brand,
         cardHolder: selectedCard?.holderName,
+        supplierName: mk.supplier,
       });
       setCheckout('done');
     }, 2200);
-  }, [total, selectedCard, addTransaction, addNotification]);
+  }, [total, selectedCard, marketplace, addTransaction, addNotification]);
 
   // Run the native biometric prompt (Touch ID / Windows Hello). The payment
   // flow only proceeds once the user actually authenticates.
@@ -1106,9 +1117,172 @@ function CartDrawer({ items, onClose, onQtyChange, onRemove }: {
   );
 }
 
+// ── Marketplace brand logos ─────────────────────────────────────────────────────
+
+function LocalMarketplaceLogo() {
+  return (
+    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 11 }}>
+      <div style={{ width: 46, height: 46, borderRadius: 12, background: 'linear-gradient(135deg,#1434CB,#0a1f8f)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <Store size={24} color="white" strokeWidth={2} />
+      </div>
+      <div style={{ textAlign: 'left' }}>
+        <div style={{ fontSize: 18, fontWeight: 800, color: '#0a0a23', letterSpacing: '-0.02em', lineHeight: 1.1 }}>PanamaCompra</div>
+        <div style={{ fontSize: 9.5, fontWeight: 700, color: '#6b7280', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 2 }}>Catálogo del Estado</div>
+      </div>
+    </div>
+  );
+}
+
+function AmazonBusinessLogo() {
+  return (
+    <div style={{ display: 'inline-flex', alignItems: 'flex-end', gap: 9 }}>
+      <div style={{ position: 'relative', display: 'inline-block' }}>
+        <span style={{ fontSize: 30, fontWeight: 700, color: '#232F3E', letterSpacing: '-0.045em', fontFamily: 'Arial, Helvetica, sans-serif', lineHeight: 1 }}>amazon</span>
+        <svg viewBox="0 0 112 22" style={{ position: 'absolute', left: 2, right: 0, bottom: -7, width: 108, overflow: 'visible' }} fill="none">
+          <path d="M3 8 Q 56 25 105 5" stroke="#FF9900" strokeWidth="3.2" strokeLinecap="round" />
+          <path d="M105 5 L 95 7 M105 5 L 100 14" stroke="#FF9900" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </div>
+      <span style={{ fontSize: 18, fontWeight: 400, color: '#232F3E', letterSpacing: '0.01em', marginBottom: 1, fontFamily: 'Arial, Helvetica, sans-serif' }}>business</span>
+    </div>
+  );
+}
+
+function MercadoLibreLogo({ width = 118, height = 82 }: { width?: number; height?: number } = {}) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 150 104" width={width} height={height} aria-label="Mercado Libre">
+      <path fill="#2D3277" d="M150 49.027c0-26.944-33.685-48.87-75-48.87-41.501 0-75 21.926-75 48.87v2.787c0 28.616 29.404 51.843 75 51.843 45.968 0 75-23.227 75-51.843v-2.787Z" />
+      <path fill="#FFE600" d="M147.022 49.027c0 25.457-32.196 46.083-72.022 46.083-39.826 0-72.022-20.626-72.022-46.083C2.978 23.57 35.174 2.944 75 2.944c39.826.186 72.022 20.626 72.022 46.083Z" />
+      <path fill="#FFF" d="M50.993 34.533s-.745.743-.373 1.487c1.117 1.486 4.653 2.23 8.189 1.486 2.047-.557 4.839-2.601 7.444-4.645 2.792-2.23 5.583-4.46 8.56-5.389 2.979-.93 4.84-.558 6.142-.186 1.49.372 2.978 1.3 5.584 3.345 5.024 3.716 24.751 20.997 28.101 23.97 2.792-1.3 15.075-6.503 31.638-10.22-1.117-8.919-6.514-17.095-14.702-23.784-11.353 4.831-25.31 7.247-39.082.557 0 0-7.444-3.53-14.702-3.345-10.794.186-15.447 5.017-20.472 9.849l-6.327 6.875Z" />
+      <path fill="#FFF" d="M114.082 56.274c-.186-.186-23.263-20.44-28.474-24.342-2.978-2.23-4.653-2.788-6.514-3.16-.93-.185-2.233 0-3.163.372-2.42.744-5.584 2.788-8.375 5.017-2.978 2.416-5.77 4.46-8.189 5.017-3.163.93-7.258 0-9.119-1.114-.744-.558-1.303-1.115-1.489-1.673-.744-1.486.559-2.787.745-2.973l6.327-6.875 2.233-2.23c-2.047.186-3.908.743-5.769 1.3-2.233.558-4.466 1.302-6.7 1.302-.93 0-5.955-.744-6.885-1.115-5.77-1.487-10.794-3.16-18.425-6.69C11.166 25.8 5.211 34.161 3.536 43.452c1.303.372 3.35.93 4.28 1.115 20.472 4.46 26.8 9.291 28.102 10.22 1.303-1.3 2.978-2.23 5.025-2.23 2.233 0 4.28 1.115 5.583 2.974 1.117-.93 2.792-1.673 4.839-1.673.93 0 1.86.186 2.977.558a6.83 6.83 0 0 1 4.095 3.716c.744-.372 1.675-.557 2.791-.557 1.117 0 2.233.185 3.35.743 3.722 1.672 4.28 5.389 4.094 8.176h.745c4.466 0 8.189 3.716 8.189 8.176 0 1.3-.373 2.601-.931 3.902 1.303.743 4.28 2.23 7.072 1.858 2.233-.186 2.978-.929 3.35-1.486.186-.372.372-.558.186-.93l-5.77-6.503s-.93-.93-.558-1.3c.373-.372.93.185 1.303.557 2.978 2.415 6.514 6.132 6.514 6.132s.372.557 1.675.743c1.116.186 3.163 0 4.652-1.115.373-.372.745-.743.93-1.115 1.49-1.858-.185-3.716-.185-3.716l-6.7-7.619s-.93-.929-.558-1.3c.372-.372.93.185 1.302.557a253.206 253.206 0 0 1 8.003 7.619c.558.371 3.164 2.044 6.513-.186 2.048-1.301 2.42-2.973 2.42-4.274-.186-1.672-1.489-2.787-1.489-2.787l-9.305-9.291s-.93-.744-.558-1.301c.372-.372.93.186 1.302.557 2.978 2.416 10.98 9.663 10.98 9.663.186 0 2.792 2.044 6.328-.186 1.303-.743 2.047-1.858 2.047-3.345-.372-2.044-2.047-3.53-2.047-3.53Z" />
+      <path fill="#FFF" d="M69.417 67.98c-1.489 0-2.978.744-3.164.744-.186 0 0-.558.186-.93.186-.371 2.047-5.946-2.605-7.99-3.536-1.486-5.583.186-6.328.93-.186.185-.372.185-.372 0 0-.93-.558-3.717-3.536-4.646-4.28-1.3-7.072 1.672-7.816 2.787-.373-2.415-2.42-4.46-5.025-4.46a5 5 0 0 0-5.025 5.018 5 5 0 0 0 5.025 5.017c1.303 0 2.605-.558 3.536-1.487v.186c-.186 1.3-.559 5.76 4.094 7.619 1.861.743 3.536.186 4.839-.744.372-.371.372-.185.372.186-.186 1.115 0 3.717 3.536 5.017 2.605 1.115 4.28 0 5.21-.929.373-.371.56-.371.56.372.185 3.345 2.977 5.946 6.327 5.946 3.536 0 6.327-2.787 6.327-6.318.186-3.344-2.605-6.132-6.141-6.318Z" />
+      <path fill="#2D3277" d="M115.012 53.858c-7.072-6.132-23.635-20.44-27.915-23.785-2.606-1.858-4.28-2.973-5.77-3.344-.744-.186-1.674-.372-2.791-.372s-2.42.186-3.536.558c-2.792.929-5.77 3.158-8.56 5.388l-.187.186c-2.605 2.044-5.21 4.088-7.258 4.646-.93.185-1.861.371-2.605.371-2.234 0-4.28-.743-5.025-1.672-.186-.186 0-.372.186-.744l6.141-7.06c4.839-4.832 9.492-9.477 20.1-9.663h.558c6.7 0 13.213 2.973 13.958 3.345 6.327 2.973 12.655 4.46 19.168 4.46 6.7 0 13.586-1.673 21.03-5.018-.744-.743-1.675-1.3-2.605-2.044-6.328 2.787-12.469 4.088-18.425 4.088-5.955 0-12.096-1.486-17.866-4.274-.372-.186-7.63-3.53-15.26-3.53h-.558c-8.933.186-13.958 3.344-17.308 6.132-3.35 0-6.142.929-8.747 1.672-2.233.558-4.28 1.115-6.142 1.115h-2.233c-2.233 0-13.213-2.787-21.96-6.132-.93.557-1.675 1.3-2.605 2.044 9.119 3.716 20.285 6.69 23.82 6.875.931 0 2.048.186 2.979.186 2.233 0 4.652-.557 6.885-1.3 1.303-.372 2.792-.744 4.28-1.116l-1.302 1.301-6.328 6.876c-.558.557-1.674 1.858-.93 3.53.372.743.93 1.3 1.675 1.858 1.489.93 4.28 1.673 6.7 1.673.93 0 1.86 0 2.605-.372 2.606-.557 5.397-2.787 8.375-5.203 2.42-1.858 5.77-4.274 8.188-5.017.745-.186 1.675-.372 2.234-.372h.558c1.675.186 3.35.744 6.328 2.973 5.21 3.903 28.287 24.157 28.473 24.343 0 0 1.489 1.3 1.303 3.344 0 1.115-.744 2.23-1.861 2.974-.93.557-2.047.929-2.978.929-1.488 0-2.605-.744-2.605-.744s-8.002-7.247-10.98-9.662c-.372-.372-.93-.744-1.303-.744-.186 0-.372.186-.558.372-.372.557 0 1.3.744 1.858l9.305 9.291s1.117 1.115 1.303 2.416c0 1.486-.744 2.787-2.233 3.902-1.117.743-2.233 1.115-3.35 1.115-1.489 0-2.42-.557-2.605-.743l-1.303-1.301c-2.42-2.416-4.839-4.831-6.7-6.318-.372-.371-.93-.743-1.303-.743-.186 0-.372 0-.558.186-.186.186-.372.743.186 1.3a2.3 2.3 0 0 0 .372.558l6.7 7.618s1.303 1.673.186 3.16l-.186.37-.558.558c-1.117.93-2.606 1.115-3.35 1.115h-.93c-.745-.186-1.117-.371-1.303-.557-.373-.372-3.722-3.902-6.514-6.132-.372-.372-.744-.743-1.303-.743-.186 0-.372 0-.558.185-.558.558.372 1.487.558 1.859l5.77 6.317s0 .186-.186.372c-.187.372-.931.93-2.978 1.3h-.745c-2.233 0-4.466-1.114-5.583-1.672.559-1.115.745-2.415.745-3.716 0-4.645-3.908-8.548-8.561-8.548h-.372c.186-2.23-.186-6.317-4.28-7.99-1.117-.557-2.42-.743-3.537-.743-.93 0-1.86.186-2.605.557-.93-1.672-2.233-2.973-4.28-3.53-1.117-.372-2.048-.558-3.164-.558-1.675 0-3.35.558-4.839 1.487-1.303-1.672-3.536-2.787-5.583-2.787-1.861 0-3.722.743-5.211 2.044-1.861-1.301-8.933-5.947-27.916-10.22-.93-.186-2.977-.744-4.28-1.115-.186 1.115-.372 2.044-.558 3.159 0 0 3.536.929 4.28.929 19.355 4.274 25.868 8.733 26.985 9.662a7.446 7.446 0 0 0-.558 2.787c0 4.089 3.35 7.247 7.258 7.247.372 0 .93 0 1.303-.185.558 2.973 2.605 5.203 5.397 6.317.93.372 1.675.558 2.605.558.558 0 1.117 0 1.675-.186.558 1.3 1.861 3.159 4.466 4.274a7.472 7.472 0 0 0 2.792.557c.745 0 1.489-.185 2.233-.371 1.303 3.159 4.467 5.389 8.003 5.389 2.233 0 4.466-.93 6.141-2.602 1.303.743 4.28 2.23 7.258 2.23h1.117c2.978-.372 4.28-1.487 4.839-2.416.186-.186.186-.371.372-.557.744.186 1.489.371 2.233.371 1.675 0 3.164-.557 4.653-1.672 1.489-1.115 2.605-2.601 2.791-4.088.559.186 1.117.186 1.489.186 1.675 0 3.35-.558 4.839-1.487 2.977-2.044 3.536-4.46 3.536-6.132.558.186 1.116.186 1.675.186 1.489 0 2.977-.557 4.466-1.3a6.49 6.49 0 0 0 3.164-5.018c.186-1.486-.186-2.787-.931-4.088 5.025-2.23 16.378-6.318 29.963-9.29 0-1.116-.186-2.045-.372-3.16-16.191 2.974-28.288 8.176-31.452 9.477ZM69.417 80.244c-3.164 0-5.77-2.415-5.956-5.574 0-.186 0-.93-.558-.93-.186 0-.372.187-.744.372-.745.558-1.675 1.301-2.792 1.301-.558 0-1.302-.186-1.86-.371-3.35-1.301-3.35-3.717-3.165-4.646 0-.186 0-.557-.186-.743l-.186-.186h-.186c-.186 0-.372 0-.558.186-1.117.743-2.047 1.115-2.978 1.115-.558 0-1.116-.186-1.675-.372-4.466-1.672-4.094-5.946-3.908-7.061 0-.186 0-.372-.186-.557l-.372-.186-.373.371c-.93.744-2.047 1.301-3.163 1.301-2.606 0-4.653-2.044-4.653-4.645 0-2.602 2.047-4.646 4.653-4.646 2.233 0 4.28 1.672 4.466 3.902l.186 1.301.745-1.115c0-.186 1.86-2.973 5.397-2.973.558 0 1.302.186 2.047.372 2.791.743 3.164 3.344 3.164 4.273 0 .558.558.558.558.558.186 0 .372-.186.558-.186.559-.557 1.675-1.486 3.35-1.486.745 0 1.675.185 2.606.557 4.28 1.858 2.419 7.247 2.419 7.433-.372.929-.372 1.3 0 1.486h.372c.186 0 .372 0 .745-.186.558-.185 1.489-.557 2.233-.557 3.164 0 5.955 2.602 5.955 5.946 0 3.345-2.605 5.946-5.955 5.946Z" />
+    </svg>
+  );
+}
+
+// ── Compact marketplace marks (used in the breadcrumb) ───────────────────────────
+
+function LocalMark() {
+  return (
+    <span style={{ display: 'inline-flex', width: 20, height: 20, borderRadius: 6, background: 'linear-gradient(135deg,#1434CB,#0a1f8f)', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+      <Store size={12} color="white" strokeWidth={2.2} />
+    </span>
+  );
+}
+
+function AmazonMark() {
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 20, flexShrink: 0 }}>
+      <svg viewBox="0 0 24 15" width={22} height={14} fill="none" aria-label="Amazon">
+        <path d="M2 7 Q 12 16 22 5" stroke="#FF9900" strokeWidth="2.4" strokeLinecap="round" />
+        <path d="M22 5 L 18 6 M22 5 L 19.5 10" stroke="#FF9900" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </span>
+  );
+}
+
+function MeliMark() {
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}>
+      <MercadoLibreLogo width={26} height={18} />
+    </span>
+  );
+}
+
+// ── Marketplace picker (prior screen) ────────────────────────────────────────────
+
+type MarketplaceId = 'local' | 'amazon' | 'meli';
+
+const MARKETPLACES: Array<{
+  id: MarketplaceId;
+  name: string;
+  desc: string;
+  accent: string;
+  Logo: () => React.JSX.Element;
+  Mark: () => React.JSX.Element;
+}> = [
+  { id: 'local',  name: 'Local Marketplace', desc: 'Curated government suppliers · closed-loop catalog.', accent: '#1434CB', Logo: LocalMarketplaceLogo, Mark: LocalMark },
+  { id: 'amazon', name: 'Amazon Business',   desc: 'Global Amazon Business catalog · ships to Panama.',   accent: '#FF9900', Logo: AmazonBusinessLogo, Mark: AmazonMark },
+  { id: 'meli',   name: 'Mercado Libre',     desc: "Latin America's leading marketplace.",                accent: '#FFE600', Logo: MercadoLibreLogo,   Mark: MeliMark },
+];
+
+function MarketplacePicker({ onSelect }: { onSelect: (id: MarketplaceId) => void }) {
+  return (
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: 'easeOut' }}>
+      {/* Header */}
+      <div style={{ marginBottom: 28 }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'rgba(20,52,203,0.08)', color: '#1434CB', fontSize: 11, fontWeight: 800, padding: '5px 12px', borderRadius: 99, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+          <ShieldCheck size={12} /> Government Purchase Policy Enforced
+        </span>
+        <h1 style={{ fontSize: 26, fontWeight: 800, color: '#0a0a23', margin: '14px 0 8px', letterSpacing: '-0.02em' }}>Select a marketplace</h1>
+        <p style={{ fontSize: 13.5, color: '#5b6472', maxWidth: 600, lineHeight: 1.5 }}>
+          Choose where this agency will purchase. Every route enforces the same{' '}
+          <span style={{ fontWeight: 700, color: '#1434CB' }}>${POLICY_THRESHOLD.toLocaleString()} USD</span> per-item Visa spend policy.
+        </p>
+      </div>
+
+      {/* Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 18, maxWidth: 1000 }}>
+        {MARKETPLACES.map(({ id, name, desc, accent, Logo }) => (
+          <motion.button
+            key={id}
+            onClick={() => onSelect(id)}
+            whileHover={{ y: -4 }}
+            transition={{ type: 'spring', stiffness: 320, damping: 24 }}
+            style={{
+              textAlign: 'left', cursor: 'pointer', background: 'white',
+              border: '1px solid rgba(0,0,0,0.08)', borderRadius: 16, overflow: 'hidden',
+              display: 'flex', flexDirection: 'column', boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+            }}
+          >
+            <div style={{ height: 4, background: accent }} />
+            {/* Logo well */}
+            <div style={{ height: 128, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 20px', borderBottom: '1px solid rgba(0,0,0,0.06)', background: 'linear-gradient(180deg,#fcfcfd,#f7f8fb)' }}>
+              <Logo />
+            </div>
+            {/* Body */}
+            <div style={{ padding: 18, display: 'flex', flexDirection: 'column', flex: 1 }}>
+              <p style={{ fontSize: 15, fontWeight: 800, color: '#0a0a23', marginBottom: 5 }}>{name}</p>
+              <p style={{ fontSize: 12.5, color: '#6b7280', lineHeight: 1.45, marginBottom: 16, flex: 1 }}>{desc}</p>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: '#1434CB' }}>
+                Browse catalog <ArrowRight size={15} />
+              </span>
+            </div>
+          </motion.button>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
+// ── Per-marketplace catalog ──────────────────────────────────────────────────────
+// Each marketplace shows a slightly different assortment + pricing, derived from
+// the base catalog: PanamaCompra = negotiated baseline, Amazon = undercuts with
+// .99 pricing, Mercado Libre = regional import markup. A small, marketplace-specific
+// subset is hidden so the displayed products differ between marketplaces.
+
+const MARKET_ADJUST: Record<MarketplaceId, { priceMul: number; end99: boolean; skuPrefix: string; dropMod: number[] }> = {
+  local:  { priceMul: 1.00, end99: false, skuPrefix: '',     dropMod: []     },
+  amazon: { priceMul: 0.90, end99: true,  skuPrefix: 'AMZ-', dropMod: [7]    },
+  meli:   { priceMul: 1.12, end99: false, skuPrefix: 'MLM-', dropMod: [3, 8] },
+};
+
+function buildCatalog(mp: MarketplaceId): Product[] {
+  const cfg = MARKET_ADJUST[mp];
+  return PRODUCTS
+    .filter((_, i) => !cfg.dropMod.includes(i % 10))
+    .map((p) => {
+      const raw = p.price * cfg.priceMul;
+      const price = cfg.end99 ? Math.max(0.99, Math.floor(raw) + 0.99) : Math.round(raw * 100) / 100;
+      return { ...p, price, sku: cfg.skuPrefix + p.sku };
+    });
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function PettyCashPage() {
+  const [marketplace, setMarketplace]         = useState<MarketplaceId | null>(null);
   const [query, setQuery]                     = useState('');
   const [category, setCategory]               = useState<Category | 'All'>('All');
   const [cart, setCart]                       = useState<CartItem[]>([]);
@@ -1117,21 +1291,25 @@ export default function PettyCashPage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const lastQueryRef                          = useRef('');
 
+  const selectedMarketplace = MARKETPLACES.find((m) => m.id === marketplace);
+
   // Show the policy overlay only on a hard refresh (Ctrl/Cmd+R) of this page,
   // not on in-app navigation.
   useEffect(() => {
     if (wasPageRefreshed()) setShowPolicy(true);
   }, []);
 
+  const catalog = useMemo(() => (marketplace ? buildCatalog(marketplace) : PRODUCTS), [marketplace]);
+
   const filtered = useMemo(() => {
-    let list = PRODUCTS;
+    let list = catalog;
     if (query.trim()) {
       const q = query.toLowerCase();
       list = list.filter((p) => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q));
     }
     if (category !== 'All') list = list.filter((p) => p.category === category);
     return list;
-  }, [query, category]);
+  }, [query, category, catalog]);
 
   function handleSearch(val: string) {
     setQuery(val);
@@ -1155,6 +1333,11 @@ export default function PettyCashPage() {
   }
 
   const cartCount = cart.reduce((s, i) => s + i.qty, 0);
+
+  // Prior screen: pick a marketplace before entering the catalog.
+  if (!marketplace) {
+    return <MarketplacePicker onSelect={setMarketplace} />;
+  }
 
   return (
     <>
@@ -1181,10 +1364,23 @@ export default function PettyCashPage() {
         )}
       </AnimatePresence>
       <AnimatePresence>
-        {cartOpen && <CartDrawer items={cart} onClose={() => setCartOpen(false)} onQtyChange={changeQty} onRemove={removeItem} />}
+        {cartOpen && <CartDrawer items={cart} onClose={() => setCartOpen(false)} onQtyChange={changeQty} onRemove={removeItem} marketplace={marketplace} />}
       </AnimatePresence>
 
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: 'easeOut' }}>
+        {/* Breadcrumb — switch marketplace */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 14, fontSize: 12.5 }}>
+          <button onClick={() => setMarketplace(null)}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280', fontWeight: 600, padding: 0 }}>
+            <ChevronRight size={14} style={{ transform: 'rotate(180deg)' }} /> Marketplaces
+          </button>
+          <ChevronRight size={13} style={{ color: '#c0c4cc' }} />
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+            {selectedMarketplace?.Mark()}
+            <span style={{ fontWeight: 700, color: '#1434CB' }}>{selectedMarketplace?.name}</span>
+          </span>
+        </div>
+
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
           <div>

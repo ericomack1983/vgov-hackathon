@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useCallback, useEffect } from 'react';
+import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePayment } from '@/context/PaymentContext';
 import {
@@ -113,24 +113,18 @@ export default function ReconciliationPage() {
     description: string; invoiceNo: string; supplierName: string;
     autoMatched: boolean;
   } | null>(null);
+  // Always-current ref so the once-registered sidebar action invokes the latest
+  // closure: open the AI analysis lightbox AND reconcile all pending via VPC.
+  const autoReconcileRef = useRef<() => void>(() => {});
 
-  // Register sidebar action
+  // Register sidebar action — plays the AI analysis lightbox and runs VPC
+  // reconciliation across every pending transaction (PanamaCompra, Amazon, MELI).
   useEffect(() => {
     setActions([{
       id: 'auto-reconcile',
       label: 'Automatic Reconciliation',
       variant: 'ai',
-      onClick: () => {
-        setAnalysisInvoice({
-          supplierId: 'sup-001',
-          rfpId: 'rfp-001',
-          amount: 13,
-          description: 'Invoice from Apex Federal Solutions',
-          invoiceNo: 'INV-001-2026',
-          supplierName: 'Apex Federal Solutions',
-          autoMatched: true,
-        });
-      },
+      onClick: () => { autoReconcileRef.current(); },
     }]);
     return () => clearActions();
   }, [setActions, clearActions]);
@@ -177,6 +171,28 @@ export default function ReconciliationPage() {
       await handleReconcile(tx.id);
     }
   }, [transactions, reconcileStates, handleReconcile]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Sidebar "Automatic Reconciliation": open the AI analysis lightbox for a
+  // representative pending purchase, then reconcile every pending tx via VPC.
+  autoReconcileRef.current = () => {
+    const pending = transactions.filter((tx) => {
+      const s = getState(tx.id).status;
+      return s === 'idle' || s === 'unmatched';
+    });
+    const rep = pending[0] ?? transactions[0];
+    if (rep) {
+      setAnalysisInvoice({
+        supplierId: rep.supplierId,
+        rfpId: rep.rfpId,
+        amount: rep.amount,
+        description: `Invoice from ${rep.supplierName}`,
+        invoiceNo: rep.orderId,
+        supplierName: rep.supplierName,
+        autoMatched: true,
+      });
+    }
+    void handleReconcileAll();
+  };
 
   const metrics = useMemo(() => {
     let usdTotal = 0;
@@ -403,7 +419,7 @@ export default function ReconciliationPage() {
       )}
     </motion.div>
 
-      {/* ── AI Analysis panel ── */}
+      {/* ── AI analysis lightbox (Automatic Reconciliation) ── */}
       <AnimatePresence>
         {analysisInvoice && (
           <InvoiceAnalysisPanel
@@ -415,17 +431,6 @@ export default function ReconciliationPage() {
             invoiceNo={analysisInvoice.invoiceNo}
             autoMatched={analysisInvoice.autoMatched}
             onClose={() => setAnalysisInvoice(null)}
-            onComplete={() => {
-              // Auto-trigger VPC reconciliation for the matching supplier's transaction
-              const name = analysisInvoice.supplierName.toLowerCase();
-              const match = transactions.find(
-                (tx) => tx.supplierName.toLowerCase().includes(name) ||
-                        name.includes(tx.supplierName.toLowerCase()),
-              );
-              if (match && getState(match.id).status === 'idle') {
-                handleReconcile(match.id);
-              }
-            }}
           />
         )}
       </AnimatePresence>

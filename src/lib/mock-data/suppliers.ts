@@ -13,17 +13,6 @@ export const MOCK_SUPPLIERS: Supplier[] = [
     deliveryAvgDays: 14,
     riskScore: 8,
     vsmsScore: 94,
-    cards: [
-      {
-        id: 'card-sup001-002',
-        type: 'debit',
-        brand: 'Mastercard',
-        last4: '8843',
-        expiry: '12/26',
-        holderName: 'Apex Federal Solutions',
-        status: 'active',
-      },
-    ],
   },
   {
     id: 'sup-002',
@@ -50,17 +39,6 @@ export const MOCK_SUPPLIERS: Supplier[] = [
     deliveryAvgDays: 18,
     riskScore: 12,
     vsmsScore: 88,
-    cards: [
-      {
-        id: 'card-sup003-001',
-        type: 'credit',
-        brand: 'Amex',
-        last4: '5562',
-        expiry: '08/28',
-        holderName: 'ClearPath Consulting',
-        status: 'active',
-      },
-    ],
   },
   {
     id: 'sup-004',
@@ -126,25 +104,5 @@ export const MOCK_SUPPLIERS: Supplier[] = [
     deliveryAvgDays: 35,
     riskScore: 45,
     vsmsScore: 41,
-    cards: [
-      {
-        id: 'card-002',
-        type: 'debit',
-        brand: 'Mastercard',
-        last4: '3390',
-        expiry: '03/25',
-        holderName: 'Harbor Defense Co',
-        status: 'inactive',
-      },
-      {
-        id: 'card-003',
-        type: 'credit',
-        brand: 'Amex',
-        last4: '7714',
-        expiry: '11/27',
-        holderName: 'J. Harrington',
-        status: 'active',
-      },
-    ],
   },
 ];
