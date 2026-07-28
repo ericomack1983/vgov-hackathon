@@ -136,4 +136,119 @@ export interface Notification {
   emailType?: 'invoice-verified';
   invoiceNo?: string;
   rfpTitle?: string;
+  missionId?: string;
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+   TCI 2.0 — Misiones, Policy Controls & Entity Hierarchy
+   ──────────────────────────────────────────────────────────────────────────── */
+
+export type MissionStatus =
+  | 'borrador'
+  | 'pendiente_aprobacion'
+  | 'aprobada'
+  | 'activa'
+  | 'en_conciliacion'
+  | 'cerrada';
+
+export interface MissionApproval {
+  role: string;
+  user: string;
+  date: string;
+  action: 'aprobado' | 'rechazado';
+}
+
+export interface Mission {
+  id: string;                  // 'MIS-2026-0042'
+  ministry: string;            // ref Entity.id
+  traveler: { name: string; role: string; email: string };
+  destination: { city: string; country: string; countryCode: string };
+  dates: { start: string; end: string };
+  purpose: string;
+  budgetGTQ: number;
+  spentGTQ: number;
+  status: MissionStatus;
+  policyProfileId: string;
+  cardId?: string;
+  approvals: MissionApproval[];
+  /** set when the unused balance has been returned to Tesorería */
+  releasedGTQ?: number;
+  releasedAt?: string;
+}
+
+export interface MCCCategory {
+  code: string;
+  label: string;
+}
+
+export type ATMPolicy = 'bloqueado' | 'limitado' | 'permitido';
+
+export interface PolicyProfile {
+  id: string;
+  name: string;                        // 'Viático Internacional — EE.UU.'
+  txnLimitGTQ: number;
+  dailyLimitGTQ: number;
+  allowedCountries: string[];          // ['US']
+  allowedMCCs: MCCCategory[];          // hotel 7011, restaurante 5812, transporte 4121
+  blockedMCCs: MCCCategory[];          // electrónica 5732, joyería 5944, casino 7995
+  atmWithdrawal: ATMPolicy;
+  atmDailyCapGTQ?: number;
+  validity: { start: string; end: string };
+  autoReleaseUnused: boolean;
+  supplierWhitelistIds?: string[];
+  emergencyOverride: boolean;
+}
+
+export type EntityType = 'ministerio' | 'agencia' | 'programa';
+
+export interface Entity {
+  id: string;
+  name: string;                // 'Ministerio de Relaciones Exteriores'
+  acronym: string;             // 'MINEX'
+  type: EntityType;
+  parentId?: string;           // builds the tree
+  budgetGTQ: number;
+  spentGTQ: number;
+  activeCards: number;
+  activeMissions: number;
+  approvalChain: string[];     // ['Gestor de Viajes', 'Tesorería Nacional']
+}
+
+export interface MissionCard {
+  id: string;
+  missionId: string;
+  holderName: string;
+  brand: 'Visa';
+  type: 'credit' | 'debit';
+  usageType: 'single-use' | 'multi-use';
+  last4: string;
+  expiry: string;              // MM/YY
+  spendLimitGTQ: number;
+  policyProfileId: string;
+  blocked?: boolean;
+  issuedAt: string;
+}
+
+export type MissionTxStatus = 'aprobada' | 'rechazada' | 'pendiente_recibo' | 'conciliada';
+
+export type DeclineReason =
+  | 'MCC no autorizado'
+  | 'Retiro ATM deshabilitado'
+  | 'País no habilitado'
+  | 'Límite por transacción excedido'
+  | 'Fuera de vigencia';
+
+export interface MissionTransaction {
+  id: string;
+  missionId: string;
+  merchant: string;
+  mcc: MCCCategory;
+  /** original currency amount — present on international transactions */
+  amountUSD?: number;
+  amountGTQ: number;
+  countryCode: string;
+  status: MissionTxStatus;
+  declineReason?: DeclineReason;
+  receiptAttached: boolean;
+  createdAt: string;
 }

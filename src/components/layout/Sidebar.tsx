@@ -18,7 +18,10 @@ import {
   VisaArrowForwardTiny,
   VisaArrowBackTiny,
   VisaCartLow,
+  VisaTransitAirplaneLow,
+  VisaGovernmentLow,
 } from '@visa/nova-icons-react';
+import { features } from '@/lib/features';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { useUI } from '@/context/UIContext';
@@ -32,10 +35,15 @@ const ICON_WHITE  = { '--v-icon-primary': 'rgba(255,255,255,0.8)', '--v-icon-sec
 const ICON_BRIGHT = { '--v-icon-primary': 'white',                 '--v-icon-secondary': 'white'                 } as React.CSSProperties;
 const ICON_GOLD   = { '--v-icon-primary': '#f7b600',               '--v-icon-secondary': '#f7b600'               } as React.CSSProperties;
 
-const NAV_ITEMS: Record<string, Array<{ label: string; href: string; icon: NovaIcon }>> = {
+type NavItem = { label: string; href: string; icon: NovaIcon };
+
+const NAV_ITEMS: Record<string, NavItem[]> = {
   gov: [
     { label: 'Dashboard',      href: '/dashboard',      icon: VisaDashboardLow      },
     { label: 'Cards',          href: '/cards',          icon: VisaCardGenericLow    },
+    ...(features.missions
+      ? [{ label: 'Misiones',  href: '/misiones',       icon: VisaTransitAirplaneLow as NovaIcon }]
+      : []),
     { label: 'Suppliers',      href: '/suppliers',      icon: VisaGlobalLow         },
     { label: 'Procurement',    href: '/rfp',            icon: VisaDocumentLow       },
     { label: 'Marketplace',    href: '/petty-cash',     icon: VisaCartLow           },
@@ -44,6 +52,9 @@ const NAV_ITEMS: Record<string, Array<{ label: string; href: string; icon: NovaI
     { label: 'Transactions',   href: '/transactions',   icon: VisaTransactionsLow   },
     { label: 'Audit Trail',    href: '/audit',          icon: VisaSecurityLockLow   },
     { label: 'Notifications',  href: '/notifications',  icon: VisaNotificationsLow  },
+    ...(features.entityHierarchy
+      ? [{ label: 'Entidades', href: '/entidades',      icon: VisaGovernmentLow as NovaIcon }]
+      : []),
     { label: 'SDK Logs',       href: '/sdk-logs',       icon: VisaLogLow            },
   ],
   supplier: [
@@ -311,7 +322,11 @@ export function Sidebar({ currentPath, collapsed, onToggle }: SidebarProps) {
             href={item.href}
             label={item.label}
             icon={item.icon}
-            isActive={item.href === currentPath}
+            isActive={
+              item.href === currentPath ||
+              /* rutas TCI 2.0 con detalle anidado (/misiones/:id) */
+              (item.href === '/misiones' && currentPath.startsWith('/misiones/'))
+            }
             badge={item.href === '/notifications' ? unreadCount : undefined}
             bellBump={item.href === '/notifications' ? bellBump : undefined}
             collapsed={collapsed}

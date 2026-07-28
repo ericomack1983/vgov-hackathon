@@ -6,8 +6,14 @@ import {
   CreditCard, Coins, Brain, CheckCircle2, AlertTriangle,
   ArrowUpDown, Filter, Sparkles, ChevronDown, ChevronUp,
 } from 'lucide-react';
+import Link from 'next/link';
 import { usePayment } from '@/context/PaymentContext';
 import { useAILedger, type LedgerEntry } from '@/context/AILedgerContext';
+import { useMissions } from '@/context/MissionsContext';
+import { features } from '@/lib/features';
+import { formatGTQ, formatUSD, flagEmoji } from '@/lib/tci-format';
+import { MissionTxStatusBadge } from '@/components/tci/MissionStatusBadge';
+import type { MissionTransaction, Transaction } from '@/lib/mock-data/types';
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -221,7 +227,9 @@ function AILedgerRow({ entry, expanded, onToggle, index }: {
 export default function TransactionsPage() {
   const { transactions } = usePayment();
   const { entries } = useAILedger();
+  const { missions, missionTransactions } = useMissions();
 
+  const [missionFilter, setMissionFilter] = useState<'all' | 'none' | string>('all');
   const [sortKey, setSortKey]     = useState<SortKey>('date');
   const [sortAsc, setSortAsc]     = useState(false);
   const [filterKey, setFilterKey] = useState<FilterKey>('all');
@@ -251,6 +259,31 @@ export default function TransactionsPage() {
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   );
   const latestId = sortedTx[0]?.id;
+
+  /* ── Filas del ledger clásico — pagos + movimientos de misión ─────────── */
+  type ClassicRow =
+    | { kind: 'tx'; at: number; tx: Transaction }
+    | { kind: 'mission'; at: number; mtx: MissionTransaction };
+
+  const classicRows: ClassicRow[] = useMemo(() => {
+    const base: ClassicRow[] = sortedTx.map((tx) => ({
+      kind: 'tx', at: new Date(tx.createdAt).getTime(), tx,
+    }));
+
+    const missionRows: ClassicRow[] = features.missions
+      ? missionTransactions.map((mtx) => ({
+          kind: 'mission', at: new Date(mtx.createdAt).getTime(), mtx,
+        }))
+      : [];
+
+    return [...base, ...missionRows]
+      .filter((row) => {
+        if (!features.missions || missionFilter === 'all') return true;
+        if (missionFilter === 'none') return row.kind === 'tx';
+        return row.kind === 'mission' && row.mtx.missionId === missionFilter;
+      })
+      .sort((a, b) => b.at - a.at);
+  }, [sortedTx, missionTransactions, missionFilter]);
 
   // ── Summary stats ────────────────────────────────────────────────
   const autoApproved  = entries.filter((e) => e.decision === 'auto_approved').length;
@@ -409,10 +442,32 @@ export default function TransactionsPage() {
       {/* ── Classic Tab ── */}
       {activeTab === 'classic' && (
         <>
-          <p className="text-sm text-slate-500 mb-4">
-            {transactions.length} transaction{transactions.length !== 1 ? 's' : ''}
-          </p>
-          {sortedTx.length === 0 ? (
+          <div className="flex items-center gap-3 mb-4 flex-wrap">
+            <p className="text-sm text-slate-500">
+              {classicRows.length} transaction{classicRows.length !== 1 ? 's' : ''}
+            </p>
+
+            {features.missions && (
+              <div className="flex items-center gap-2 ml-auto">
+                <label htmlFor="tx-mission-filter" className="text-xs font-medium text-slate-500">Misión:</label>
+                <select
+                  id="tx-mission-filter"
+                  value={missionFilter}
+                  onChange={(e) => setMissionFilter(e.target.value)}
+                  className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#1434CB] focus:border-[#1434CB]"
+                >
+                  <option value="all">Todas</option>
+                  <option value="none">Sin misión</option>
+                  {missions
+                    .filter((m) => missionTransactions.some((t) => t.missionId === m.id))
+                    .map((m) => (
+                      <option key={m.id} value={m.id}>{m.id} — {m.traveler.name}</option>
+                    ))}
+                </select>
+              </div>
+            )}
+          </div>
+          {classicRows.length === 0 ? (
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center">
               <p className="text-sm text-slate-500">No transactions yet</p>
             </div>
@@ -426,12 +481,68 @@ export default function TransactionsPage() {
                       <th className="px-4 py-3 text-xs font-medium text-slate-500">Amount</th>
                       <th className="px-4 py-3 text-xs font-medium text-slate-500">Supplier</th>
                       <th className="px-4 py-3 text-xs font-medium text-slate-500">Status</th>
+                      {features.missions && (
+                        <th className="px-4 py-3 text-xs font-medium text-slate-500">Misión</th>
+                      )}
                       <th className="px-4 py-3 text-xs font-medium text-slate-500">Order ID</th>
                       <th className="px-4 py-3 text-xs font-medium text-slate-500">Date</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {sortedTx.map((tx) => {
+                    {classicRows.map((row) => {
+                      /* ── Movimiento de misión ── */
+                      if (row.kind === 'mission') {
+                        const mtx = row.mtx;
+                        return (
+                          <tr key={mtx.id} className="border-b border-slate-50 hover:bg-slate-50/50">
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-md bg-[#1434CB]/10 flex items-center justify-center">
+                                  <CreditCard size={12} className="text-[#1434CB]" />
+                                </div>
+                                <span className="bg-[#D6DFFA] text-indigo-700 px-2 py-0.5 rounded text-xs font-semibold">VCN</span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className={`text-sm font-bold ${mtx.status === 'rechazada' ? 'text-slate-400 line-through' : 'text-slate-900'}`}>
+                                {formatGTQ(mtx.amountGTQ)}
+                              </span>
+                              {mtx.amountUSD !== undefined && (
+                                <p className="text-[10px] text-slate-400">{formatUSD(mtx.amountUSD)}</p>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-slate-600">
+                              <span className="mr-1.5" aria-hidden>{flagEmoji(mtx.countryCode)}</span>
+                              {mtx.merchant}
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <MissionTxStatusBadge status={mtx.status} />
+                                {mtx.declineReason && (
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-50 text-red-600 border border-red-100">
+                                    {mtx.declineReason}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <Link
+                                href={`/misiones/${mtx.missionId}`}
+                                className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold font-mono bg-[#EEF1FD] text-[#1434CB] hover:bg-[#D6DFFA] transition-colors"
+                              >
+                                {mtx.missionId}
+                              </Link>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-slate-400 font-mono">—</td>
+                            <td className="px-4 py-3 text-sm text-slate-500">
+                              {new Date(mtx.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </td>
+                          </tr>
+                        );
+                      }
+
+                      /* ── Pago clásico ── */
+                      const tx = row.tx;
                       const isLatest = tx.id === latestId;
                       return (
                         <motion.tr
@@ -476,6 +587,9 @@ export default function TransactionsPage() {
                               {tx.status}
                             </span>
                           </td>
+                          {features.missions && (
+                            <td className="px-4 py-3 text-sm text-slate-300">—</td>
+                          )}
                           <td className="px-4 py-3 text-sm text-slate-600 font-mono">{tx.orderId}</td>
                           <td className="px-4 py-3 text-sm text-slate-500">
                             {new Date(tx.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}

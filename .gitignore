@@ -62,3 +62,7 @@ chroma_db/
 /bash
 /claude
 /govprocure-ai-tmp@0.1.0
+
+# python caches
+__pycache__/
+*.pyc

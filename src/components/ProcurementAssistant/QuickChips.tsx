@@ -1,12 +1,16 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import s from './styles.module.css';
+import { features } from '@/lib/features';
 
 interface Chip {
   label: string;
   prompt: string;
   icon: string;
+  /** cuando está presente, el chip navega en lugar de escribir un prompt */
+  href?: string;
 }
 
 const CHIPS: Chip[] = [
@@ -16,6 +20,12 @@ const CHIPS: Chip[] = [
   { label: 'Issue card',      prompt: 'Issue a virtual card to [supplier], $[amount], valid [period]',   icon: '💳' },
   { label: 'Block card',      prompt: 'Emergency block account [account ID]',                            icon: '🚫' },
   { label: 'Settlement',      prompt: 'Settle payment for order [order ID], $[amount]',                  icon: '✅' },
+  ...(features.missions
+    ? [{ label: 'Crear misión', prompt: '', icon: '✈️', href: '/misiones?nueva=1' } as Chip]
+    : []),
+  ...(features.policyControls
+    ? [{ label: 'Verificar política', prompt: '', icon: '🛡️', href: '/misiones/MIS-2026-0042?tab=politica' } as Chip]
+    : []),
 ];
 
 interface QuickChipsProps {
@@ -23,6 +33,8 @@ interface QuickChipsProps {
 }
 
 export function QuickChips({ onChipClick }: QuickChipsProps) {
+  const router = useRouter();
+
   return (
     <div className={s.quickChipsContainer} role="toolbar" aria-label="Quick actions">
       <div className={s.quickChipsList}>
@@ -31,7 +43,7 @@ export function QuickChips({ onChipClick }: QuickChipsProps) {
             key={chip.label}
             type="button"
             className={s.quickChip}
-            onClick={() => onChipClick(chip.prompt)}
+            onClick={() => (chip.href ? router.push(chip.href) : onChipClick(chip.prompt))}
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.04, duration: 0.2 }}

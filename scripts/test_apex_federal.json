@@ -1,0 +1,7 @@
+{
+  "_comment": "Test payload for P-GOV-FEDERAL policy — expected result: approved",
+
+  "email_id": "sup-001-rfp-001",
+  "vendor_email": "invoices@apexfederalsolutions.com",
+  "email_body": "Invoice INV-2026-AFX-001 from Apex Federal Solutions.\n\nVendor: Apex Federal Solutions\nVendor Status: Approved Federal Contractor\nPrior transactions on record: 3\n\nPurchase Transaction Reference: PT-2026-GOV-0042\nContract Reference: RFP-GOV-001-2026\nSAM.gov UEI: AXFED2026XYZ\n\nServices: Cloud infrastructure and SaaS platform services\nBilling period: March 1 – March 31, 2026\nAmount due: $247,500.00 USD\n\nLine items:\n  Cloud hosting and compute services   $180,000.00\n  SaaS platform license (annual)        $52,500.00\n  Support and maintenance               $15,000.00\n\nPayment terms: Net 30\nBudget code: GOV-CONTRACT-FEDERAL\n\nThank you,\nApex Federal Solutions Billing"
+}

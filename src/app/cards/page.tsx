@@ -4,6 +4,11 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, Loader2, Wifi, ChevronDown, ShieldCheck, ToggleLeft, ToggleRight, CreditCard, ShieldOff, Shield } from 'lucide-react';
 import { useProcurement } from '@/context/ProcurementContext';
+import { useMissions } from '@/context/MissionsContext';
+import { features } from '@/lib/features';
+import { PolicyControlsPanel } from '@/components/tci/PolicyControlsPanel';
+import { TciToaster } from '@/components/tci/TciToaster';
+import type { PolicyProfile } from '@/lib/mock-data/types';
 import { v4 as uuidv4 } from 'uuid';
 import {
   vcnService,
@@ -1004,6 +1009,10 @@ export default function CardsPage() {
   const [allowIntl, setAllowIntl]           = useState(false);
   const [allowRecurring, setAllowRecurring] = useState(false);
 
+  const { policyProfiles, savePolicyProfile } = useMissions();
+  const [cardTab, setCardTab]                 = useState<'detalles' | 'politica'>('detalles');
+  const [cardPolicy, setCardPolicy]           = useState<PolicyProfile | null>(null);
+
   const [isRequesting, setIsRequesting]       = useState(false);
   const [issuedCard, setIssuedCard]           = useState<IssuedCard | null>(null);
   const [sdkIssuancePayload, setSdkIssuancePayload] = useState<SDKIssuancePayload | null>(null);
@@ -1207,7 +1216,73 @@ export default function CardsPage() {
                     issuedLast4={issuedCard.last4}
                     blocked={issuedCard.blocked}
                   />
+
+                  {/* Card detail tabs — Detalles / Política (TCI 2.0) */}
+                  {features.policyControls && (
+                    <div className="mt-5 flex items-center gap-1 p-1 rounded-xl bg-slate-100">
+                      {([
+                        { key: 'detalles', label: 'Detalles' },
+                        { key: 'politica', label: 'Política' },
+                      ] as const).map((tab) => (
+                        <button
+                          key={tab.key}
+                          type="button"
+                          onClick={() => setCardTab(tab.key)}
+                          className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                            cardTab === tab.key
+                              ? 'bg-white text-slate-800 shadow-sm'
+                              : 'text-slate-500 hover:text-slate-700'
+                          }`}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Política de la tarjeta */}
+                  {features.policyControls && cardTab === 'politica' && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.25 }}
+                      className="mt-3 bg-white rounded-2xl border border-slate-100 shadow-sm p-5"
+                    >
+                      <TciToaster />
+                      <label htmlFor="card-policy-profile" className="block text-xs font-semibold text-slate-600 mb-1">
+                        Perfil de política aplicado
+                      </label>
+                      <select
+                        id="card-policy-profile"
+                        value={cardPolicy?.id ?? ''}
+                        onChange={(e) => setCardPolicy(policyProfiles.find((p) => p.id === e.target.value) ?? null)}
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1434CB] focus:border-[#1434CB] mb-4"
+                      >
+                        <option value="">Sin política aplicada</option>
+                        {policyProfiles.map((p) => (
+                          <option key={p.id} value={p.id}>{p.name}</option>
+                        ))}
+                      </select>
+
+                      {cardPolicy ? (
+                        <PolicyControlsPanel
+                          bare
+                          showFooter
+                          profile={cardPolicy}
+                          onChange={setCardPolicy}
+                          onSave={savePolicyProfile}
+                          onApplyToCard={savePolicyProfile}
+                        />
+                      ) : (
+                        <p className="text-xs text-slate-400">
+                          Seleccione un perfil para ver y ajustar los controles de esta tarjeta.
+                        </p>
+                      )}
+                    </motion.div>
+                  )}
+
                   {/* Issued details */}
+                  {(!features.policyControls || cardTab === 'detalles') && (
                   <motion.div
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -1272,6 +1347,7 @@ export default function CardsPage() {
                       )}
                     </div>
                   </motion.div>
+                  )}
                 </motion.div>
               ) : (
                 <motion.div key="preview" className="w-full" style={{ perspective: 1000 }}>

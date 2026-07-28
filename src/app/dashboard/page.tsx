@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   DollarSign, Wallet, ShoppingCart, CheckCircle,
-  TrendingUp, Sparkles, Download, ArrowUpRight,
+  TrendingUp, Sparkles, Download, ArrowUpRight, Plane, ShieldCheck,
 } from 'lucide-react';
 import { useUI } from '@/context/UIContext';
 import { usePayment } from '@/context/PaymentContext';
@@ -16,6 +16,9 @@ import { RecentTransactions } from '@/components/dashboard/RecentTransactions';
 import { BudgetTracker } from '@/components/dashboard/BudgetTracker';
 import { RecurringContracts } from '@/components/dashboard/RecurringContracts';
 import { computeDonutSegments } from '@/lib/chart-utils';
+import { useMissions } from '@/context/MissionsContext';
+import { features } from '@/lib/features';
+import { formatGTQCompact } from '@/lib/tci-format';
 
 const TABS = ['Overview', 'Analytics', 'Reports'] as const;
 type Tab = typeof TABS[number];
@@ -27,6 +30,7 @@ export default function DashboardPage() {
   const { role } = useUI();
   const { transactions } = usePayment();
   const { rfps } = useProcurement();
+  const { activeMissionCount, pendingReleaseGTQ } = useMissions();
   const [activeTab, setActiveTab] = useState<Tab>('Overview');
 
   if (role !== 'gov') return null;
@@ -204,6 +208,25 @@ export default function DashboardPage() {
                   gradientColors={['#10b981', '#1434CB']}
                 />
               </div>
+
+              {/* row 3 — TCI 2.0 misiones */}
+              {features.missions && (
+                <div className="grid grid-cols-2 gap-4">
+                  <StatCard
+                    label="Misiones Activas"
+                    value={`${activeMissionCount}`}
+                    icon={<Plane size={18} />}
+                    trend="Gasto controlado por política"
+                    trendUp
+                  />
+                  <StatCard
+                    label="Saldo por Liberar (GTQ)"
+                    value={formatGTQCompact(pendingReleaseGTQ)}
+                    icon={<ShieldCheck size={18} />}
+                    gradientColors={['#059669', '#10b981']}
+                  />
+                </div>
+              )}
 
               {/* budget tracker */}
               <BudgetTracker transactions={transactions} annualBudget={USD_BUDGET + USDC_BUDGET} />

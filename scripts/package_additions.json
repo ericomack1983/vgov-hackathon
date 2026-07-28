@@ -1,0 +1,23 @@
+{
+  "_comment": "Add these scripts and dependencies to your EXISTING package.json — do not replace it",
+
+  "scripts_to_add": {
+    "rag:start":   "python3 scripts/rag_service.py",
+    "rag:seed":    "python3 scripts/seed_chroma.py",
+    "rag:reseed":  "python3 scripts/seed_chroma.py --reset",
+    "rag:health":  "curl -s http://localhost:8001/health | python3 -m json.tool",
+    "ai:install":  "bash scripts/install.sh",
+    "dev:full":    "concurrently \"npm run dev\" \"npm run rag:start\""
+  },
+
+  "devDependencies_to_add": {
+    "concurrently": "^9.0.0"
+  },
+
+  "_usage": [
+    "1. Copy the scripts_to_add entries into your existing package.json scripts block",
+    "2. Run: npm install concurrently",
+    "3. Run: npm run ai:install   (one-time setup)",
+    "4. Run: npm run dev:full     (starts Next.js + RAG service together)"
+  ]
+}
