@@ -11,6 +11,7 @@ import { MOCK_MISSIONS, MOCK_MISSION_TRANSACTIONS } from '@/lib/mock-data/missio
 import { MOCK_POLICY_PROFILES } from '@/lib/mock-data/policy-profiles';
 import { MOCK_ENTITIES } from '@/lib/mock-data/entities';
 import { features } from '@/lib/features';
+import { expiryFromMission, type IssuedVcn } from '@/lib/mission-issuance';
 import { usePayment } from './PaymentContext';
 
 /* ── Seed cards for the missions that already carry a cardId ─────────────── */
@@ -183,7 +184,17 @@ interface MissionsContextValue extends MissionsState {
   pendingReleaseGTQ: number;
   /* acciones */
   createMission: (input: NewMissionInput, asDraft?: boolean) => Mission;
-  approveMission: (id: string, approval: MissionApproval) => MissionCard;
+  /**
+   * Aprueba la misión y registra su tarjeta. `vcn` trae las credenciales reales
+   * emitidas por el sandbox de Visa (`issueMissionVcn`); si se omite, se generan
+   * credenciales de respaldo.
+   */
+  approveMission: (id: string, approval: MissionApproval, vcn?: IssuedVcn) => MissionCard;
+  /**
+   * Vincula a una misión una VCN emitida desde /cards. Deja la misión activa y
+   * registra la aprobación implícita de quien emitió la tarjeta.
+   */
+  attachCardToMission: (id: string, vcn: IssuedVcn, approval: MissionApproval) => MissionCard;
   rejectMission: (id: string, approval: MissionApproval) => void;
   closeMission: (id: string) => void;
   releaseBalance: (id: string) => number;
@@ -358,11 +369,11 @@ export function MissionsProvider({ children }: { children: ReactNode }) {
   );
 
   const approveMission = useCallback(
-    (id: string, approval: MissionApproval): MissionCard => {
+    (id: string, approval: MissionApproval, vcn?: IssuedVcn): MissionCard => {
       const mission = state.missions.find((m) => m.id === id);
       const cardId = `mis-card-${id.split('-').pop()}`;
-      const end = mission ? new Date(mission.dates.end) : new Date();
-      const expiry = `${String(end.getMonth() + 1).padStart(2, '0')}/${String(end.getFullYear() + 3).slice(-2)}`;
+      const expiry = vcn?.expiry
+        ?? (mission ? expiryFromMission(mission) : expiryFromMission({ dates: { start: '', end: '' } }));
 
       const card: MissionCard = {
         id: cardId,
@@ -371,7 +382,7 @@ export function MissionsProvider({ children }: { children: ReactNode }) {
         brand: 'Visa',
         type: 'credit',
         usageType: 'multi-use',
-        last4: randomLast4(),
+        last4: vcn?.last4 ?? randomLast4(),
         expiry,
         spendLimitGTQ: mission?.budgetGTQ ?? 0,
         policyProfileId: mission?.policyProfileId ?? '',
@@ -404,6 +415,13 @@ export function MissionsProvider({ children }: { children: ReactNode }) {
       return card;
     },
     [state.missions, addNotification],
+  );
+
+  /* Emisión desde /cards — misma transición de estado, distinto aviso. */
+  const attachCardToMission = useCallback(
+    (id: string, vcn: IssuedVcn, approval: MissionApproval): MissionCard =>
+      approveMission(id, approval, vcn),
+    [approveMission],
   );
 
   const rejectMission = useCallback(
@@ -473,14 +491,14 @@ export function MissionsProvider({ children }: { children: ReactNode }) {
       getMission, getEntity, getProfile, getMissionCard,
       transactionsForMission, entityStats, childEntities,
       activeMissionCount, pendingReleaseGTQ,
-      createMission, approveMission, rejectMission, closeMission,
+      createMission, approveMission, attachCardToMission, rejectMission, closeMission,
       releaseBalance, attachReceipt, savePolicyProfile, addEntity, updateApprovalChain,
     }),
     [
       state, getMission, getEntity, getProfile, getMissionCard,
       transactionsForMission, entityStats, childEntities,
       activeMissionCount, pendingReleaseGTQ,
-      createMission, approveMission, rejectMission, closeMission,
+      createMission, approveMission, attachCardToMission, rejectMission, closeMission,
       releaseBalance, attachReceipt, savePolicyProfile, addEntity, updateApprovalChain,
     ],
   );

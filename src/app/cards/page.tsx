@@ -8,7 +8,9 @@ import { useMissions } from '@/context/MissionsContext';
 import { features } from '@/lib/features';
 import { PolicyControlsPanel } from '@/components/tci/PolicyControlsPanel';
 import { TciToaster } from '@/components/tci/TciToaster';
-import type { PolicyProfile } from '@/lib/mock-data/types';
+import toast from 'react-hot-toast';
+import { issueMissionVcn, expiryFromMission } from '@/lib/mission-issuance';
+import type { Mission, PolicyProfile } from '@/lib/mock-data/types';
 import { v4 as uuidv4 } from 'uuid';
 import {
   vcnService,
@@ -443,10 +445,13 @@ const STEP_BADGE: Record<IssueStep, { tag: string; color: string; bg: string; bo
 
 
 // ── Issuance overlay — dark terminal style ───────────────────────────────────
-function IssuanceOverlay({ brand, onDone, sdkPayload }: {
+function IssuanceOverlay({ brand, onDone, sdkPayload, mission, missionProfile }: {
   brand: Brand;
   onDone: (last4: string) => void;
   sdkPayload: SDKIssuancePayload;
+  /** Cuando la emisión se vincula a una misión, las reglas salen de su política. */
+  mission?: Mission;
+  missionProfile?: PolicyProfile;
 }) {
   const [completedSteps, setCompletedSteps] = useState<IssueStep[]>([]);
   const [currentIdx, setCurrentIdx]         = useState(0);
@@ -460,6 +465,15 @@ function IssuanceOverlay({ brand, onDone, sdkPayload }: {
   useEffect(() => {
     if (sdkFiredRef.current) return;
     sdkFiredRef.current = true;
+
+    /* Emisión vinculada a misión — mismo helper que usa /misiones/[id]. */
+    if (mission) {
+      issueMissionVcn(mission, missionProfile).then((vcn) => {
+        sdkLast4Ref.current = vcn.last4;
+        setDisplayLast4(vcn.last4);
+      });
+      return;
+    }
 
     const today = new Date();
     const startDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`;
@@ -1009,9 +1023,18 @@ export default function CardsPage() {
   const [allowIntl, setAllowIntl]           = useState(false);
   const [allowRecurring, setAllowRecurring] = useState(false);
 
-  const { policyProfiles, savePolicyProfile } = useMissions();
+  const { policyProfiles, savePolicyProfile, missions, attachCardToMission, getProfile } = useMissions();
   const [cardTab, setCardTab]                 = useState<'detalles' | 'politica'>('detalles');
   const [cardPolicy, setCardPolicy]           = useState<PolicyProfile | null>(null);
+
+  /* Vinculación con misiones — sólo las que aún no tienen tarjeta emitida. */
+  const [missionId, setMissionId] = useState('');
+  const linkableMissions = missions.filter(
+    (m) => !m.cardId && (m.status === 'pendiente_aprobacion' || m.status === 'borrador'),
+  );
+  const linkedMission = features.missions && missionId
+    ? missions.find((m) => m.id === missionId)
+    : undefined;
 
   const [isRequesting, setIsRequesting]       = useState(false);
   const [issuedCard, setIssuedCard]           = useState<IssuedCard | null>(null);
@@ -1121,6 +1144,24 @@ export default function CardsPage() {
       allowIntl,
       allowRecurring,
     });
+
+    /* Si el operador eligió una misión, la VCN queda vinculada: la misión pasa
+       a «activa» y la tarjeta se refleja en /misiones/[id]. */
+    if (features.missions && linkedMission) {
+      attachCardToMission(
+        linkedMission.id,
+        { last4, expiry: expiryFromMission(linkedMission) },
+        {
+          role: 'Emisión de Tarjetas',
+          user: holderName.trim() || 'Operador',
+          date: now.toISOString(),
+          action: 'aprobado',
+        },
+      );
+      toast.success(`VCN •••• ${last4} vinculada a ${linkedMission.id} — misión activa`);
+      setMissionId('');
+    }
+
     setIsRequesting(false);
   }
 
@@ -1138,6 +1179,7 @@ export default function CardsPage() {
     setAllowOnline(true);
     setAllowIntl(false);
     setAllowRecurring(false);
+    setMissionId('');
     setIssuedCard(null);
     setIsBlocking(false);
   }
@@ -1156,9 +1198,17 @@ export default function CardsPage() {
 
   return (
     <>
+      {features.missions && <TciToaster />}
+
       <AnimatePresence>
         {isRequesting && sdkIssuancePayload && (
-          <IssuanceOverlay brand={brand} onDone={handleIssuanceDone} sdkPayload={sdkIssuancePayload} />
+          <IssuanceOverlay
+            brand={brand}
+            onDone={handleIssuanceDone}
+            sdkPayload={sdkIssuancePayload}
+            mission={linkedMission}
+            missionProfile={linkedMission ? getProfile(linkedMission.policyProfileId) : undefined}
+          />
         )}
       </AnimatePresence>
 
@@ -1248,7 +1298,6 @@ export default function CardsPage() {
                       transition={{ duration: 0.25 }}
                       className="mt-3 bg-white rounded-2xl border border-slate-100 shadow-sm p-5"
                     >
-                      <TciToaster />
                       <label htmlFor="card-policy-profile" className="block text-xs font-semibold text-slate-600 mb-1">
                         Perfil de política aplicado
                       </label>
@@ -1442,6 +1491,37 @@ export default function CardsPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Vincular a una misión — la VCN emitida aparece en /misiones/[id] */}
+                {features.missions && (
+                  <div>
+                    <label htmlFor="mission-link" className="block text-xs font-semibold text-slate-600 mb-1.5">
+                      Vincular a misión <span className="font-normal text-slate-400">(opcional)</span>
+                    </label>
+                    <div className="relative">
+                      <select
+                        id="mission-link"
+                        className={inputClass + ' appearance-none pr-8'}
+                        value={missionId}
+                        onChange={(e) => setMissionId(e.target.value)}
+                      >
+                        <option value="">Sin misión — tarjeta de proveedor</option>
+                        {linkableMissions.map((m) => (
+                          <option key={m.id} value={m.id}>
+                            {m.id} — {m.traveler.name} · {m.destination.city}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    </div>
+                    {missionId && (
+                      <p className="mt-1.5 text-[11px] text-slate-500">
+                        Al emitir, la misión pasa a <span className="font-semibold text-emerald-600">activa</span> y la
+                        tarjeta se muestra en «Tarjeta de la misión».
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 {/* Network + Card Type — 2 col */}
                 <div className="grid grid-cols-2 gap-3">

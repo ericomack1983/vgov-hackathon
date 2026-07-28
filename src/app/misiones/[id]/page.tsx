@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useEffect, useState } from 'react';
+import { use, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -21,7 +21,8 @@ import { MissionCardVisual } from '@/components/tci/MissionCardVisual';
 import { BudgetRing, MiniProgress } from '@/components/tci/BudgetRing';
 import { TciToaster } from '@/components/tci/TciToaster';
 import { ConfettiCanvas, useConfetti } from '@/components/ui/ConfettiCanvas';
-import type { PolicyProfile } from '@/lib/mock-data/types';
+import { issueMissionVcn, fallbackVcn, type IssuedVcn } from '@/lib/mission-issuance';
+import type { Mission, PolicyProfile } from '@/lib/mock-data/types';
 
 const TABS = ['Resumen', 'Transacciones', 'Conciliación', 'Política'] as const;
 type Tab = typeof TABS[number];
@@ -39,17 +40,35 @@ const ISSUE_STEPS = [
 
 /* ── Overlay de emisión ──────────────────────────────────────────────────── */
 
-function IssuanceOverlay({ onDone }: { onDone: () => void }) {
+function IssuanceOverlay({ mission, profile, onDone }: {
+  mission: Mission;
+  profile?: PolicyProfile;
+  onDone: (vcn: IssuedVcn) => void;
+}) {
   const [idx, setIdx] = useState(0);
+  /* La llamada al SDK corre en paralelo a la animación; el resultado espera
+     en el ref hasta que los pasos terminan. */
+  const vcnRef = useRef<IssuedVcn | null>(null);
+  /* `onDone` se recrea en cada render del padre; el ref evita reiniciar los pasos. */
+  const doneRef = useRef(onDone);
+  useEffect(() => { doneRef.current = onDone; });
+
+  useEffect(() => {
+    let cancelled = false;
+    issueMissionVcn(mission, profile).then((vcn) => {
+      if (!cancelled) vcnRef.current = vcn;
+    });
+    return () => { cancelled = true; };
+  }, [mission, profile]);
 
   useEffect(() => {
     if (idx >= ISSUE_STEPS.length - 1) {
-      const t = setTimeout(onDone, 800);
+      const t = setTimeout(() => doneRef.current(vcnRef.current ?? fallbackVcn(mission)), 800);
       return () => clearTimeout(t);
     }
     const t = setTimeout(() => setIdx((i) => i + 1), 620);
     return () => clearTimeout(t);
-  }, [idx, onDone]);
+  }, [idx, mission]);
 
   return (
     <motion.div
@@ -163,13 +182,17 @@ export default function MissionDetailPage({ params, searchParams }: {
     setIssuing(true);
   }
 
-  function finishIssuance() {
-    const issued = approveMission(mission!.id, {
-      role: 'Tesorería Nacional',
-      user: 'Sandra Gómez',
-      date: new Date().toISOString(),
-      action: 'aprobado',
-    });
+  function finishIssuance(vcn: IssuedVcn) {
+    const issued = approveMission(
+      mission!.id,
+      {
+        role: 'Tesorería Nacional',
+        user: 'Sandra Gómez',
+        date: new Date().toISOString(),
+        action: 'aprobado',
+      },
+      vcn,
+    );
     setIssuing(false);
     fireConfetti();
     toast.success(`Tarjeta virtual •••• ${issued.last4} emitida — misión activa`);
@@ -207,7 +230,7 @@ export default function MissionDetailPage({ params, searchParams }: {
       <ConfettiCanvas handleRef={confettiRef} />
 
       <AnimatePresence>
-        {issuing && <IssuanceOverlay onDone={finishIssuance} />}
+        {issuing && <IssuanceOverlay mission={mission} profile={profile} onDone={finishIssuance} />}
       </AnimatePresence>
 
       <Link
