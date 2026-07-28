@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { use, useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, Loader2, Wifi, ChevronDown, ShieldCheck, ToggleLeft, ToggleRight, CreditCard, ShieldOff, Shield } from 'lucide-react';
 import { useProcurement } from '@/context/ProcurementContext';
@@ -10,6 +10,8 @@ import { PolicyControlsPanel } from '@/components/tci/PolicyControlsPanel';
 import { TciToaster } from '@/components/tci/TciToaster';
 import toast from 'react-hot-toast';
 import { issueMissionVcn, expiryFromMission } from '@/lib/mission-issuance';
+import { formatGTQ } from '@/lib/tci-format';
+import Link from 'next/link';
 import type { Mission, PolicyProfile } from '@/lib/mock-data/types';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -1006,8 +1008,15 @@ function IPCPanel({ purpose, mccCode, spendLimit, allowOnline, allowIntl, allowR
   );
 }
 
-export default function CardsPage() {
+export default function CardsPage({ searchParams }: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const { suppliers, addCardToSupplier } = useProcurement();
+  const { policyProfiles, savePolicyProfile, missions, attachCardToMission, getProfile } = useMissions();
+
+  /* Llegada desde «Aprobar y Emitir Tarjeta» en /misiones/[id]: ?mission=MIS-… */
+  const { mission: missionParam } = use(searchParams);
+  const presetMissionId = typeof missionParam === 'string' ? missionParam : '';
 
   const [holderName, setHolderName]         = useState('');
   const [brand, setBrand]                   = useState<Brand>('Visa');
@@ -1023,14 +1032,41 @@ export default function CardsPage() {
   const [allowIntl, setAllowIntl]           = useState(false);
   const [allowRecurring, setAllowRecurring] = useState(false);
 
-  const { policyProfiles, savePolicyProfile, missions, attachCardToMission, getProfile } = useMissions();
   const [cardTab, setCardTab]                 = useState<'detalles' | 'politica'>('detalles');
   const [cardPolicy, setCardPolicy]           = useState<PolicyProfile | null>(null);
 
   /* Vinculación con misiones — sólo las que aún no tienen tarjeta emitida. */
   const [missionId, setMissionId] = useState('');
+
+  /* El parámetro puede llegar en el primer render o tras la hidratación (la ruta
+     se prerenderiza), así que el precargado vive en un efecto y corre una vez. */
+  const prefilledRef = useRef('');
+  useEffect(() => {
+    if (!features.missions || !presetMissionId || prefilledRef.current === presetMissionId) return;
+    const m = missions.find((x) => x.id === presetMissionId);
+    if (!m) return;
+    prefilledRef.current = presetMissionId;
+
+    const profile = getProfile(m.policyProfileId);
+    /* eslint-disable react-hooks/set-state-in-effect --
+       sincronización URL → formulario; corre una sola vez por misión. */
+    setMissionId(m.id);
+    setHolderName(m.traveler.name);
+    setPurpose(m.purpose);
+    setSpendLimit(String(m.budgetGTQ));
+    setUsageType('multi-use');
+    setExpiryDate(m.dates.end);
+    if (profile) {
+      setMccCode(profile.allowedMCCs[0]?.code ?? '');
+      setAllowIntl(profile.allowedCountries.some((c) => c !== 'GT'));
+    }
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [presetMissionId, missions, getProfile]);
+  /* Tras emitir, la misión ya tiene cardId; se conserva en la lista para que el
+     select y el banner sigan mostrando el vínculo. */
   const linkableMissions = missions.filter(
-    (m) => !m.cardId && (m.status === 'pendiente_aprobacion' || m.status === 'borrador'),
+    (m) => m.id === missionId
+      || (!m.cardId && (m.status === 'pendiente_aprobacion' || m.status === 'borrador')),
   );
   const linkedMission = features.missions && missionId
     ? missions.find((m) => m.id === missionId)
@@ -1104,7 +1140,8 @@ export default function CardsPage() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!holderName.trim() || !supplierId) return;
+    /* Una tarjeta de misión va al viajero, no a un proveedor. */
+    if (!holderName.trim() || (!supplierId && !linkedMission)) return;
     setSdkIssuancePayload({ holderName: holderName.trim(), purpose, spendLimit, mccCode, allowOnline, expiryDate });
     setIsRequesting(true);
   }
@@ -1116,16 +1153,18 @@ export default function CardsPage() {
     const expiry = `${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getFullYear() + 3).slice(-2)}`;
 
     // Persist VCN into the supplier's card list so the payment page can use it
-    addCardToSupplier(supplierId, {
-      id: 'vcn-' + uuidv4().slice(0, 8),
-      type: cardType,
-      brand,
-      last4,
-      expiry,
-      holderName: holderName.trim(),
-      status: 'active',
-      usageType,
-    });
+    if (supplierId) {
+      addCardToSupplier(supplierId, {
+        id: 'vcn-' + uuidv4().slice(0, 8),
+        type: cardType,
+        brand,
+        last4,
+        expiry,
+        holderName: holderName.trim(),
+        status: 'active',
+        usageType,
+      });
+    }
 
     setIssuedCard({
       holderName: holderName.trim(),
@@ -1148,18 +1187,20 @@ export default function CardsPage() {
     /* Si el operador eligió una misión, la VCN queda vinculada: la misión pasa
        a «activa» y la tarjeta se refleja en /misiones/[id]. */
     if (features.missions && linkedMission) {
+      /* Llegar con ?mission= significa que Tesorería ya autorizó en la misión;
+         elegirla a mano aquí es una emisión operativa. */
+      const fromTreasury = linkedMission.id === presetMissionId;
       attachCardToMission(
         linkedMission.id,
         { last4, expiry: expiryFromMission(linkedMission) },
         {
-          role: 'Emisión de Tarjetas',
-          user: holderName.trim() || 'Operador',
+          role: fromTreasury ? 'Tesorería Nacional' : 'Emisión de Tarjetas',
+          user: fromTreasury ? 'Sandra Gómez' : holderName.trim() || 'Operador',
           date: now.toISOString(),
           action: 'aprobado',
         },
       );
       toast.success(`VCN •••• ${last4} vinculada a ${linkedMission.id} — misión activa`);
-      setMissionId('');
     }
 
     setIsRequesting(false);
@@ -1241,6 +1282,41 @@ export default function CardsPage() {
             ))}
           </div>
         </div>
+
+        {/* Contexto de misión — llegada desde «Aprobar y Emitir Tarjeta» */}
+        {features.missions && linkedMission && (
+          <div className="mt-5 rounded-xl border border-[#1434CB]/15 bg-[#F5F7FF] px-5 py-4">
+            <div className="flex items-start justify-between gap-4 flex-wrap">
+              <div className="flex items-start gap-3">
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                  style={{ background: 'linear-gradient(135deg,#1434CB,#6366f1)' }}
+                >
+                  <ShieldCheck size={15} className="text-white" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">
+                    Emisión autorizada por Tesorería Nacional — {linkedMission.id}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {linkedMission.traveler.name} · {linkedMission.destination.city} ·{' '}
+                    {getProfile(linkedMission.policyProfileId)?.name ?? 'Sin perfil'} · Presupuesto{' '}
+                    {formatGTQ(linkedMission.budgetGTQ)}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    La VCN emitida se vinculará a esta misión y la dejará activa.
+                  </p>
+                </div>
+              </div>
+              <Link
+                href={`/misiones/${linkedMission.id}`}
+                className="text-xs font-semibold text-[#1434CB] hover:underline shrink-0"
+              >
+                ← Volver a la misión
+              </Link>
+            </div>
+          </div>
+        )}
 
         <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
 
@@ -1369,6 +1445,18 @@ export default function CardsPage() {
                         ))}
                       </div>
                     </div>
+                    {/* Vuelta a la misión — la tarjeta ya aparece en su panel */}
+                    {features.missions && linkedMission?.cardId && (
+                      <Link
+                        href={`/misiones/${linkedMission.id}`}
+                        className="flex items-center justify-between gap-3 rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2.5 hover:bg-emerald-100 transition-colors"
+                      >
+                        <span className="text-xs font-semibold text-emerald-800">
+                          Vinculada a {linkedMission.id} — ver «Tarjeta de la misión»
+                        </span>
+                        <span className="text-xs font-bold text-emerald-700 shrink-0">→</span>
+                      </Link>
+                    )}
                     <div className="pt-2 border-t border-slate-100 flex items-center gap-3">
                       <button
                         onClick={resetForm}
@@ -1474,15 +1562,18 @@ export default function CardsPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-600 mb-1.5">Assign to Supplier</label>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                      Assign to Supplier
+                      {linkedMission && <span className="font-normal text-slate-400"> (opcional)</span>}
+                    </label>
                     <div className="relative">
                       <select
                         className={inputClass + ' appearance-none pr-8'}
                         value={supplierId}
                         onChange={(e) => setSupplierId(e.target.value)}
-                        required
+                        required={!linkedMission}
                       >
-                        <option value="">Select supplier…</option>
+                        <option value="">{linkedMission ? 'Sin proveedor — tarjeta del viajero' : 'Select supplier…'}</option>
                         {suppliers.map((s) => (
                           <option key={s.id} value={s.id}>{s.name}</option>
                         ))}
@@ -1694,10 +1785,10 @@ export default function CardsPage() {
 
               <button
                 type="submit"
-                disabled={!holderName.trim() || !supplierId}
+                disabled={!holderName.trim() || (!supplierId && !linkedMission)}
                 className="w-full py-3 rounded-xl text-sm font-bold text-white bg-[#1434CB] hover:bg-[#0F27B0] disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm"
               >
-                Issue Virtual Card Number
+                {linkedMission ? `Emitir tarjeta para ${linkedMission.id}` : 'Issue Virtual Card Number'}
               </button>
             </motion.form>
           )}

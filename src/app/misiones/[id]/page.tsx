@@ -1,7 +1,8 @@
 'use client';
 
-import { use, useEffect, useRef, useState } from 'react';
+import { use, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, ShieldCheck, CreditCard, Download, Loader2, Check,
@@ -21,101 +22,13 @@ import { MissionCardVisual } from '@/components/tci/MissionCardVisual';
 import { BudgetRing, MiniProgress } from '@/components/tci/BudgetRing';
 import { TciToaster } from '@/components/tci/TciToaster';
 import { ConfettiCanvas, useConfetti } from '@/components/ui/ConfettiCanvas';
-import { issueMissionVcn, fallbackVcn, type IssuedVcn } from '@/lib/mission-issuance';
-import type { Mission, PolicyProfile } from '@/lib/mock-data/types';
+import type { PolicyProfile } from '@/lib/mock-data/types';
 
 const TABS = ['Resumen', 'Transacciones', 'Conciliación', 'Política'] as const;
 type Tab = typeof TABS[number];
 
 const CARD_PANEL =
   'bg-white rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.05),0_4px_16px_rgba(0,0,0,0.06)] border border-slate-200 p-6';
-
-const ISSUE_STEPS = [
-  'Validando solicitud de VCN…',
-  'Contactando red del emisor (Banco CHN)…',
-  'Generando credenciales de tarjeta virtual…',
-  'Aplicando Visa Payment Controls…',
-  '¡VCN emitida exitosamente!',
-];
-
-/* ── Overlay de emisión ──────────────────────────────────────────────────── */
-
-function IssuanceOverlay({ mission, profile, onDone }: {
-  mission: Mission;
-  profile?: PolicyProfile;
-  onDone: (vcn: IssuedVcn) => void;
-}) {
-  const [idx, setIdx] = useState(0);
-  /* La llamada al SDK corre en paralelo a la animación; el resultado espera
-     en el ref hasta que los pasos terminan. */
-  const vcnRef = useRef<IssuedVcn | null>(null);
-  /* `onDone` se recrea en cada render del padre; el ref evita reiniciar los pasos. */
-  const doneRef = useRef(onDone);
-  useEffect(() => { doneRef.current = onDone; });
-
-  useEffect(() => {
-    let cancelled = false;
-    issueMissionVcn(mission, profile).then((vcn) => {
-      if (!cancelled) vcnRef.current = vcn;
-    });
-    return () => { cancelled = true; };
-  }, [mission, profile]);
-
-  useEffect(() => {
-    if (idx >= ISSUE_STEPS.length - 1) {
-      const t = setTimeout(() => doneRef.current(vcnRef.current ?? fallbackVcn(mission)), 800);
-      return () => clearTimeout(t);
-    }
-    const t = setTimeout(() => setIdx((i) => i + 1), 620);
-    return () => clearTimeout(t);
-  }, [idx, mission]);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: 'rgba(15,23,42,0.72)', backdropFilter: 'blur(3px)' }}
-    >
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md mx-4">
-        <div className="flex items-center gap-3 mb-6">
-          <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center"
-            style={{ background: 'linear-gradient(135deg,#1434CB,#6366f1)' }}
-          >
-            <CreditCard size={16} className="text-white" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-slate-900">Emitiendo tarjeta virtual</p>
-            <p className="text-xs text-slate-500">Visa · Banco CHN</p>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          {ISSUE_STEPS.map((label, i) => (
-            <div key={label} className="flex items-center gap-3">
-              <div
-                className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full transition-colors ${
-                  i < idx ? 'bg-emerald-500' : i === idx ? 'bg-[#1434CB]' : 'bg-slate-100'
-                }`}
-              >
-                {i < idx ? (
-                  <Check size={11} className="text-white" />
-                ) : i === idx ? (
-                  <Loader2 size={11} className="text-white animate-spin" />
-                ) : null}
-              </div>
-              <span className={`text-xs ${i <= idx ? 'text-slate-700 font-medium' : 'text-slate-300'}`}>
-                {label}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </motion.div>
-  );
-}
 
 /* ── Página ──────────────────────────────────────────────────────────────── */
 
@@ -134,15 +47,15 @@ export default function MissionDetailPage({ params, searchParams }: {
   const { tab } = use(searchParams);
   const {
     getMission, getEntity, getProfile, getMissionCard, transactionsForMission,
-    approveMission, rejectMission, closeMission, releaseBalance, attachReceipt, savePolicyProfile,
+    rejectMission, closeMission, releaseBalance, attachReceipt, savePolicyProfile,
   } = useMissions();
+  const router = useRouter();
 
   /* Enlace profundo desde el Asistente IA: ?tab=politica.
      La pestaña elegida por el usuario gana sobre la de la URL. */
   const [tabOverride, setTabOverride] = useState<Tab | null>(null);
   const activeTab = tabOverride ?? TAB_BY_PARAM[typeof tab === 'string' ? tab : ''] ?? 'Resumen';
   const setActiveTab = setTabOverride;
-  const [issuing, setIssuing] = useState(false);
   const [releasing, setReleasing] = useState(false);
   /* `policyEdits` sólo existe cuando el usuario toca los controles */
   const [policyEdits, setPolicyEdits] = useState<PolicyProfile | null>(null);
@@ -178,24 +91,10 @@ export default function MissionDetailPage({ params, searchParams }: {
   const canReconcile = mission.status === 'en_conciliacion' || mission.status === 'cerrada' || missionEnded;
   const isPending = mission.status === 'pendiente_aprobacion';
 
+  /* La emisión vive en /cards. Aprobar lleva allí con la misión precargada;
+     esa pantalla emite la VCN y la vincula de vuelta a la misión. */
   function handleApprove() {
-    setIssuing(true);
-  }
-
-  function finishIssuance(vcn: IssuedVcn) {
-    const issued = approveMission(
-      mission!.id,
-      {
-        role: 'Tesorería Nacional',
-        user: 'Sandra Gómez',
-        date: new Date().toISOString(),
-        action: 'aprobado',
-      },
-      vcn,
-    );
-    setIssuing(false);
-    fireConfetti();
-    toast.success(`Tarjeta virtual •••• ${issued.last4} emitida — misión activa`);
+    router.push(`/cards?mission=${encodeURIComponent(mission!.id)}`);
   }
 
   function handleReject() {
@@ -228,10 +127,6 @@ export default function MissionDetailPage({ params, searchParams }: {
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
       <TciToaster />
       <ConfettiCanvas handleRef={confettiRef} />
-
-      <AnimatePresence>
-        {issuing && <IssuanceOverlay mission={mission} profile={profile} onDone={finishIssuance} />}
-      </AnimatePresence>
 
       <Link
         href="/misiones"
