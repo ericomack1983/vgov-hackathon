@@ -8,6 +8,7 @@ import { SupplierCard } from '@/components/procurement/SupplierCard';
 import type { Supplier } from '@/lib/mock-data/types';
 import { wasPageRefreshed } from '@/lib/playOnRefresh';
 import createGlobe from 'cobe';
+import { useT } from '@/context/LanguageContext';
 
 // ── Globe markers ──────────────────────────────────────────────────────────────
 const GLOBE_MARKERS = [
@@ -415,6 +416,7 @@ function sortSuppliers(list: Supplier[], sort: SortKey): Supplier[] {
 }
 
 export default function SuppliersPage() {
+  const t = useT();
   const { suppliers } = useProcurement();
 
   const [query, setQuery]           = useState('');
@@ -472,7 +474,7 @@ export default function SuppliersPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h1 className="text-lg font-semibold" style={{ color: '#000000' }}>Supplier Registry</h1>
+          <h1 className="text-lg font-semibold" style={{ color: '#000000' }}>{t('page.suppliers.title')}</h1>
           <p className="mt-0.5 text-sm" style={{ color: '#4a4a4a' }}>Browse and manage registered suppliers.</p>
         </div>
         <span

@@ -14,6 +14,7 @@ import { features } from '@/lib/features';
 import { formatGTQ, formatUSD, flagEmoji } from '@/lib/tci-format';
 import { MissionTxStatusBadge } from '@/components/tci/MissionStatusBadge';
 import type { MissionTransaction, Transaction } from '@/lib/mock-data/types';
+import { useT } from '@/context/LanguageContext';
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -225,6 +226,7 @@ function AILedgerRow({ entry, expanded, onToggle, index }: {
 // ── Page ───────────────────────────────────────────────────────────────────
 
 export default function TransactionsPage() {
+  const t = useT();
   const { transactions } = usePayment();
   const { entries } = useAILedger();
   const { missions, missionTransactions } = useMissions();
@@ -306,7 +308,7 @@ export default function TransactionsPage() {
             <Brain size={16} className="text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-semibold text-slate-900">Transaction Ledger</h1>
+            <h1 className="text-xl font-semibold text-slate-900">{t('page.transactions.title')}</h1>
             <p className="text-sm text-slate-500">AI-scored invoices &amp; payment records</p>
           </div>
         </div>

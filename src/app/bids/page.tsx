@@ -8,8 +8,10 @@ import { BidFormModal } from '@/components/procurement/BidFormModal';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { FileText } from 'lucide-react';
 import { format } from 'date-fns';
+import { useT } from '@/context/LanguageContext';
 
 export default function BidsPage() {
+  const t = useT();
   const { rfps } = useProcurement();
   const { role } = useUI();
   const [selectedRfp, setSelectedRfp] = useState<{ id: string; title: string } | null>(null);
@@ -22,7 +24,7 @@ export default function BidsPage() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
     >
-      <h1 className="text-xl font-semibold text-slate-900">Submit Bids</h1>
+      <h1 className="text-xl font-semibold text-slate-900">{t('page.bids.title')}</h1>
       <p className="mt-1 text-sm text-slate-500">
         Browse open procurement requests and submit your bids.
       </p>

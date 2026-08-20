@@ -2,6 +2,7 @@
 
 import { ReactNode } from 'react';
 import { UIProvider } from './UIContext';
+import { LanguageProvider } from './LanguageContext';
 import { ProcurementProvider } from './ProcurementContext';
 import { PaymentProvider } from './PaymentContext';
 import { AuthProvider } from './AuthContext';
@@ -12,6 +13,7 @@ import { MissionsProvider } from './MissionsContext';
 
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
+    <LanguageProvider>
     <AuthProvider>
       <UIProvider>
         <SidebarActionsProvider>
@@ -29,5 +31,6 @@ export function AppProviders({ children }: { children: ReactNode }) {
         </SidebarActionsProvider>
       </UIProvider>
     </AuthProvider>
+    </LanguageProvider>
   );
 }

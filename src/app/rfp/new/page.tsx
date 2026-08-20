@@ -5,8 +5,10 @@ import { CreateRFPForm } from '@/components/procurement/CreateRFPForm';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { useUI } from '@/context/UIContext';
+import { useT } from '@/context/LanguageContext';
 
 export default function NewRfpPage() {
+  const t = useT();
   const { role } = useUI();
 
   if (role !== 'gov') {
@@ -45,7 +47,7 @@ export default function NewRfpPage() {
         <ArrowLeft size={16} />
         Back to RFPs
       </Link>
-      <h1 className="text-xl font-semibold text-slate-900 mb-6">Create New RFP</h1>
+      <h1 className="text-xl font-semibold text-slate-900 mb-6">{t('page.rfpNew.title')}</h1>
       <CreateRFPForm />
     </motion.div>
   );

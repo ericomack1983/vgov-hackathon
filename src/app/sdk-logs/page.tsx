@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Terminal, Trash2, ChevronDown, ChevronRight, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { useSDKLogs } from '@/hooks/useSDKLogs';
 import type { SDKLogEntry, SDKService } from '@/lib/sdk-logger';
+import { useT } from '@/context/LanguageContext';
 
 // ── Service badge config ──────────────────────────────────────────────────────
 const SERVICE_STYLE: Record<SDKService, { color: string; bg: string; border: string }> = {
@@ -117,6 +118,7 @@ function LogRow({ entry }: { entry: SDKLogEntry }) {
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 export default function SDKLogsPage() {
+  const t = useT();
   const { logs, clear } = useSDKLogs();
   const [filter, setFilter] = useState<SDKService | 'ALL'>('ALL');
 
@@ -137,7 +139,7 @@ export default function SDKLogsPage() {
             <Terminal size={16} className="text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-semibold text-slate-900">SDK Logs</h1>
+            <h1 className="text-xl font-semibold text-slate-900">{t('page.sdkLogs.title')}</h1>
             <p className="text-xs text-slate-400 mt-0.5">Live @visa-gov/sdk · Visa Developer API calls</p>
           </div>
         </div>

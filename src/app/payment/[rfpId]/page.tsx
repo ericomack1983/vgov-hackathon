@@ -21,6 +21,7 @@ import type { EnhancedDataInput } from '@/lib/cybs/enhancedData';
 import { CyberSourceBadge } from '@/components/brand/CyberSourceBadge';
 import type { PaymentMethod, PaymentCard } from '@/lib/mock-data/types';
 import { b2bService, vpaService } from '@/lib/visa-sdk';
+import { useT } from '@/context/LanguageContext';
 
 // ─── types ────────────────────────────────────────────────────────────────────
 type Step = 'card-select' | 'card-confirm' | 'fund-select' | 'processing' | 'done';
@@ -345,6 +346,7 @@ function DoneStep({ bidAmount, fundMethod, selectedCard, winner, orderId, isCnp,
 
 // ─── main page ────────────────────────────────────────────────────────────────
 export default function PaymentCheckoutPage({ params }: { params: Promise<{ rfpId: string }> }) {
+  const t = useT();
   const { rfpId } = use(params);
   const { rfps, suppliers, updateRFP } = useProcurement();
   const { transactions, addTransaction, addNotification, setVisaPaymentId } = usePayment();
@@ -605,7 +607,7 @@ export default function PaymentCheckoutPage({ params }: { params: Promise<{ rfpI
       <Link href={`/rfp/${rfpId}`} className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 mb-2">
         <ArrowLeft size={16} /> Back to RFP
       </Link>
-      <h1 className="text-xl font-semibold text-slate-900">Payment Checkout</h1>
+      <h1 className="text-xl font-semibold text-slate-900">{t('page.checkout.title')}</h1>
       <p className="text-sm text-slate-500 mb-6">{rfp.title} · <span className="font-semibold text-slate-700">${bidAmount.toLocaleString()}</span> → {winner?.name}</p>
 
       {step !== 'done' && <StepDots current={step} />}

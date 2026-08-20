@@ -25,6 +25,7 @@ import {
   buildBlockRule,
   buildAmountRule,
 } from '@/lib/visa-sdk';
+import { useT } from '@/context/LanguageContext';
 
 interface SDKIssuancePayload {
   holderName: string;
@@ -1018,6 +1019,7 @@ function IPCPanel({ purpose, mccCode, spendLimit, allowOnline, allowIntl, allowR
 export default function CardsPage({ searchParams }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+  const t = useT();
   const { suppliers, addCardToSupplier } = useProcurement();
   const { policyProfiles, savePolicyProfile, missions, attachCardToMission, getProfile } = useMissions();
 
@@ -1362,7 +1364,7 @@ export default function CardsPage({ searchParams }: {
       >
         <div className="flex items-start justify-between gap-6">
           <div>
-            <h1 className="text-lg font-semibold" style={{ color: '#000000' }}>Virtual Card Issuance</h1>
+            <h1 className="text-lg font-semibold" style={{ color: '#000000' }}>{t('page.cards.title')}</h1>
             <p className="mt-0.5 text-sm" style={{ color: '#4a4a4a' }}>
               Issue a VCN — a single-use or limited-use credential tied to a specific supplier, amount, and time window.
             </p>

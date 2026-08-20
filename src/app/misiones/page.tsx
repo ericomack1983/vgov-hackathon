@@ -12,6 +12,7 @@ import { MiniProgress } from '@/components/tci/BudgetRing';
 import { MissionWizard } from '@/components/tci/MissionWizard';
 import { TciToaster } from '@/components/tci/TciToaster';
 import type { MissionStatus } from '@/lib/mock-data/types';
+import { useT } from '@/context/LanguageContext';
 
 const ALL_STATUSES: MissionStatus[] = [
   'borrador', 'pendiente_aprobacion', 'aprobada', 'activa', 'en_conciliacion', 'cerrada',
@@ -23,6 +24,7 @@ const INPUT_CLASS =
 export default function MisionesPage({ searchParams }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+  const t = useT();
   const { nueva } = use(searchParams);
   const { missions, entities, activeMissionCount, pendingReleaseGTQ } = useMissions();
 
@@ -63,7 +65,7 @@ export default function MisionesPage({ searchParams }: {
             <Plane size={16} className="text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-semibold text-slate-900">Misiones</h1>
+            <h1 className="text-xl font-semibold text-slate-900">{t('page.missions.title')}</h1>
             <p className="text-sm text-slate-500">Viáticos y gasto de misión con controles de política en la tarjeta</p>
           </div>
         </div>

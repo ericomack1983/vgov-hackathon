@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { useProcurement } from '@/context/ProcurementContext';
 import { ArrowRight, CreditCard, Building2, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
+import { useT } from '@/context/LanguageContext';
 
 function VisaWordmark() {
   return (
@@ -19,6 +20,7 @@ function VisaWordmark() {
 }
 
 export default function PaymentPage() {
+  const t = useT();
   const { rfps, suppliers } = useProcurement();
   const awardedRfps = rfps.filter((r) => r.status === 'Awarded');
 
@@ -31,7 +33,7 @@ export default function PaymentPage() {
       {/* ── Page header ── */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-lg font-semibold" style={{ color: '#000000' }}>Payments</h1>
+          <h1 className="text-lg font-semibold" style={{ color: '#000000' }}>{t('page.payments.title')}</h1>
           <p className="mt-0.5 text-sm" style={{ color: '#4a4a4a' }}>
             Awarded contracts pending disbursement.
           </p>

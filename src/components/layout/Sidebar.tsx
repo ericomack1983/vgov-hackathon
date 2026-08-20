@@ -25,6 +25,7 @@ import { features } from '@/lib/features';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { useUI } from '@/context/UIContext';
+import { useT } from '@/context/LanguageContext';
 import { useSidebarActions, SidebarAction } from '@/context/SidebarActionsContext';
 import { usePayment } from '@/context/PaymentContext';
 import { SidebarCard } from './SidebarCard';
@@ -37,34 +38,35 @@ const ICON_GOLD   = { '--v-icon-primary': '#f7b600',               '--v-icon-sec
 
 type NavItem = { label: string; href: string; icon: NovaIcon };
 
+/** `label` is a translation key — resolved per render against the active language. */
 const NAV_ITEMS: Record<string, NavItem[]> = {
   gov: [
-    { label: 'Dashboard',      href: '/dashboard',      icon: VisaDashboardLow      },
-    { label: 'Cards',          href: '/cards',          icon: VisaCardGenericLow    },
+    { label: 'nav.dashboard',      href: '/dashboard',      icon: VisaDashboardLow      },
+    { label: 'nav.cards',          href: '/cards',          icon: VisaCardGenericLow    },
     ...(features.missions
-      ? [{ label: 'Misiones',  href: '/misiones',       icon: VisaTransitAirplaneLow as NovaIcon }]
+      ? [{ label: 'nav.missions',  href: '/misiones',       icon: VisaTransitAirplaneLow as NovaIcon }]
       : []),
-    { label: 'Suppliers',      href: '/suppliers',      icon: VisaGlobalLow         },
-    { label: 'Procurement',    href: '/rfp',            icon: VisaDocumentLow       },
-    { label: 'Marketplace',    href: '/petty-cash',     icon: VisaCartLow           },
-    { label: 'Payments',       href: '/payment',        icon: VisaWalletLow         },
-    { label: 'Reconciliation', href: '/reconciliation', icon: VisaCheckmarkLow      },
-    { label: 'Transactions',   href: '/transactions',   icon: VisaTransactionsLow   },
-    { label: 'Audit Trail',    href: '/audit',          icon: VisaSecurityLockLow   },
-    { label: 'Notifications',  href: '/notifications',  icon: VisaNotificationsLow  },
+    { label: 'nav.suppliers',      href: '/suppliers',      icon: VisaGlobalLow         },
+    { label: 'nav.procurement',    href: '/rfp',            icon: VisaDocumentLow       },
+    { label: 'nav.marketplace',    href: '/petty-cash',     icon: VisaCartLow           },
+    { label: 'nav.payments',       href: '/payment',        icon: VisaWalletLow         },
+    { label: 'nav.reconciliation', href: '/reconciliation', icon: VisaCheckmarkLow      },
+    { label: 'nav.transactions',   href: '/transactions',   icon: VisaTransactionsLow   },
+    { label: 'nav.audit',          href: '/audit',          icon: VisaSecurityLockLow   },
+    { label: 'nav.notifications',  href: '/notifications',  icon: VisaNotificationsLow  },
     ...(features.entityHierarchy
-      ? [{ label: 'Entidades', href: '/entidades',      icon: VisaGovernmentLow as NovaIcon }]
+      ? [{ label: 'nav.entities',  href: '/entidades',      icon: VisaGovernmentLow as NovaIcon }]
       : []),
-    { label: 'SDK Logs',       href: '/sdk-logs',       icon: VisaLogLow            },
+    { label: 'nav.sdkLogs',        href: '/sdk-logs',       icon: VisaLogLow            },
   ],
   supplier: [
-    { label: 'My Bids',       href: '/bids',          icon: VisaDocumentLow       },
-    { label: 'Notifications', href: '/notifications', icon: VisaNotificationsLow  },
+    { label: 'nav.myBids',        href: '/bids',          icon: VisaDocumentLow       },
+    { label: 'nav.notifications', href: '/notifications', icon: VisaNotificationsLow  },
   ],
   auditor: [
-    { label: 'Audit Trail',   href: '/audit',          icon: VisaSecurityLockLow  },
-    { label: 'Transactions',  href: '/transactions',   icon: VisaTransactionsLow  },
-    { label: 'Notifications', href: '/notifications',  icon: VisaNotificationsLow },
+    { label: 'nav.audit',         href: '/audit',          icon: VisaSecurityLockLow  },
+    { label: 'nav.transactions',  href: '/transactions',   icon: VisaTransactionsLow  },
+    { label: 'nav.notifications', href: '/notifications',  icon: VisaNotificationsLow },
   ],
 };
 
@@ -93,6 +95,7 @@ const RING_DELAYS = [0, 0.7, 1.4];
 const EASE = [0.4, 0, 0.2, 1] as const;
 
 function ProcurementActions({ actions, collapsed }: { actions: SidebarAction[]; collapsed: boolean }) {
+  const t = useT();
   return (
     <AnimatePresence>
       {actions.length > 0 && !collapsed && (
@@ -105,7 +108,7 @@ function ProcurementActions({ actions, collapsed }: { actions: SidebarAction[]; 
         >
           <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)', margin: '4px 0 10px' }} />
           <p style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: 8, paddingLeft: 4 }}>
-            Procurement Actions
+            {t('nav.sectionActions')}
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -155,7 +158,7 @@ function ProcurementActions({ actions, collapsed }: { actions: SidebarAction[]; 
                     />
                     <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px' }}>
                       <Icon style={{ width: 14, height: 14, flexShrink: 0 }} aria-hidden />
-                      <span style={{ fontSize: 11, fontWeight: 700, color: cfg.ink, flex: 1, lineHeight: 1.3, letterSpacing: '0.01em' }}>{action.label}</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: cfg.ink, flex: 1, lineHeight: 1.3, letterSpacing: '0.01em' }}>{t(action.label)}</span>
                       <VisaArrowForwardTiny style={{ width: 10, height: 10, flexShrink: 0 }} aria-hidden />
                     </div>
                   </motion.div>
@@ -292,6 +295,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ currentPath, collapsed, onToggle }: SidebarProps) {
+  const t = useT();
   const { role } = useUI();
   const { actions } = useSidebarActions();
   const { unreadCount } = usePayment();
@@ -329,7 +333,7 @@ export function Sidebar({ currentPath, collapsed, onToggle }: SidebarProps) {
           <NavItem
             key={item.href}
             href={item.href}
-            label={item.label}
+            label={t(item.label)}
             icon={item.icon}
             isActive={
               item.href === currentPath ||

@@ -12,6 +12,7 @@ import { vpcService, type VPCReconciliationResult } from '@/lib/visa-sdk';
 import type { Transaction } from '@/lib/mock-data/types';
 import { useSidebarActions } from '@/context/SidebarActionsContext';
 import { InvoiceAnalysisPanel } from '@/components/ai/InvoiceAnalysisPanel';
+import { useT } from '@/context/LanguageContext';
 
 // ── Reconciliation state per transaction ──────────────────────────────────────
 
@@ -266,6 +267,7 @@ async function fetchCybsRecord(authorizationId?: string): Promise<{ cybs?: CybsR
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function ReconciliationPage() {
+  const t = useT();
   const { transactions } = usePayment();
   const { setActions, clearActions } = useSidebarActions();
   const [reconcileStates, setReconcileStates] = useState<Record<string, ReconcileState>>({});
@@ -284,7 +286,7 @@ export default function ReconciliationPage() {
   useEffect(() => {
     setActions([{
       id: 'auto-reconcile',
-      label: 'Automatic Reconciliation',
+      label: 'action.automaticReconciliation',
       variant: 'ai',
       onClick: () => { autoReconcileRef.current(); },
     }]);
@@ -404,9 +406,9 @@ export default function ReconciliationPage() {
     >
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">Reconciliation</h1>
+          <h1 className="text-xl font-semibold text-slate-900">{t('page.reconciliation.title')}</h1>
           <p className="text-sm text-slate-500">
-            Match VCN charges against Visa Payment Controls transaction records via VPC Reporting API.
+            {t('page.reconciliation.subtitle')}
           </p>
         </div>
         {transactions.length > 0 && pendingCount > 0 && (

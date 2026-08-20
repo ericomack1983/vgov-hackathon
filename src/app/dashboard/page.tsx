@@ -19,6 +19,7 @@ import { computeDonutSegments } from '@/lib/chart-utils';
 import { useMissions } from '@/context/MissionsContext';
 import { features } from '@/lib/features';
 import { formatGTQCompact } from '@/lib/tci-format';
+import { useT } from '@/context/LanguageContext';
 
 const TABS = ['Overview', 'Analytics', 'Reports'] as const;
 type Tab = typeof TABS[number];
@@ -27,6 +28,7 @@ const USD_BUDGET   = 10_000_000;
 const USDC_BUDGET  = 500_000;
 
 export default function DashboardPage() {
+  const t = useT();
   const { role } = useUI();
   const { transactions } = usePayment();
   const { rfps } = useProcurement();
@@ -86,7 +88,7 @@ export default function DashboardPage() {
       {/* ── Header ────────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">Financial Dashboard</h1>
+          <h1 className="text-xl font-semibold text-slate-900">{t('page.dashboard.title')}</h1>
           <p className="text-sm text-slate-500 mt-0.5">Overview of payment activity and procurement savings</p>
         </div>
 

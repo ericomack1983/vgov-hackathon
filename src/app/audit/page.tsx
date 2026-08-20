@@ -10,6 +10,7 @@ import { buildAuditTrail } from '@/lib/audit-utils';
 import { AuditEventRow } from '@/components/audit/AuditEventRow';
 import { ProcurementCard } from '@/components/procurement/ProcurementCard';
 import dynamic from 'next/dynamic';
+import { useT } from '@/context/LanguageContext';
 
 const ExportPDFButton = dynamic(
   () => import('@/components/audit/ExportPDFButton').then((m) => m.ExportPDFButton),
@@ -17,6 +18,7 @@ const ExportPDFButton = dynamic(
 );
 
 export default function AuditPage() {
+  const t = useT();
   const { rfps } = useProcurement();
   const { transactions } = usePayment();
   const { role } = useUI();
@@ -36,7 +38,7 @@ export default function AuditPage() {
         <div className="flex items-center gap-3">
           <Shield size={20} className="text-[#1434CB]" />
           <div>
-            <h1 className="text-xl font-semibold text-slate-900">Audit Trail</h1>
+            <h1 className="text-xl font-semibold text-slate-900">{t('page.audit.title')}</h1>
             <p className="text-sm text-slate-500">Compliance log of all procurement events</p>
           </div>
         </div>

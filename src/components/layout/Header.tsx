@@ -6,6 +6,8 @@ import { Nav, NavAppName, VisaLogo, Typography } from '@visa/nova-react';
 import { VisaSettingsLow, VisaChevronRightTiny } from '@visa/nova-icons-react';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { useAuth } from '@/context/AuthContext';
+import { useLanguage } from '@/context/LanguageContext';
+import { LanguageSwitcher } from './LanguageSwitcher';
 
 /* Circular frosted-glass icon button — bell & gear */
 function NavIconBtn({ children }: { children: React.ReactNode }) {
@@ -26,6 +28,7 @@ function NavIconBtn({ children }: { children: React.ReactNode }) {
 
 export function Header() {
   const { user, signOut } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
 
   const handleSignOut = async () => {
@@ -58,11 +61,14 @@ export function Header() {
       <VisaLogo />
       <div style={{ width: 1, height: 22, background: 'rgba(255,255,255,0.3)', margin: '0 20px', flexShrink: 0 }} />
       <NavAppName style={{ fontWeight: 700, fontSize: '0.875rem', letterSpacing: '0.01em' }}>
-        Government Procurement Portal
+        {t('app.name')}
       </NavAppName>
 
       {/* Right — icon buttons + user chip */}
       <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
+
+        {/* Language */}
+        <LanguageSwitcher />
 
         {/* Notification bell */}
         <NavIconBtn>
@@ -72,7 +78,7 @@ export function Header() {
         {/* Settings */}
         <NavIconBtn>
           <button
-            aria-label="Settings"
+            aria-label={t('app.settings')}
             style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', padding: 0 }}
           >
             <VisaSettingsLow style={{ width: 20, height: 20 }} />
@@ -83,7 +89,7 @@ export function Header() {
         {user && (
           <button
             onClick={handleSignOut}
-            aria-label="Sign out"
+            aria-label={t('app.signOut')}
             style={{
               display: 'flex', alignItems: 'center', gap: 8,
               background: 'rgba(255,255,255,0.13)',

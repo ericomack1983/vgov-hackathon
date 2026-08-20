@@ -105,7 +105,7 @@ export default function RfpDetailPage({ params }: { params: Promise<{ id: string
     if (!rfp.evaluationResults && rfp.bids.length >= 2) {
       actions.push({
         id: 'evaluate',
-        label: 'Run AI Evaluation',
+        label: 'action.runAiEvaluation',
         variant: 'ai' as const,
         onClick: handleEvaluate,
         disabled: isEvaluating,
@@ -114,7 +114,7 @@ export default function RfpDetailPage({ params }: { params: Promise<{ id: string
     if (rfp.status === 'Evaluating') {
       actions.push({
         id: 'award',
-        label: 'Award Supplier',
+        label: 'action.awardSupplier',
         variant: 'award' as const,
         onClick: () => {
           updateRFP(rfp.id, { status: 'Awarded', selectedWinnerId: effectiveWinnerId });
@@ -126,7 +126,7 @@ export default function RfpDetailPage({ params }: { params: Promise<{ id: string
     if (rfp.status === 'Awarded') {
       actions.push({
         id: 'payment',
-        label: 'Proceed to Payment',
+        label: 'action.proceedToPayment',
         variant: 'payment' as const,
         onClick: () => setShowInvoiceOverlay(true),
       });

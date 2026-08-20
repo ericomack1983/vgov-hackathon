@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { Plus, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { RFPStatus } from '@/lib/mock-data/types';
+import { useT } from '@/context/LanguageContext';
 
 const statusVariant: Record<RFPStatus, 'default' | 'success' | 'warning' | 'error'> = {
   Draft: 'default',
@@ -20,6 +21,7 @@ const statusVariant: Record<RFPStatus, 'default' | 'success' | 'warning' | 'erro
 };
 
 export default function RfpPage() {
+  const t = useT();
   const { rfps } = useProcurement();
   const { role } = useUI();
   const [showModal, setShowModal] = useState(false);
@@ -32,7 +34,7 @@ export default function RfpPage() {
     >
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">Procurement Requests</h1>
+          <h1 className="text-xl font-semibold text-slate-900">{t('page.rfp.title')}</h1>
           <p className="mt-1 text-sm text-slate-500">Create and track RFPs across all stages.</p>
         </div>
         {role === 'gov' && (
