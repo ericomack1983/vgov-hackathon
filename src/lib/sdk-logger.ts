@@ -8,7 +8,7 @@
 
 import { v4 as uuid } from 'uuid';
 
-export type SDKService = 'VCN' | 'VPA' | 'B2B-BIP' | 'B2B-SIP' | 'VPC' | 'IPC';
+export type SDKService = 'VCN' | 'VPA' | 'B2B-BIP' | 'B2B-SIP' | 'VPC' | 'IPC' | 'CYBS';
 
 export type SDKLogStatus = 'success' | 'error';
 

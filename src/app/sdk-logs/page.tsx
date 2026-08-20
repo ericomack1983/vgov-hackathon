@@ -14,9 +14,10 @@ const SERVICE_STYLE: Record<SDKService, { color: string; bg: string; border: str
   'B2B-SIP': { color: '#22d3ee', bg: 'rgba(34,211,238,0.12)',  border: 'rgba(34,211,238,0.3)'  },
   'VPC':     { color: '#fb923c', bg: 'rgba(251,146,60,0.12)',  border: 'rgba(251,146,60,0.3)'  },
   'IPC':     { color: '#f472b6', bg: 'rgba(244,114,182,0.12)', border: 'rgba(244,114,182,0.3)' },
+  'CYBS':    { color: '#60a5fa', bg: 'rgba(96,165,250,0.12)',  border: 'rgba(96,165,250,0.3)'  },
 };
 
-const ALL_SERVICES: SDKService[] = ['VCN', 'VPA', 'B2B-BIP', 'B2B-SIP', 'VPC', 'IPC'];
+const ALL_SERVICES: SDKService[] = ['VCN', 'VPA', 'B2B-BIP', 'B2B-SIP', 'VPC', 'IPC', 'CYBS'];
 
 // ── Single log row ────────────────────────────────────────────────────────────
 function LogRow({ entry }: { entry: SDKLogEntry }) {

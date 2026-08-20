@@ -2,7 +2,10 @@
 
 import { use, useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle, Loader2, Wifi, ChevronDown, ShieldCheck, ToggleLeft, ToggleRight, CreditCard, ShieldOff, Shield } from 'lucide-react';
+import { CheckCircle, Loader2, Wifi, ChevronDown, ShieldCheck, ToggleLeft, ToggleRight, CreditCard, ShieldOff, Shield, FileText } from 'lucide-react';
+import { UNSPSC_FOR_MCC } from '@/lib/cybs/enhancedFromCard';
+import { UNIT_OF_MEASURE } from '@/lib/cybs/enhancedData';
+import { InvoiceUploadPanel, type ExtractedInvoiceFields } from '@/components/cards/InvoiceUploadPanel';
 import { useProcurement } from '@/context/ProcurementContext';
 import { useMissions } from '@/context/MissionsContext';
 import { features } from '@/lib/features';
@@ -84,6 +87,10 @@ interface IssuedCard {
   mccCode?: string;
   mccLabel?: string;
   expiryDate?: string;
+  invoiceNumber?: string;
+  taxRate?: string;
+  productSku?: string;
+  commodityCode?: string;
   allowOnline: boolean;
   allowIntl: boolean;
   allowRecurring: boolean;
@@ -1026,6 +1033,19 @@ export default function CardsPage({ searchParams }: {
   const [purpose, setPurpose]               = useState('');
   const [spendLimit, setSpendLimit]         = useState('');
   const [cardAcceptorId, setCardAcceptorId] = useState('');
+  // Reconciliation data — travels with every payment as Level II / Level III.
+  const [invoiceNumber, setInvoiceNumber]   = useState('');
+  const [invoiceDate, setInvoiceDate]       = useState('');
+  const [taxRate, setTaxRate]               = useState('');
+  const [buyerTaxId, setBuyerTaxId]         = useState('');
+  const [vatRegistration, setVatRegistration] = useState('');
+  const [productSku, setProductSku]         = useState('');
+  const [commodityCode, setCommodityCode]   = useState('');
+  const [unitOfMeasure, setUnitOfMeasure]   = useState('EA');
+  const [freightAmount, setFreightAmount]   = useState('');
+  const [dutyAmount, setDutyAmount]         = useState('');
+  const [shipToPostalCode, setShipToPostalCode] = useState('');
+  const [shipToCountry, setShipToCountry]   = useState('US');
   const [mccCode, setMccCode]               = useState('');
   const [expiryDate, setExpiryDate]         = useState('');
   const [allowOnline, setAllowOnline]       = useState(true);
@@ -1138,6 +1158,62 @@ export default function CardsPage({ searchParams }: {
     if (usageType === 'single-use') setAllowRecurring(false);
   }, [usageType]);
 
+  /**
+   * Apply what the invoice contained. Each entry sets one control and names it
+   * for the confirmation chips; a null from the extractor means the invoice did
+   * not state that field, so the existing value is left alone.
+   */
+  function applyExtractedInvoice(f: ExtractedInvoiceFields): string[] {
+    const applied: string[] = [];
+    const set = (label: string, value: string | null | undefined, setter: (v: string) => void) => {
+      const trimmed = value?.trim();
+      if (!trimmed) return;
+      setter(trimmed);
+      applied.push(label);
+    };
+
+    set('Invoice Number', f.invoiceNumber, setInvoiceNumber);
+    set('Invoice Date', f.invoiceDate, setInvoiceDate);
+    set('Purpose', f.purpose, setPurpose);
+    set('Spend Limit', f.totalAmount, setSpendLimit);
+    set('Tax Rate', f.taxRate, setTaxRate);
+    set('Buyer Tax ID', f.buyerTaxId, setBuyerTaxId);
+    set('VAT Registration', f.vatRegistration, setVatRegistration);
+    set('Product SKU', f.productSku, setProductSku);
+    set('Commodity Code', f.commodityCode, setCommodityCode);
+    set('Freight', f.freightAmount, setFreightAmount);
+    set('Duty', f.dutyAmount, setDutyAmount);
+    set('Ship-To Postal', f.shipToPostalCode, setShipToPostalCode);
+    set('Ship-To Country', f.shipToCountry, setShipToCountry);
+    set('Acceptor ID', f.cardAcceptorId, setCardAcceptorId);
+
+    // Unit of measure and MCC only apply if they match an option we offer —
+    // an unrecognised code would silently select nothing.
+    const uom = f.unitOfMeasure?.trim().toUpperCase();
+    if (uom && UNIT_OF_MEASURE.some((u) => u.code === uom)) {
+      setUnitOfMeasure(uom);
+      applied.push('Unit of Measure');
+    }
+    const mcc = f.mccCode?.trim();
+    if (mcc && MCC_CATEGORIES.some((m) => m.code === mcc)) {
+      setMccCode(mcc);
+      applied.push('MCC Category');
+    }
+
+    // Match the supplier by name so the card is assigned, not just described.
+    const name = f.supplierName?.trim().toLowerCase();
+    if (name) {
+      const match = suppliers.find((sp) => sp.name.toLowerCase() === name)
+        ?? suppliers.find((sp) => sp.name.toLowerCase().includes(name) || name.includes(sp.name.toLowerCase()));
+      if (match) {
+        setSupplierId(match.id);
+        applied.push('Supplier');
+      }
+    }
+
+    return applied;
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     /* Una tarjeta de misión va al viajero, no a un proveedor. */
@@ -1163,6 +1239,28 @@ export default function CardsPage({ searchParams }: {
         holderName: holderName.trim(),
         status: 'active',
         usageType,
+        // Carried onto the card so a payment made with it can transmit Level II
+        // and Level III data built from the controls set right here.
+        purpose: purpose.trim() || undefined,
+        mccCode: mcc?.code,
+        mccLabel: mcc?.label,
+        cardAcceptorId: cardAcceptorId.trim() || undefined,
+        spendLimit: spendLimit || undefined,
+        validUntil: expiryDate || undefined,
+        missionId: linkedMission?.id,
+        missionName: linkedMission?.purpose,
+        invoiceNumber: invoiceNumber.trim() || undefined,
+        invoiceDate: invoiceDate || undefined,
+        taxRate: taxRate || undefined,
+        buyerTaxId: buyerTaxId.trim() || undefined,
+        vatRegistration: vatRegistration.trim() || undefined,
+        productSku: productSku.trim() || undefined,
+        commodityCode: commodityCode.trim() || undefined,
+        unitOfMeasure: unitOfMeasure || undefined,
+        freightAmount: freightAmount || undefined,
+        dutyAmount: dutyAmount || undefined,
+        shipToPostalCode: shipToPostalCode.trim() || undefined,
+        shipToCountry: shipToCountry.trim() || undefined,
       });
     }
 
@@ -1179,6 +1277,10 @@ export default function CardsPage({ searchParams }: {
       mccCode: mcc?.code,
       mccLabel: mcc?.label,
       expiryDate: expiryDate || undefined,
+      invoiceNumber: invoiceNumber.trim() || undefined,
+      taxRate: taxRate || undefined,
+      productSku: productSku.trim() || undefined,
+      commodityCode: commodityCode.trim() || (mcc?.code ? UNSPSC_FOR_MCC[mcc.code] : undefined),
       allowOnline,
       allowIntl,
       allowRecurring,
@@ -1425,6 +1527,10 @@ export default function CardsPage({ searchParams }: {
                       ...(issuedCard.expiryDate   ? [{ label: 'Valid Until',      value: issuedCard.expiryDate }] : []),
                       ...(issuedCard.mccLabel     ? [{ label: 'MCC Category',     value: `${issuedCard.mccCode} · ${issuedCard.mccLabel}` }] : []),
                       ...(issuedCard.cardAcceptorId ? [{ label: 'Acceptor ID',    value: issuedCard.cardAcceptorId }] : []),
+                      ...(issuedCard.invoiceNumber  ? [{ label: 'Invoice',         value: issuedCard.invoiceNumber }] : []),
+                      ...(issuedCard.taxRate        ? [{ label: 'Tax Rate',        value: `${issuedCard.taxRate}%` }] : []),
+                      ...(issuedCard.productSku     ? [{ label: 'Product SKU',     value: issuedCard.productSku }] : []),
+                      ...(issuedCard.commodityCode  ? [{ label: 'Commodity',       value: issuedCard.commodityCode }] : []),
                     ].map((row) => (
                       <div key={row.label} className="flex justify-between items-center text-sm">
                         <span className="text-slate-400">{row.label}</span>
@@ -1511,6 +1617,9 @@ export default function CardsPage({ searchParams }: {
                 usageType={usageType}
               />
             )}
+
+            {/* Read an invoice instead of typing the form */}
+            {!issuedCard && <InvoiceUploadPanel onExtract={applyExtractedInvoice} />}
           </div>
 
           {/* Right — Form */}
@@ -1780,6 +1889,131 @@ export default function CardsPage({ searchParams }: {
                       <span className="text-[10px] text-slate-400">{sub}</span>
                     </button>
                   ))}
+                </div>
+              </div>
+
+              {/* ── Section: Reconciliation Data (Level II / III) ── */}
+              <div className="border-t border-slate-100 pt-4">
+                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 mb-1">
+                  <FileText size={12} /> Reconciliation Data
+                  <span className="ml-auto font-mono text-[9px] text-[#1434CB] normal-case tracking-normal">Level II / III</span>
+                </p>
+                <p className="text-[10px] text-slate-400 mb-3 leading-snug">
+                  Sent with every payment on this card, so the statement line matches the invoice without re-keying.
+                </p>
+
+                {/* Invoice number + date */}
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                      Invoice Number <span className="text-slate-400 font-normal">opt.</span>
+                    </label>
+                    <input type="text" className={inputClass} placeholder="e.g. INV-2026-0412"
+                      value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} maxLength={30} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                      Invoice Date <span className="text-slate-400 font-normal">opt.</span>
+                    </label>
+                    <input type="date" className={inputClass}
+                      value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)} />
+                  </div>
+                </div>
+
+                {/* Tax rate + buyer tax id */}
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                      Tax Rate (%) <span className="text-slate-400 font-normal">0 = exempt</span>
+                    </label>
+                    <input type="number" min="0" max="100" step="0.5" className={inputClass} placeholder="e.g. 7"
+                      value={taxRate} onChange={(e) => setTaxRate(e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                      Buyer Tax ID <span className="text-slate-400 font-normal">opt.</span>
+                    </label>
+                    <input type="text" className={inputClass} placeholder="e.g. 53-0196966"
+                      value={buyerTaxId} onChange={(e) => setBuyerTaxId(e.target.value)} maxLength={20} />
+                  </div>
+                </div>
+
+                {/* VAT registration + product SKU */}
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                      VAT Registration <span className="text-slate-400 font-normal">opt.</span>
+                    </label>
+                    <input type="text" className={inputClass} placeholder="e.g. GT-1234567-8"
+                      value={vatRegistration} onChange={(e) => setVatRegistration(e.target.value)} maxLength={21} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                      Product SKU <span className="text-slate-400 font-normal">opt.</span>
+                    </label>
+                    <input type="text" className={inputClass} placeholder="e.g. SKU-CLD-0042"
+                      value={productSku} onChange={(e) => setProductSku(e.target.value)} maxLength={30} />
+                  </div>
+                </div>
+
+                {/* Commodity code + unit of measure */}
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                      Commodity Code <span className="text-slate-400 font-normal">UNSPSC</span>
+                    </label>
+                    <input type="text" className={inputClass}
+                      placeholder={mccCode ? `auto: ${UNSPSC_FOR_MCC[mccCode] ?? '—'}` : 'e.g. 81110000'}
+                      value={commodityCode} onChange={(e) => setCommodityCode(e.target.value)} maxLength={15} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1.5">Unit of Measure</label>
+                    <div className="relative">
+                      <select className={inputClass + ' appearance-none pr-8'}
+                        value={unitOfMeasure} onChange={(e) => setUnitOfMeasure(e.target.value)}>
+                        {UNIT_OF_MEASURE.map((u) => (
+                          <option key={u.code} value={u.code}>{u.code} — {u.label}</option>
+                        ))}
+                      </select>
+                      <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Freight + duty */}
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                      Freight ($) <span className="text-slate-400 font-normal">opt.</span>
+                    </label>
+                    <input type="number" min="0" step="10" className={inputClass} placeholder="0.00"
+                      value={freightAmount} onChange={(e) => setFreightAmount(e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                      Duty ($) <span className="text-slate-400 font-normal">opt.</span>
+                    </label>
+                    <input type="number" min="0" step="10" className={inputClass} placeholder="0.00"
+                      value={dutyAmount} onChange={(e) => setDutyAmount(e.target.value)} />
+                  </div>
+                </div>
+
+                {/* Destination */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                      Ship-To Postal <span className="text-slate-400 font-normal">opt.</span>
+                    </label>
+                    <input type="text" className={inputClass} placeholder="e.g. 20405"
+                      value={shipToPostalCode} onChange={(e) => setShipToPostalCode(e.target.value)} maxLength={10} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                      Ship-To Country <span className="text-slate-400 font-normal">ISO-2</span>
+                    </label>
+                    <input type="text" className={inputClass} placeholder="US"
+                      value={shipToCountry} onChange={(e) => setShipToCountry(e.target.value.toUpperCase())} maxLength={2} />
+                  </div>
                 </div>
               </div>
 

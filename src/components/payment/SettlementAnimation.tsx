@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { SettlementState, getStepLabel } from '@/lib/settlement-engine';
 import { Building2, ShieldCheck, MonitorSmartphone, CheckCircle, Lock, CreditCard } from 'lucide-react';
 import createGlobe from 'cobe';
+import { CyberSourceBadge } from '@/components/brand/CyberSourceBadge';
 
 // ── Coordinates ────────────────────────────────────────────────────────────────
 const SAO_PAULO  = { lat: -23.55, lng: -46.63 };
@@ -194,6 +195,11 @@ function GlobePaymentArc({ progress }: { progress: number }) {
         <span style={{ color: showArc1 ? '#F7B600' : undefined }}>Visa Network</span>
         <span>→</span>
         <span style={{ color: settled ? '#34d399' : showArc2 ? '#60a5fa' : undefined }}>BR</span>
+      </div>
+
+      {/* The rail actually carrying this settlement */}
+      <div className="mt-2.5">
+        <CyberSourceBadge tone="dark" label="CyberSource · Payments API" />
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
+import { Fragment, useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePayment } from '@/context/PaymentContext';
 import {
@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { vpcService, type VPCReconciliationResult } from '@/lib/visa-sdk';
+import type { Transaction } from '@/lib/mock-data/types';
 import { useSidebarActions } from '@/context/SidebarActionsContext';
 import { InvoiceAnalysisPanel } from '@/components/ai/InvoiceAnalysisPanel';
 
@@ -19,6 +20,30 @@ type ReconcileStatus = 'idle' | 'loading' | 'matched' | 'partial_match' | 'unmat
 interface ReconcileState {
   status: ReconcileStatus;
   result?: VPCReconciliationResult;
+  /** What CyberSource holds for this authorization, fetched at reconcile time. */
+  cybs?: CybsRecord;
+  cybsError?: string;
+}
+
+/** The processor's own record, read back from the Transaction Details API. */
+interface CybsRecord {
+  transactionId: string;
+  reference?: string;
+  amount?: string;
+  currency?: string;
+  taxAmount?: string;
+  approvalCode?: string;
+  applications?: string[];
+  shipTo?: { postalCode?: string; country?: string; locality?: string; administrativeArea?: string };
+  lineItems?: {
+    productName?: string;
+    productSku?: string;
+    quantity?: number;
+    unitPrice?: string;
+    taxAmount?: string;
+    commodityCode?: string;
+    unitOfMeasure?: string;
+  }[];
 }
 
 // ── VPC Match Cell ─────────────────────────────────────────────────────────────
@@ -102,6 +127,143 @@ function VPCMatchCell({
   );
 }
 
+// ── Level II / III detail ─────────────────────────────────────────────────────
+
+/**
+ * What the card carried and what the processor holds, side by side.
+ *
+ * Reconciliation without this is amount-matching: two numbers agreeing tells you
+ * very little. The Level II/III set is what lets a row be checked against the
+ * invoice it belongs to — PO, cost centre, tax treatment, and the line item.
+ */
+function EnhancedDetail({ tx, cybs, cybsError }: {
+  tx: Transaction;
+  cybs?: CybsRecord;
+  cybsError?: string;
+}) {
+  const e = tx.enhanced;
+  if (!e && !cybs) return null;
+
+  const ledgerAmount = tx.amount.toFixed(2);
+  const cybsAmount = cybs?.amount ? Number(cybs.amount).toFixed(2) : undefined;
+  const amountAgrees = cybsAmount !== undefined && cybsAmount === ledgerAmount;
+  const line = cybs?.lineItems?.[0];
+
+  const levelTwo = [
+    { label: 'Invoice',      value: e?.invoiceNumber },
+    { label: 'PO Number',    value: e?.purchaseOrderNumber },
+    { label: 'Tax',          value: e ? (e.taxable ? `Taxable · $${e.taxAmount ?? '0.00'}` : 'Exempt') : undefined },
+    { label: 'Cost Center',  value: e?.costCenter },
+    { label: 'MCC',          value: e?.merchantCategoryCode },
+    { label: 'Acceptor ID',  value: e?.cardAcceptorReferenceNumber },
+    { label: 'Statement',    value: e?.statementNote },
+  ].filter((r) => r.value);
+
+  const levelThree = [
+    { label: 'Line Items', value: e?.lineItemCount ? String(e.lineItemCount) : undefined },
+    { label: 'Commodity',  value: e?.commodityCodes?.join(', ') || line?.commodityCode },
+    { label: 'SKU',        value: line?.productSku },
+    { label: 'Ship To',    value: e?.shipToPostalCode ?? cybs?.shipTo?.postalCode },
+    { label: 'Ship From',  value: e?.shipFromPostalCode },
+  ].filter((r) => r.value);
+
+  return (
+    <div className="bg-slate-50/70 border-t border-slate-100 px-5 py-4">
+      <div className="grid gap-5 md:grid-cols-3">
+
+        {/* Level II */}
+        <div>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Level II · Purchase</p>
+          <div className="space-y-1">
+            {levelTwo.length === 0 && <p className="text-[11px] text-slate-400">No Level II data on this payment.</p>}
+            {levelTwo.map((r) => (
+              <div key={r.label} className="flex justify-between gap-3 text-[11px]">
+                <span className="text-slate-400 shrink-0">{r.label}</span>
+                <span className="font-mono text-slate-600 text-right break-all">{r.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Level III */}
+        <div>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Level III · Line Detail</p>
+          <div className="space-y-1">
+            {levelThree.length === 0 && <p className="text-[11px] text-slate-400">No Level III data on this payment.</p>}
+            {levelThree.map((r) => (
+              <div key={r.label} className="flex justify-between gap-3 text-[11px]">
+                <span className="text-slate-400 shrink-0">{r.label}</span>
+                <span className="font-mono text-slate-600 text-right break-all">{r.value}</span>
+              </div>
+            ))}
+            {line?.productName && (
+              <div className="pt-1.5 mt-1 border-t border-dashed border-slate-200 flex justify-between gap-3 text-[11px]">
+                <span className="text-slate-500 truncate">{line.productName}</span>
+                <span className="font-mono font-semibold text-slate-700 shrink-0">
+                  ${Number(line.unitPrice ?? 0).toLocaleString()}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Processor verification */}
+        <div>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Verified at CyberSource</p>
+          {cybsError && <p className="text-[11px] text-amber-600">{cybsError}</p>}
+          {cybs && (
+            <div className="space-y-1">
+              <div className="flex justify-between gap-3 text-[11px]">
+                <span className="text-slate-400 shrink-0">Ledger amount</span>
+                <span className="font-mono text-slate-600">${tx.amount.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between gap-3 text-[11px]">
+                <span className="text-slate-400 shrink-0">Processor amount</span>
+                <span className={`font-mono font-semibold ${amountAgrees ? 'text-emerald-600' : 'text-red-600'}`}>
+                  ${Number(cybs.amount ?? 0).toLocaleString()}
+                </span>
+              </div>
+              <div className="flex justify-between gap-3 text-[11px]">
+                <span className="text-slate-400 shrink-0">Approval</span>
+                <span className="font-mono text-slate-600">{cybs.approvalCode ?? '—'}</span>
+              </div>
+              <div className="flex justify-between gap-3 text-[11px]">
+                <span className="text-slate-400 shrink-0">Applications</span>
+                <span className="font-mono text-slate-600 text-right break-all">{cybs.applications?.join(' · ') ?? '—'}</span>
+              </div>
+              <div className={`mt-2 inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-bold ${
+                amountAgrees ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'
+              }`}>
+                {amountAgrees ? <CheckCircle2 size={10} /> : <AlertCircle size={10} />}
+                {amountAgrees ? 'Three-way match: invoice · ledger · processor' : 'Amount disagrees with processor'}
+              </div>
+            </div>
+          )}
+          {!cybs && !cybsError && (
+            <p className="text-[11px] text-slate-400">No card authorization on this transaction.</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Pull the settled record from CyberSource. Never throws: a lookup failure
+ * downgrades the row to ledger-only reconciliation rather than failing the match.
+ */
+async function fetchCybsRecord(authorizationId?: string): Promise<{ cybs?: CybsRecord; cybsError?: string }> {
+  if (!authorizationId) return {};
+  try {
+    const res = await fetch(`/api/payments/card/${authorizationId}`);
+    const json = await res.json();
+    if (!json.ok) return { cybsError: json.reason ?? 'Lookup failed' };
+    return { cybs: json as CybsRecord };
+  } catch {
+    return { cybsError: 'Could not reach CyberSource' };
+  }
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function ReconciliationPage() {
   const { transactions } = usePayment();
@@ -143,16 +305,21 @@ export default function ReconciliationPage() {
       // In production this would come from the VCN issuance step.
       const vpcAccountId = `VPC-ACCT-${txId.slice(-8).toUpperCase()}`;
 
-      const result = await vpcService.Reporting.reconcilePayment({
-        accountId: vpcAccountId,
-        invoiceAmount: tx.amount,
-        supplierName: tx.supplierName,
-        invoiceNumber: tx.orderId,
-      });
+      // VPC match and the CyberSource lookup are independent — run them together
+      // rather than making the row wait for one before starting the other.
+      const [result, cybsLookup] = await Promise.all([
+        vpcService.Reporting.reconcilePayment({
+          accountId: vpcAccountId,
+          invoiceAmount: tx.amount,
+          supplierName: tx.supplierName,
+          invoiceNumber: tx.orderId,
+        }),
+        fetchCybsRecord(tx.authorizationId),
+      ]);
 
       setReconcileStates(prev => ({
         ...prev,
-        [txId]: { status: result.matchStatus, result },
+        [txId]: { status: result.matchStatus, result, ...cybsLookup },
       }));
     } catch {
       setReconcileStates(prev => ({
@@ -340,6 +507,7 @@ export default function ReconciliationPage() {
                   <th className="px-5 py-3 text-xs font-semibold text-slate-500 w-[90px]">Method</th>
                   <th className="px-5 py-3 text-xs font-semibold text-slate-500 w-[130px]">Amount</th>
                   <th className="px-5 py-3 text-xs font-semibold text-slate-500">Supplier</th>
+                  <th className="px-5 py-3 text-xs font-semibold text-slate-500 w-[170px]">Auth ID</th>
                   <th className="px-5 py-3 text-xs font-semibold text-slate-500 w-[220px]">VPC Match</th>
                   <th className="px-5 py-3 text-xs font-semibold text-slate-500 text-right w-[120px]">Status</th>
                 </tr>
@@ -349,10 +517,10 @@ export default function ReconciliationPage() {
                   const rs = getState(tx.id);
                   const isReconciled = rs.status === 'matched' || rs.status === 'partial_match';
                   return (
+                    <Fragment key={tx.id}>
                     <motion.tr
-                      key={tx.id}
                       layout
-                      className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors"
+                      className={`hover:bg-slate-50/50 transition-colors ${isReconciled ? '' : 'border-b border-slate-50'}`}
                     >
                       <td className="px-5 py-4 text-[12px] font-mono text-slate-500">
                         {tx.orderId}
@@ -365,6 +533,23 @@ export default function ReconciliationPage() {
                       </td>
                       <td className="px-5 py-4 text-sm font-medium text-slate-600">
                         {tx.supplierName}
+                      </td>
+                      <td className="px-5 py-4">
+                        {tx.authorizationId ? (
+                          <div className="leading-tight">
+                            <span
+                              title={tx.authorizationId}
+                              className="block text-[11px] font-mono text-slate-600 truncate max-w-[150px]"
+                            >
+                              {tx.authorizationId}
+                            </span>
+                            <span className="text-[10px] text-slate-400">
+                              CyberSource{tx.approvalCode ? ` · ${tx.approvalCode}` : ''}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-[11px] text-slate-300 font-mono">—</span>
+                        )}
                       </td>
                       <td className="px-5 py-4">
                         <AnimatePresence mode="wait">
@@ -399,6 +584,23 @@ export default function ReconciliationPage() {
                         </AnimatePresence>
                       </td>
                     </motion.tr>
+
+                    {/* Level II / III — what the card carried, checked against the processor */}
+                    {isReconciled && (
+                      <tr className="border-b border-slate-100">
+                        <td colSpan={7} className="p-0">
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            transition={{ duration: 0.25, ease: 'easeOut' }}
+                            style={{ overflow: 'hidden' }}
+                          >
+                            <EnhancedDetail tx={tx} cybs={rs.cybs} cybsError={rs.cybsError} />
+                          </motion.div>
+                        </td>
+                      </tr>
+                    )}
+                    </Fragment>
                   );
                 })}
               </tbody>

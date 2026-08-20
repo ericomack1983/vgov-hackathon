@@ -15,6 +15,34 @@ export interface PaymentCard {
   holderName: string;
   status: 'active' | 'inactive';
   usageType?: 'single-use' | 'multi-use';
+
+  /**
+   * Issuance controls captured on /cards. These are what the card was created
+   * to buy, and they become the Level II / Level III data on every payment made
+   * with it — see src/lib/cybs/enhancedFromCard.ts for the field-by-field map.
+   */
+  purpose?: string;          // → invoiceDetails.transactionAdviceAddendum
+  mccCode?: string;          // → merchantInformation.categoryCode
+  mccLabel?: string;         // → line item commodity classification
+  cardAcceptorId?: string;   // → merchantInformation.cardAcceptorReferenceNumber
+  spendLimit?: string;       // control only — bounds what may be charged
+  validUntil?: string;       // control only — YYYY-MM-DD
+  missionId?: string;        // → invoiceDetails.costCenter
+  missionName?: string;      // → invoiceDetails.purchaseContactName context
+
+  /** Reconciliation data — the fields an AP clerk matches the statement against. */
+  invoiceNumber?: string;    // → invoiceDetails.invoiceNumber + per line item
+  invoiceDate?: string;      // → invoiceDetails.invoiceDate (YYYY-MM-DD)
+  taxRate?: string;          // → lineItems[].taxRate; '' or '0' means exempt
+  buyerTaxId?: string;       // → merchantInformation.taxId
+  vatRegistration?: string;  // → merchantInformation.vatRegistrationNumber
+  productSku?: string;       // → lineItems[].productSku
+  commodityCode?: string;    // → lineItems[].commodityCode (UNSPSC, overrides the MCC map)
+  unitOfMeasure?: string;    // → lineItems[].unitOfMeasure (UN/CEFACT)
+  freightAmount?: string;    // → amountDetails.freightAmount
+  dutyAmount?: string;       // → amountDetails.dutyAmount
+  shipToPostalCode?: string; // → shipTo.postalCode
+  shipToCountry?: string;    // → shipTo.country
 }
 
 export interface Supplier {
@@ -111,6 +139,19 @@ export interface Transaction {
   orderId: string;
   createdAt: string;
   settledAt?: string;
+
+  /**
+   * CyberSource handles for card payments. The authorization id is the one to
+   * quote when looking a transaction up — reconciliation reads the settled
+   * record back from it.
+   */
+  authorizationId?: string;
+  captureId?: string;
+  approvalCode?: string;
+  /** Whether Decision Manager flagged the authorization. */
+  review?: boolean;
+  /** Level II / III transmitted with this payment. */
+  enhanced?: import('@/lib/cybs/enhancedData').EnhancedDataSummary;
 }
 
 export interface Notification {

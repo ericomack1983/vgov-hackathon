@@ -16,6 +16,7 @@
     "@visa/nova-react": "^3.1.0",
     "clsx": "^2.1.1",
     "cobe": "^2.0.1",
+    "cybersource-rest-client": "^0.0.81",
     "date-fns": "^3.6.0",
     "framer-motion": "^11.18.2",
     "html2canvas": "^1.4.1",

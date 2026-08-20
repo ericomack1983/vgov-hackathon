@@ -75,11 +75,17 @@ const ACTION_ICON_MAP: Record<string, NovaIcon> = {
   upload:  VisaFileUploadLow,
 };
 
-const ACTION_STYLES: Record<string, { gradient: string; border: string }> = {
-  ai:      { gradient: 'linear-gradient(135deg,#4f46e5,#7c3aed)', border: 'rgba(99,102,241,0.5)'  },
-  award:   { gradient: 'linear-gradient(135deg,#059669,#10b981)', border: 'rgba(16,185,129,0.5)'  },
-  payment: { gradient: 'linear-gradient(135deg,#1434CB,#6366f1)', border: 'rgba(99,102,241,0.5)'  },
-  upload:  { gradient: 'linear-gradient(135deg,#0ea5e9,#6366f1)', border: 'rgba(14,165,233,0.5)'  },
+/**
+ * These buttons sit on the blue sidebar, so a translucent blue fill left them
+ * barely legible against it. The surface is white and the ink is the variant's
+ * brand colour — the inversion is what makes them readable, and the tint pulse
+ * stays subtle enough not to eat the contrast.
+ */
+const ACTION_STYLES: Record<string, { ink: string; tint: string; border: string }> = {
+  ai:      { ink: '#4f46e5', tint: 'linear-gradient(135deg,#4f46e5,#7c3aed)', border: 'rgba(99,102,241,0.35)' },
+  award:   { ink: '#059669', tint: 'linear-gradient(135deg,#059669,#10b981)', border: 'rgba(16,185,129,0.35)' },
+  payment: { ink: '#1434CB', tint: 'linear-gradient(135deg,#1434CB,#6366f1)', border: 'rgba(20,52,203,0.35)'  },
+  upload:  { ink: '#0284c7', tint: 'linear-gradient(135deg,#0ea5e9,#6366f1)', border: 'rgba(14,165,233,0.35)' },
 };
 
 const RING_DELAYS = [0, 0.7, 1.4];
@@ -121,7 +127,7 @@ function ProcurementActions({ actions, collapsed }: { actions: SidebarAction[]; 
                       key={ri}
                       style={{
                         position: 'absolute', inset: 0, borderRadius: 12,
-                        border: `1.5px solid ${cfg.border.replace('0.5', '0.75')}`,
+                        border: '1.5px solid rgba(255,255,255,0.55)',
                         pointerEvents: 'none',
                       }}
                       animate={{ scale: [1, 1.55], opacity: [0.65, 0] }}
@@ -135,18 +141,21 @@ function ProcurementActions({ actions, collapsed }: { actions: SidebarAction[]; 
                     style={{
                       position: 'relative', width: '100%', borderRadius: 12,
                       overflow: 'hidden', cursor: 'pointer',
+                      background: '#ffffff',
                       border: `1px solid ${cfg.border}`,
-                      ...ICON_WHITE,
-                    }}
+                      boxShadow: '0 2px 10px rgba(3,10,40,0.22)',
+                      '--v-icon-primary': cfg.ink,
+                      '--v-icon-secondary': cfg.ink,
+                    } as React.CSSProperties}
                   >
                     <motion.div
-                      style={{ position: 'absolute', inset: 0, background: cfg.gradient }}
-                      animate={{ opacity: [0.12, 0.28, 0.12] }}
+                      style={{ position: 'absolute', inset: 0, background: cfg.tint }}
+                      animate={{ opacity: [0.05, 0.13, 0.05] }}
                       transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut', delay: i * 0.4 }}
                     />
-                    <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', ...ICON_WHITE }}>
+                    <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px' }}>
                       <Icon style={{ width: 14, height: 14, flexShrink: 0 }} aria-hidden />
-                      <span style={{ fontSize: 11, fontWeight: 600, color: 'white', flex: 1, lineHeight: 1.3 }}>{action.label}</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: cfg.ink, flex: 1, lineHeight: 1.3, letterSpacing: '0.01em' }}>{action.label}</span>
                       <VisaArrowForwardTiny style={{ width: 10, height: 10, flexShrink: 0 }} aria-hidden />
                     </div>
                   </motion.div>

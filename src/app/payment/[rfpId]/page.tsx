@@ -9,11 +9,16 @@ import { SettlementAnimation } from '@/components/payment/SettlementAnimation';
 import {
   ArrowLeft, ArrowRight, CheckCircle, CreditCard,
   DollarSign, Coins, Bell, CheckCircle2, XCircle, AlertCircle,
-  Clock, Mail,
+  Clock, Mail, FileText, Receipt,
 } from 'lucide-react';
 import Link from 'next/link';
 import { v4 as uuidv4 } from 'uuid';
+import toast from 'react-hot-toast';
 import { authenticateWithBiometrics } from '@/lib/biometricAuth';
+import { payWithCard, type CardPaymentSuccess } from '@/lib/cybs/payWithCard';
+import { enhancedFromCard, cardControlViolation } from '@/lib/cybs/enhancedFromCard';
+import type { EnhancedDataInput } from '@/lib/cybs/enhancedData';
+import { CyberSourceBadge } from '@/components/brand/CyberSourceBadge';
 import type { PaymentMethod, PaymentCard } from '@/lib/mock-data/types';
 import { b2bService, vpaService } from '@/lib/visa-sdk';
 
@@ -21,7 +26,16 @@ import { b2bService, vpaService } from '@/lib/visa-sdk';
 type Step = 'card-select' | 'card-confirm' | 'fund-select' | 'processing' | 'done';
 type FundMethod = 'USD' | 'USDC';
 
-interface SelectableCard extends Pick<PaymentCard, 'id' | 'brand' | 'last4' | 'type' | 'holderName' | 'status' | 'expiry' | 'usageType'> {
+interface SelectableCard extends Pick<PaymentCard,
+  | 'id' | 'brand' | 'last4' | 'type' | 'holderName' | 'status' | 'expiry' | 'usageType'
+  // Issuance controls from /cards — these become the Level II/III data.
+  | 'purpose' | 'mccCode' | 'mccLabel' | 'cardAcceptorId' | 'spendLimit' | 'validUntil'
+  | 'missionId' | 'missionName'
+  // Reconciliation data from /cards.
+  | 'invoiceNumber' | 'invoiceDate' | 'taxRate' | 'buyerTaxId' | 'vatRegistration'
+  | 'productSku' | 'commodityCode' | 'unitOfMeasure' | 'freightAmount' | 'dutyAmount'
+  | 'shipToPostalCode' | 'shipToCountry'
+> {
   supplierName: string;
 }
 
@@ -86,8 +100,114 @@ function CardVisual({ card }: { card: SelectableCard }) {
   );
 }
 
+
+// ─── Level II / III panel ─────────────────────────────────────────────────────
+/**
+ * What the commercial card carries beyond the amount. Every field tagged
+ * "from /cards" was set when the VCN was issued — the point of the panel is that
+ * nobody re-keys this data onto an invoice later.
+ */
+function EnhancedDataPanel({ data, transmitted }: {
+  data: EnhancedDataInput;
+  /** Before the payment it is a preview; after, it is a record of what was sent. */
+  transmitted?: boolean;
+}) {
+  const item = data.lineItems[0];
+
+  const money = (v?: string) => (v === undefined ? undefined : `$${Number(v).toLocaleString(undefined, { minimumFractionDigits: 2 })}`);
+
+  const levelTwo: { label: string; value?: string; fromCard?: boolean }[] = [
+    { label: 'Invoice',      value: data.invoiceNumber, fromCard: true },
+    { label: 'Invoice Date', value: data.invoiceDate, fromCard: true },
+    { label: 'PO Number',    value: data.purchaseOrderNumber },
+    { label: 'PO Date',      value: data.purchaseOrderDate },
+    { label: 'Tax Status',   value: data.taxable ? `Taxable @ ${item?.taxRate ?? '—'}%` : 'Exempt' },
+    { label: 'Buyer Tax ID', value: data.taxId, fromCard: true },
+    { label: 'VAT Reg.',     value: data.vatRegistrationNumber, fromCard: true },
+    { label: 'Cost Center',  value: data.costCenter, fromCard: true },
+    { label: 'MCC',          value: data.merchantCategoryCode, fromCard: true },
+    { label: 'Acceptor ID',  value: data.cardAcceptorReferenceNumber, fromCard: true },
+    { label: 'Statement',    value: data.transactionAdviceAddendum, fromCard: true },
+    { label: 'Contact',      value: data.purchaseContactName, fromCard: true },
+  ];
+
+  const levelThree: { label: string; value?: string; fromCard?: boolean }[] = [
+    { label: 'Line Items', value: String(data.lineItems.length) },
+    { label: 'SKU',        value: item?.productSku, fromCard: true },
+    { label: 'Commodity',  value: item?.commodityCode, fromCard: true },
+    { label: 'Unit / Qty', value: item ? `${item.unitOfMeasure ?? 'EA'} × ${item.quantity}` : undefined, fromCard: true },
+    { label: 'Ship To',    value: data.shipTo ? `${data.shipTo.locality}, ${data.shipTo.administrativeArea} ${data.shipTo.postalCode} ${data.shipTo.country}` : undefined },
+    { label: 'Ship From',  value: data.shipFromPostalCode },
+  ];
+
+  // The parts must add up to the charge, or none of this reconciles.
+  const breakdown: { label: string; value?: string }[] = [
+    { label: 'Line net', value: money(item?.totalAmount) },
+    { label: 'Tax',      value: money(data.taxAmount) },
+    { label: 'Freight',  value: money(data.freightAmount) },
+    { label: 'Duty',     value: money(data.dutyAmount) },
+  ].filter((r) => r.value && Number(r.value.replace(/[$,]/g, '')) > 0 || r.label === 'Line net');
+
+  const chargedTotal =
+    Number(item?.totalAmount ?? 0) + Number(data.taxAmount ?? 0) +
+    Number(data.freightAmount ?? 0) + Number(data.dutyAmount ?? 0);
+
+  const Row = ({ label, value, fromCard }: { label: string; value?: string; fromCard?: boolean }) =>
+    !value ? null : (
+      <div className="flex justify-between gap-3 items-baseline">
+        <span className="text-slate-400 shrink-0">
+          {label}
+          {fromCard && <span className="ml-1.5 text-[9px] font-semibold text-[#1434CB] uppercase tracking-wide">/cards</span>}
+        </span>
+        <span className="font-mono text-slate-700 text-right break-all">{value}</span>
+      </div>
+    );
+
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="flex items-center gap-2 px-4 py-2.5 bg-slate-50 border-b border-slate-100">
+        <FileText size={13} className="text-[#1434CB] shrink-0" />
+        <span className="text-xs font-bold text-slate-700">Level II / III Data</span>
+        <span className="ml-auto font-mono text-[10px] text-slate-400">purchaseLevel 3</span>
+      </div>
+
+      <div className="px-4 py-3 space-y-1.5 text-xs">
+        <p className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">Level II · Purchase</p>
+        {levelTwo.map((r) => <Row key={r.label} {...r} />)}
+
+        <p className="text-[10px] font-bold text-slate-300 uppercase tracking-wider pt-2">Level III · Line Detail</p>
+        {levelThree.map((r) => <Row key={r.label} {...r} />)}
+
+        {item && (
+          <div className="pt-2 mt-1 border-t border-dashed border-slate-200 space-y-1">
+            <p className="text-slate-500 truncate">{item.productName}</p>
+            {breakdown.map((r) => (
+              <div key={r.label} className="flex justify-between gap-3">
+                <span className="text-slate-400">{r.label}</span>
+                <span className="font-mono text-slate-600">{r.value}</span>
+              </div>
+            ))}
+            <div className="flex justify-between gap-3 pt-1 border-t border-slate-100">
+              <span className="font-semibold text-slate-600">Charged</span>
+              <span className="font-mono font-bold text-slate-900">
+                ${chargedTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <p className="px-4 py-2 bg-slate-50 border-t border-slate-100 text-[10px] text-slate-400 leading-snug">
+        {transmitted
+          ? 'Sent with both the authorization and the capture, so the settled record carries it.'
+          : 'Transmitted with the authorization and the capture — issuers price interchange off this detail.'}
+      </p>
+    </div>
+  );
+}
+
 // ─── done step ────────────────────────────────────────────────────────────────
-function DoneStep({ bidAmount, fundMethod, selectedCard, winner, orderId, isCnp, visaPaymentId }: {
+function DoneStep({ bidAmount, fundMethod, selectedCard, winner, orderId, isCnp, visaPaymentId, cybs, enhanced }: {
   bidAmount: number;
   fundMethod: string | null;
   selectedCard: { last4: string } | null;
@@ -95,6 +215,10 @@ function DoneStep({ bidAmount, fundMethod, selectedCard, winner, orderId, isCnp,
   orderId: string;
   isCnp?: boolean;
   visaPaymentId?: string | null;
+  /** CyberSource authorize + capture — BIP path only. */
+  cybs?: CardPaymentSuccess | null;
+  /** Level II/III actually transmitted with the payment. */
+  enhanced?: EnhancedDataInput | null;
 }) {
   const [notifVisible, setNotifVisible] = useState(false);
   useEffect(() => {
@@ -120,9 +244,14 @@ function DoneStep({ bidAmount, fundMethod, selectedCard, winner, orderId, isCnp,
       </motion.div>
 
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="text-center">
-        <p className="text-xl font-bold text-slate-900">{isCnp ? 'Payment Executed' : 'Payment Pending'}</p>
+        <p className="text-xl font-bold text-slate-900">
+          {cybs?.review ? 'Payment Executed · Flagged' : isCnp ? 'Payment Executed' : 'Payment Pending'}
+        </p>
         <p className="text-sm text-slate-500 mt-1">
-          ${bidAmount.toLocaleString()} {isCnp ? 'processed instantly via STP' : `dispatched via ${fundMethod} · Card •••• ${selectedCard?.last4}`}
+          ${bidAmount.toLocaleString()}{' '}
+          {cybs?.review
+            ? 'captured — Decision Manager flagged this amount for review'
+            : isCnp ? 'processed instantly via STP' : `dispatched via ${fundMethod} · Card •••• ${selectedCard?.last4}`}
         </p>
       </motion.div>
 
@@ -137,14 +266,28 @@ function DoneStep({ bidAmount, fundMethod, selectedCard, winner, orderId, isCnp,
           ...(!isCnp ? [{ label: 'Card', value: `•••• ${selectedCard?.last4}` }] : []),
           { label: 'Order ID',  value: orderId },
           ...(visaPaymentId ? [{ label: isCnp ? 'BIP ID' : 'SIP ID', value: visaPaymentId }] : []),
-          ...(isCnp ? [{ label: 'Status', value: '✓ Executed' }] : []),
+          ...(cybs ? [
+            { label: 'Auth ID',    value: cybs.authorizationId },
+            ...(cybs.captureId ? [{ label: 'Capture ID', value: cybs.captureId }] : []),
+            ...(cybs.approvalCode ? [{ label: 'Approval', value: cybs.approvalCode }] : []),
+            ...(cybs.review ? [{ label: 'Review', value: cybs.reviewReason ?? 'Held' }] : []),
+          ] : []),
+          ...(isCnp ? [{ label: 'Status', value: cybs?.review ? '✓ Captured · in review' : '✓ Executed' }] : []),
         ].map(({ label, value }) => (
           <div key={label} className="flex justify-between">
-            <span className="text-slate-400">{label}</span>
-            <span className={`font-semibold font-mono ${label === 'Status' ? 'text-emerald-600' : 'text-slate-800'}`}>{value}</span>
+            <span className="text-slate-400 shrink-0">{label}</span>
+            <span className={`font-semibold font-mono ml-3 text-right break-all ${label === 'Status' ? 'text-emerald-600' : label === 'Approval' ? 'text-emerald-600' : 'text-slate-800'}`}>{value}</span>
           </div>
         ))}
       </motion.div>
+
+      {/* Enhanced data actually transmitted — BIP only */}
+      {cybs && enhanced && (
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.58 }}
+          className="w-full max-w-xs">
+          <EnhancedDataPanel data={enhanced} transmitted />
+        </motion.div>
+      )}
 
       {/* Push notification — Card Present only */}
       <AnimatePresence>
@@ -226,28 +369,62 @@ export default function PaymentCheckoutPage({ params }: { params: Promise<{ rfpI
     };
   }, [transactions]);
 
-  const allCards = useMemo<SelectableCard[]>(() =>
-    suppliers.flatMap((s) =>
-      (s.cards ?? []).filter((c) => c.status === 'active' && c.brand === 'Visa').map((c) => ({ ...c, supplierName: s.name }))
-    ), [suppliers]);
+  /**
+   * A VCN issued against a supplier is scoped to that supplier — the card exists
+   * to pay *them*, and its spend controls were written for that relationship.
+   * Offering it for an award to a different vendor is wrong, so only the winning
+   * supplier's own cards are selectable here.
+   *
+   * Cards with no vendor linkage (mission cards) are never attached to a supplier
+   * in the first place, so this filter does not touch them.
+   */
+  const allCards = useMemo<SelectableCard[]>(() => {
+    const awarded = winner ? suppliers.find((s) => s.id === winner.id) : undefined;
+    if (!awarded) return [];
+    return (awarded.cards ?? [])
+      .filter((c) => c.status === 'active' && c.brand === 'Visa')
+      .map((c) => ({ ...c, supplierName: awarded.name }));
+  }, [suppliers, winner]);
 
   const [step, setStep]               = useState<Step>('card-select');
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const [fundMethod, setFundMethod]   = useState<FundMethod | null>(null);
   const [usdSubMethod, setUsdSubMethod] = useState<'cnp' | 'card-present' | null>(null);
-  const [orderId]                     = useState(() => 'ORD-' + uuidv4().slice(0, 8).toUpperCase());
+  // CyberSource refuses a clientReferenceInformation.code it has already seen in
+  // the last 15 minutes, so a retry after a decline needs a fresh order id.
+  const [orderId, setOrderId]         = useState(() => 'ORD-' + uuidv4().slice(0, 8).toUpperCase());
   const [visaPaymentId, setLocalVisaPaymentId] = useState<string | null>(null);
+  // Real CyberSource result — BIP (card-not-present) path only.
+  const [cybsPayment, setCybsPayment] = useState<CardPaymentSuccess | null>(null);
 
   const selectedCard = allCards.find((c) => c.id === selectedCardId) ?? null;
   const paymentMethod: PaymentMethod  = fundMethod ?? 'USD';
 
+  // Level II/III for this award, derived from the controls set on /cards when
+  // the VCN was issued. Built once so the preview, the payment and the receipt
+  // are guaranteed to show the same thing.
+  const enhancedData = useMemo(() => enhancedFromCard({
+    card: selectedCard,
+    rfp,
+    supplierName: winner?.name,
+    amount: bidAmount,
+    orderId,
+  }), [selectedCard, rfp, winner, bidAmount, orderId]);
+
   const handleComplete = useCallback((data: SettlementCompleteData) => {
     if (!rfp || !winner) return;
-    const txId = 'tx-' + uuidv4().slice(0, 8);
+    // On the BIP path the ledger carries the CyberSource handles instead of a
+    // synthetic id: capture id as the transaction, authorization id alongside.
+    const txId = cybsPayment?.captureId ?? 'tx-' + uuidv4().slice(0, 8);
     addTransaction({
       id: txId, rfpId: rfp.id, supplierId: winner.id, supplierName: winner.name,
       amount: bidAmount, method: paymentMethod, status: 'Settled' as const,
-      txHash: data.txHash, orderId,
+      txHash: cybsPayment?.authorizationId ?? data.txHash, orderId,
+      authorizationId: cybsPayment?.authorizationId,
+      captureId: cybsPayment?.captureId,
+      approvalCode: cybsPayment?.approvalCode,
+      review: cybsPayment?.review,
+      enhanced: cybsPayment?.enhanced,
       createdAt: data.startedAt || new Date().toISOString(),
       settledAt: new Date().toISOString(),
     });
@@ -270,7 +447,7 @@ export default function PaymentCheckoutPage({ params }: { params: Promise<{ rfpI
     });
     updateRFP(rfp.id, { status: 'Paid' });
     setStep('done');
-  }, [rfp, winner, paymentMethod, bidAmount, orderId, addTransaction, addNotification, updateRFP]);
+  }, [rfp, winner, paymentMethod, bidAmount, orderId, cybsPayment, addTransaction, addNotification, updateRFP]);
 
   const { state, start } = useSettlement(handleComplete);
 
@@ -347,6 +524,38 @@ export default function PaymentCheckoutPage({ params }: { params: Promise<{ rfpI
       // Non-blocking — B2B SDK failure does not interrupt the UI settlement flow
     }
 
+    // BIP moves money on the card rails, so this leg is a real CyberSource
+    // authorize + capture. Unlike the B2B SDK calls above it is *blocking*: a
+    // declined charge must not animate through to "Payment Executed".
+    if (isCnp) {
+      // The card's own controls answer first — no point authorizing a charge the
+      // VCN was never scoped to carry.
+      const violation = cardControlViolation(selectedCard, bidAmount);
+      if (violation) {
+        toast.error(violation, { icon: '⛔' });
+        setStep('fund-select');
+        return;
+      }
+
+
+      const result = await payWithCard({
+        amount: bidAmount,
+        brand: 'Visa',
+        reference: oid,
+        // Level II / Level III built from what was set when this VCN was issued.
+        enhanced: enhancedData,
+      });
+
+      if (!result.ok) {
+        toast.error(`Payment declined — ${result.reason}`, { icon: '⛔' });
+        setOrderId('ORD-' + uuidv4().slice(0, 8).toUpperCase());
+        setStep('fund-select');
+        return;
+      }
+
+      setCybsPayment(result);
+    }
+
     if (winner && !isCnp) {
       addNotification({
         id: 'notif-pending-' + uuidv4().slice(0, 8),
@@ -369,7 +578,7 @@ export default function PaymentCheckoutPage({ params }: { params: Promise<{ rfpI
     }
     const mode = method === 'USD' ? (usdSubMethod ?? undefined) : undefined;
     start(method, oid, mode);
-  }, [winner, selectedCard, bidAmount, usdSubMethod, rfp, addNotification, setVisaPaymentId, start]);
+  }, [winner, selectedCard, bidAmount, usdSubMethod, rfp, enhancedData, addNotification, setVisaPaymentId, start]);
 
   const slideProps = {
     initial:    { opacity: 0, x: 24 },
@@ -410,8 +619,15 @@ export default function PaymentCheckoutPage({ params }: { params: Promise<{ rfpI
             {allCards.length === 0 ? (
               <div className="bg-slate-50 rounded-xl border border-slate-200 p-8 text-center">
                 <CreditCard size={28} className="text-slate-300 mx-auto mb-2" />
-                <p className="text-sm text-slate-500">No registered cards available.</p>
-                <Link href="/cards" className="text-xs text-[#1434CB] font-medium mt-2 inline-block">Issue a card →</Link>
+                <p className="text-sm text-slate-500">
+                  No card issued to <span className="font-semibold text-slate-700">{winner?.name ?? 'this supplier'}</span>.
+                </p>
+                <p className="text-xs text-slate-400 mt-1">
+                  A virtual card can only pay the supplier it was issued against.
+                </p>
+                <Link href="/cards" className="text-xs text-[#1434CB] font-medium mt-2 inline-block">
+                  Issue a card for {winner?.name ?? 'this supplier'} →
+                </Link>
               </div>
             ) : (
               <div className="space-y-2">
@@ -553,15 +769,16 @@ export default function PaymentCheckoutPage({ params }: { params: Promise<{ rfpI
                         id: 'cnp' as const,
                         label: 'Buyer Initiated Transaction',
                         sub: 'Buyer provisions virtual card and pushes to supplier (BIP)',
-                        icon: '⚡',
+                        // BIP settles on the card rails, so it carries the processor mark.
+                        rail: 'cybs' as const,
                       },
                       {
                         id: 'card-present' as const,
                         label: 'Supplier Initiated Payments',
                         sub: 'Supplier submits invoice, buyer approves (SIP)',
-                        icon: '💳',
+                        rail: 'invoice' as const,
                       },
-                    ]).map(({ id, label, sub, icon }) => {
+                    ]).map(({ id, label, sub, rail }) => {
                       const sel = usdSubMethod === id;
                       return (
                         <motion.button
@@ -575,7 +792,15 @@ export default function PaymentCheckoutPage({ params }: { params: Promise<{ rfpI
                               : 'border-slate-200 bg-white hover:border-[#A5B8F3] hover:bg-slate-50'
                           }`}
                         >
-                          <span className="text-xl shrink-0">{icon}</span>
+                          {/* The rail that processes this mode, named on the left */}
+                          {rail === 'cybs' ? (
+                            <CyberSourceBadge className="shrink-0" />
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[9px] font-bold tracking-wide whitespace-nowrap shrink-0 text-slate-500 bg-slate-100 border border-slate-200">
+                              <Receipt size={10} />
+                              Invoice
+                            </span>
+                          )}
                           <div className="flex-1 min-w-0">
                             <p className={`text-sm font-bold ${sel ? 'text-indigo-900' : 'text-slate-800'}`}>{label}</p>
                             <p className={`text-xs mt-0.5 ${sel ? 'text-[#1434CB]' : 'text-slate-400'}`}>{sub}</p>
@@ -589,6 +814,18 @@ export default function PaymentCheckoutPage({ params }: { params: Promise<{ rfpI
                       );
                     })}
                   </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Level II/III preview — BIP carries it, SIP does not */}
+            <AnimatePresence>
+              {fundMethod === 'USD' && usdSubMethod === 'cnp' && (
+                <motion.div key="enhanced-preview"
+                  initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.25, ease: 'easeInOut' }}
+                  className="overflow-hidden">
+                  <EnhancedDataPanel data={enhancedData} />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -644,6 +881,8 @@ export default function PaymentCheckoutPage({ params }: { params: Promise<{ rfpI
             orderId={orderId}
             isCnp={usdSubMethod === 'cnp'}
             visaPaymentId={visaPaymentId}
+            cybs={cybsPayment}
+            enhanced={enhancedData}
           />
         )}
 

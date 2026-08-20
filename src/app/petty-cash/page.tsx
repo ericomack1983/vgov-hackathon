@@ -3,6 +3,7 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useCards, IssuedCard } from '@/context/CardsContext';
 import { authenticateWithBiometrics } from '@/lib/biometricAuth';
+import { payWithCard, type CardPaymentSuccess } from '@/lib/cybs/payWithCard';
 import { usePayment } from '@/context/PaymentContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X, ShoppingCart, Minus, Plus, CreditCard, CheckCircle2, Package, Zap, Clock, AlertTriangle, ChevronRight, ShieldCheck, Store, ArrowRight } from 'lucide-react';
@@ -635,7 +636,7 @@ function PolicyOverlay({ onDone }: { onDone: () => void }) {
 // ── Cart drawer ────────────────────────────────────────────────────────────────
 
 interface CartItem { product: Product; qty: number }
-type CheckoutState = 'idle' | 'verify' | 'processing' | 'done';
+type CheckoutState = 'idle' | 'verify' | 'processing' | 'done' | 'error';
 type PaymentMethod = 'card' | 'erp';
 
 const ERP_THRESHOLD = 10000;
@@ -680,11 +681,12 @@ function CardChip({ card }: { card: IssuedCard }) {
   );
 }
 
-function PaymentReceipt({ card, items, total, txId, onClose }: {
+function PaymentReceipt({ card, items, total, payment, onClose }: {
   card: IssuedCard;
   items: CartItem[];
   total: number;
-  txId: string;
+  /** Real CyberSource authorize + capture result behind this receipt. */
+  payment: CardPaymentSuccess;
   onClose: () => void;
 }) {
   const now = new Date();
@@ -709,7 +711,9 @@ function PaymentReceipt({ card, items, total, txId, onClose }: {
           <CheckCircle2 size={26} color="white" strokeWidth={2.5} />
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          <p style={{ fontSize: 16, fontWeight: 800, color: '#0a0a23', margin: 0 }}>Payment Approved</p>
+          <p style={{ fontSize: 16, fontWeight: 800, color: '#0a0a23', margin: 0 }}>
+            {payment.review ? 'Payment Approved · Flagged' : 'Payment Approved'}
+          </p>
           <p style={{ fontSize: 12, color: '#6b7280', margin: '3px 0 0' }}>{dateStr} · {timeStr}</p>
         </motion.div>
       </div>
@@ -746,16 +750,30 @@ function PaymentReceipt({ card, items, total, txId, onClose }: {
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
         style={{ background: '#f9fafb', borderRadius: 12, padding: '10px 12px', marginBottom: 10 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-          <span style={{ fontSize: 10, color: '#9ca3af', fontWeight: 600 }}>TRANSACTION ID</span>
-          <span style={{ fontSize: 10, fontFamily: 'monospace', color: '#374151', fontWeight: 700 }}>{txId}</span>
+          <span style={{ fontSize: 10, color: '#9ca3af', fontWeight: 600 }}>AUTH ID</span>
+          <span style={{ fontSize: 10, fontFamily: 'monospace', color: '#374151', fontWeight: 700 }}>{payment.authorizationId}</span>
         </div>
+        {payment.captureId && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+            <span style={{ fontSize: 10, color: '#9ca3af', fontWeight: 600 }}>CAPTURE ID</span>
+            <span style={{ fontSize: 10, fontFamily: 'monospace', color: '#374151', fontWeight: 700 }}>{payment.captureId}</span>
+          </div>
+        )}
+        {payment.approvalCode && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+            <span style={{ fontSize: 10, color: '#9ca3af', fontWeight: 600 }}>APPROVAL</span>
+            <span style={{ fontSize: 10, fontFamily: 'monospace', color: '#059669', fontWeight: 700 }}>{payment.approvalCode}</span>
+          </div>
+        )}
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
           <span style={{ fontSize: 10, color: '#9ca3af', fontWeight: 600 }}>NETWORK</span>
           <span style={{ fontSize: 10, color: '#374151', fontWeight: 700 }}>Visa Commercial Network</span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
           <span style={{ fontSize: 10, color: '#9ca3af', fontWeight: 600 }}>SETTLEMENT</span>
-          <span style={{ fontSize: 10, color: '#059669', fontWeight: 700 }}>1–2 Business Days</span>
+          <span style={{ fontSize: 10, color: payment.review ? '#d97706' : '#059669', fontWeight: 700 }}>
+            {payment.review ? '1–2 Days · in review' : '1–2 Business Days'}
+          </span>
         </div>
       </motion.div>
 
@@ -801,7 +819,8 @@ function CartDrawer({ items, onClose, onQtyChange, onRemove, marketplace }: {
   const [checkout, setCheckout]       = useState<CheckoutState>('idle');
   const [method, setMethod]           = useState<PaymentMethod>('card');
   const [selectedCard, setSelectedCard] = useState<IssuedCard | null>(null);
-  const [txId, setTxId]               = useState('');
+  const [payment, setPayment]         = useState<CardPaymentSuccess | null>(null);
+  const [payError, setPayError]       = useState<{ reason: string; hint?: string } | null>(null);
   const total = items.reduce((s, i) => s + i.product.price * i.qty, 0);
   const cardEligible = total <= ERP_THRESHOLD;
   const activeCards = cards.filter((c) => !c.blocked);
@@ -811,48 +830,76 @@ function CartDrawer({ items, onClose, onQtyChange, onRemove, marketplace }: {
     if (!selectedCard && activeCards.length > 0) setSelectedCard(activeCards[0]);
   }, [activeCards.length]);
 
-  const handleFingerprintSuccess = useCallback(() => {
-    const id = `VGS-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2,6).toUpperCase()}`;
-    setTxId(id);
+  // Charge the card for real: CyberSource authorize → capture, run server-side
+  // by /api/payments/card. Only reached once biometrics succeeded.
+  const runPayment = useCallback(async () => {
+    const mk = CHECKOUT_MARKET[marketplace];
+    const orderId = `${mk.prefix}-${Date.now().toString().slice(-6)}`;
+
+    setPayError(null);
     setCheckout('processing');
-    setTimeout(() => {
-      // Push to PaymentContext so dashboard picks it up
-      const mk = CHECKOUT_MARKET[marketplace];
-      addTransaction({
-        id,
-        rfpId: 'petty-cash',
-        supplierId: marketplace,
-        supplierName: mk.supplier,
-        amount: total,
-        method: 'Card',
-        status: 'Settled',
-        orderId: `${mk.prefix}-${Date.now().toString().slice(-6)}`,
-        createdAt: new Date().toISOString(),
-        settledAt: new Date().toISOString(),
-      });
-      addNotification({
-        id: `notif-${Date.now()}`,
-        type: 'payment',
-        title: `${mk.supplier} Payment Settled`,
-        message: `$${total.toFixed(2)} · ${mk.supplier} · card ····${selectedCard?.last4 ?? ''}`,
-        timestamp: new Date().toISOString(),
-        read: false,
-        amount: total,
-        cardLast4: selectedCard?.last4,
-        cardBrand: selectedCard?.brand,
-        cardHolder: selectedCard?.holderName,
-        supplierName: mk.supplier,
-      });
-      setCheckout('done');
-    }, 2200);
+
+    // Floor the spinner so a fast sandbox response doesn't flash past the user.
+    const [result] = await Promise.all([
+      payWithCard({ amount: total, brand: selectedCard?.brand ?? 'Visa', reference: orderId }),
+      new Promise((r) => setTimeout(r, 1200)),
+    ]);
+
+    if (!result.ok) {
+      setPayError({ reason: result.reason, hint: result.hint });
+      setCheckout('error');
+      return;
+    }
+
+    setPayment(result);
+
+    // Push to PaymentContext so dashboard picks it up. The ledger now carries the
+    // CyberSource handles: capture id as the transaction, auth id alongside it.
+    // Nothing captured while a review hold is open — the authorization id is the
+    // only handle that exists yet.
+    const ledgerId = result.captureId ?? result.authorizationId;
+    addTransaction({
+      id: ledgerId,
+      rfpId: 'petty-cash',
+      supplierId: marketplace,
+      supplierName: mk.supplier,
+      amount: total,
+      method: 'Card',
+      status: result.review ? 'Processing' : 'Settled',
+      txHash: result.authorizationId,
+      orderId,
+      createdAt: new Date().toISOString(),
+      settledAt: new Date().toISOString(),
+      authorizationId: result.authorizationId,
+      captureId: result.captureId,
+      approvalCode: result.approvalCode,
+      review: result.review,
+      enhanced: result.enhanced,
+    });
+    addNotification({
+      id: `notif-${Date.now()}`,
+      type: 'payment',
+      title: result.review ? `${mk.supplier} Payment Under Review` : `${mk.supplier} Payment Settled`,
+      message: `$${total.toFixed(2)} · ${mk.supplier} · card ····${selectedCard?.last4 ?? ''}`,
+      timestamp: new Date().toISOString(),
+      read: false,
+      amount: total,
+      cardLast4: selectedCard?.last4,
+      cardBrand: selectedCard?.brand,
+      cardHolder: selectedCard?.holderName,
+      supplierName: mk.supplier,
+      orderId,
+      transactionId: ledgerId,
+    });
+    setCheckout('done');
   }, [total, selectedCard, marketplace, addTransaction, addNotification]);
 
   // Run the native biometric prompt (Touch ID / Windows Hello). The payment
   // flow only proceeds once the user actually authenticates.
   const handleVerify = useCallback(async () => {
     const ok = await authenticateWithBiometrics(`Petty Cash · $${total.toFixed(2)}`);
-    if (ok) handleFingerprintSuccess();
-  }, [total, handleFingerprintSuccess]);
+    if (ok) await runPayment();
+  }, [total, runPayment]);
 
   return (
     <>
@@ -877,9 +924,9 @@ function CartDrawer({ items, onClose, onQtyChange, onRemove, marketplace }: {
       {/* Scrollable body */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px' }}>
         <AnimatePresence mode="wait">
-          {checkout === 'done' && method === 'card' && selectedCard ? (
+          {checkout === 'done' && method === 'card' && selectedCard && payment ? (
             <motion.div key="receipt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <PaymentReceipt card={selectedCard} items={items} total={total} txId={txId} onClose={onClose} />
+              <PaymentReceipt card={selectedCard} items={items} total={total} payment={payment} onClose={onClose} />
             </motion.div>
           ) : checkout === 'done' && method === 'erp' ? (
             <motion.div key="erp-done" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
@@ -1101,6 +1148,31 @@ function CartDrawer({ items, onClose, onQtyChange, onRemove, marketplace }: {
                 <span style={{ fontSize: 13, fontWeight: 600, color: method === 'card' ? '#1434CB' : '#374151' }}>
                   {method === 'card' ? 'Authorizing payment…' : 'Routing to ERP…'}
                 </span>
+              </motion.div>
+            )}
+            {checkout === 'error' && (
+              <motion.div key="pay-error" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                style={{ width: '100%' }}>
+                <div style={{ background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.25)', borderRadius: 12, padding: '11px 13px', marginBottom: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 4 }}>
+                    <AlertTriangle size={13} color="#dc2626" />
+                    <span style={{ fontSize: 12, fontWeight: 700, color: '#991b1b' }}>Payment not completed</span>
+                  </div>
+                  <p style={{ fontSize: 11, color: '#7f1d1d', lineHeight: 1.45 }}>{payError?.reason}</p>
+                  {payError?.hint && (
+                    <p style={{ fontSize: 10, color: '#b91c1c', marginTop: 4, fontFamily: 'monospace', lineHeight: 1.4 }}>{payError.hint}</p>
+                  )}
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={() => { setPayError(null); setCheckout('idle'); }}
+                    style={{ flex: 1, padding: '11px 0', borderRadius: 12, background: 'white', border: '1.5px solid rgba(0,0,0,0.12)', fontSize: 13, fontWeight: 700, color: '#4b5563', cursor: 'pointer' }}>
+                    Cancel
+                  </button>
+                  <button onClick={() => { setPayError(null); setCheckout('verify'); }}
+                    style={{ flex: 1, padding: '11px 0', borderRadius: 12, background: '#1434CB', border: 'none', fontSize: 13, fontWeight: 700, color: 'white', cursor: 'pointer' }}>
+                    Retry
+                  </button>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>

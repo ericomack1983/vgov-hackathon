@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, ChevronDown, Building2, CheckCircle2, Shield, Clock, AlertCircle, FileText } from 'lucide-react';
+import { Mail, ChevronDown, Building2, CheckCircle2, Shield, Clock, AlertCircle, FileText, Download, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import type { Notification } from '@/lib/mock-data/types';
+import { invoiceFilename } from '@/lib/invoice/invoiceFromNotification';
 
 // ── Pending authorization email (card details to supplier) ───────────────────
 function PendingAuthEmail({ n }: { n: Notification }) {
@@ -187,6 +188,26 @@ function PendingAuthEmail({ n }: { n: Notification }) {
 
 // ── Invoice verified email (Supplier → Gov) ───────────────────────────────────
 function InvoiceVerifiedEmail({ n }: { n: Notification }) {
+  // The attachment is generated on demand rather than shipped as a static file,
+  // so it always reflects the award this email actually refers to.
+  const [downloading, setDownloading] = useState(false);
+  const filename = invoiceFilename(n);
+
+  async function handleDownload() {
+    setDownloading(true);
+    try {
+      const [{ downloadInvoicePdf }, { invoiceFromNotification }] = await Promise.all([
+        import('@/lib/invoice/invoicePdf'),
+        import('@/lib/invoice/invoiceFromNotification'),
+      ]);
+      await downloadInvoicePdf(invoiceFromNotification(n), filename);
+    } catch (err) {
+      console.error('Invoice PDF generation failed:', err);
+    } finally {
+      setDownloading(false);
+    }
+  }
+
   const date = format(new Date(n.timestamp), 'MMMM d, yyyy');
   const time = format(new Date(n.timestamp), 'h:mm a');
   const supplierEmail = n.supplierName
@@ -222,10 +243,17 @@ function InvoiceVerifiedEmail({ n }: { n: Notification }) {
         </div>
         <div className="flex items-center gap-2 text-xs text-slate-500">
           <span className="font-semibold text-slate-600 w-10">Attach</span>
-          <span className="flex items-center gap-1 bg-slate-100 text-slate-600 font-medium px-2 py-0.5 rounded-full border border-slate-200">
-            <FileText size={10} />
-            {n.invoiceNo ?? 'invoice'}.pdf
-          </span>
+          <button
+            type="button"
+            onClick={handleDownload}
+            disabled={downloading}
+            title={`Download ${filename}`}
+            className="flex items-center gap-1.5 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 text-slate-600 font-medium px-2 py-0.5 rounded-full border border-slate-200 transition-colors disabled:opacity-60 cursor-pointer"
+          >
+            {downloading ? <Loader2 size={10} className="animate-spin" /> : <FileText size={10} />}
+            {filename}
+            {!downloading && <Download size={10} className="opacity-60" />}
+          </button>
         </div>
         <div className="flex items-center gap-2 text-xs text-slate-500">
           <span className="font-semibold text-slate-600 w-10">Date</span>
@@ -274,7 +302,18 @@ function InvoiceVerifiedEmail({ n }: { n: Notification }) {
 
         {/* Invoice attachment preview */}
         <div>
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Invoice Attachment</p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Invoice Attachment</p>
+            <button
+              type="button"
+              onClick={handleDownload}
+              disabled={downloading}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-[#1434CB] hover:bg-[#0F27B0] px-3 py-1.5 rounded-lg transition-colors disabled:opacity-60"
+            >
+              {downloading ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />}
+              {downloading ? 'Generating…' : 'Download PDF'}
+            </button>
+          </div>
           <div
             className="w-full rounded-2xl overflow-hidden"
             style={{

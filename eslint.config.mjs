@@ -13,6 +13,15 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  {
+    // Vendored from the cybs-payments skill — CommonJS by design, kept as close to
+    // the original as possible so it can be re-synced when the skill updates.
+    files: ["src/lib/cybs/cybs-client.js"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;
