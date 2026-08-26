@@ -5,14 +5,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { usePayment } from '@/context/PaymentContext';
 import {
   FileCheck, Search, Filter, DollarSign, Wallet, FileText,
-  CheckCircle2, AlertCircle, Loader2, ShieldCheck, Activity,
+  CheckCircle2, AlertCircle, Loader2, ShieldCheck, Activity, Clock,
 } from 'lucide-react';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { vpcService, type VPCReconciliationResult } from '@/lib/visa-sdk';
 import type { Transaction } from '@/lib/mock-data/types';
+import { useT } from '@/context/LanguageContext';
 import { useSidebarActions } from '@/context/SidebarActionsContext';
 import { InvoiceAnalysisPanel } from '@/components/ai/InvoiceAnalysisPanel';
-import { useT } from '@/context/LanguageContext';
 
 // ── Reconciliation state per transaction ──────────────────────────────────────
 
@@ -142,6 +142,7 @@ function EnhancedDetail({ tx, cybs, cybsError }: {
   cybs?: CybsRecord;
   cybsError?: string;
 }) {
+  const t = useT();
   const e = tx.enhanced;
   if (!e && !cybs) return null;
 
@@ -232,6 +233,12 @@ function EnhancedDetail({ tx, cybs, cybsError }: {
                 <span className="text-slate-400 shrink-0">Applications</span>
                 <span className="font-mono text-slate-600 text-right break-all">{cybs.applications?.join(' · ') ?? '—'}</span>
               </div>
+              {tx.review && (
+                <div className="mt-2 flex items-start gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2 py-1.5">
+                  <Clock size={10} className="text-amber-600 shrink-0 mt-0.5" />
+                  <p className="text-[10px] text-amber-800 leading-snug">{t('review.note')}</p>
+                </div>
+              )}
               <div className={`mt-2 inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-bold ${
                 amountAgrees ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'
               }`}>
@@ -548,6 +555,15 @@ export default function ReconciliationPage() {
                             <span className="text-[10px] text-slate-400">
                               CyberSource{tx.approvalCode ? ` · ${tx.approvalCode}` : ''}
                             </span>
+                            {tx.review && (
+                              <span
+                                title={t('review.pending')}
+                                className="mt-1 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide bg-amber-50 text-amber-700 border border-amber-200"
+                              >
+                                <Clock size={9} />
+                                {t('review.badge')}
+                              </span>
+                            )}
                           </div>
                         ) : (
                           <span className="text-[11px] text-slate-300 font-mono">—</span>
@@ -581,8 +597,13 @@ export default function ReconciliationPage() {
                                 : 'bg-slate-100 text-slate-500'
                             }`}
                           >
-                            {isReconciled ? 'Reconciled' : rs.status === 'unmatched' ? 'No Match' : 'Pending'}
+                            {isReconciled ? t('recon.reconciled') : rs.status === 'unmatched' ? t('recon.noMatch') : t('recon.pending')}
                           </motion.span>
+                          {tx.review && (
+                            <span className="block mt-1 text-[9px] font-semibold text-amber-600 whitespace-nowrap">
+                              {t('review.awaiting')}
+                            </span>
+                          )}
                         </AnimatePresence>
                       </td>
                     </motion.tr>

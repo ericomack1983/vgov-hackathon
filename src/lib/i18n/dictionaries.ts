@@ -201,6 +201,12 @@ const en: Dictionary = {
   'petty.cancel': 'Cancel',
   'petty.done': 'Done',
 
+  // ── Decision Manager review ──
+  'review.badge': 'DM Review',
+  'review.pending': 'Pending Decision Manager review',
+  'review.note': 'Funds are captured. Decision Manager flagged this amount, so the risk decision is still open.',
+  'review.awaiting': 'Awaiting risk decision',
+
   // ── Common ──
   'common.settled': 'Settled',
   'common.processing': 'Processing',
@@ -383,6 +389,11 @@ const es: Dictionary = {
   'petty.cancel': 'Cancelar',
   'petty.done': 'Listo',
 
+  'review.badge': 'Revisión DM',
+  'review.pending': 'Pendiente de revisión de Decision Manager',
+  'review.note': 'Los fondos están capturados. Decision Manager marcó este importe, por lo que la decisión de riesgo sigue abierta.',
+  'review.awaiting': 'A la espera de la decisión de riesgo',
+
   'common.settled': 'Liquidado',
   'common.processing': 'Procesando',
   'common.authorized': 'Autorizado',
@@ -563,6 +574,11 @@ const pt: Dictionary = {
   'petty.retry': 'Tentar de novo',
   'petty.cancel': 'Cancelar',
   'petty.done': 'Concluído',
+
+  'review.badge': 'Revisão DM',
+  'review.pending': 'Pendente de revisão do Decision Manager',
+  'review.note': 'Os fundos foram capturados. O Decision Manager sinalizou este valor, então a decisão de risco continua aberta.',
+  'review.awaiting': 'Aguardando a decisão de risco',
 
   'common.settled': 'Liquidado',
   'common.processing': 'Processando',

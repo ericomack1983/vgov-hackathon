@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -67,6 +67,12 @@ export default function MissionDetailPage({ params, searchParams }: {
   const card = mission ? getMissionCard(mission.id) : undefined;
   const txs = mission ? transactionsForMission(mission.id) : [];
   const draftPolicy = policyEdits ?? profile ?? null;
+
+  // Module is parked behind features.missions — send stray links somewhere real
+  // rather than rendering an empty page.
+  useEffect(() => {
+    if (!features.missions) router.replace('/dashboard');
+  }, [router]);
 
   if (!features.missions) return null;
 

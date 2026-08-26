@@ -221,6 +221,7 @@ function DoneStep({ bidAmount, fundMethod, selectedCard, winner, orderId, isCnp,
   /** Level II/III actually transmitted with the payment. */
   enhanced?: EnhancedDataInput | null;
 }) {
+  const t = useT();
   const [notifVisible, setNotifVisible] = useState(false);
   useEffect(() => {
     if (isCnp) return;
@@ -236,9 +237,11 @@ function DoneStep({ bidAmount, fundMethod, selectedCard, winner, orderId, isCnp,
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ type: 'spring', stiffness: 260, damping: 18, delay: 0.1 }}
-        className={`w-20 h-20 rounded-full flex items-center justify-center shadow-lg ${isCnp ? 'bg-emerald-500 shadow-emerald-200' : 'bg-amber-400 shadow-amber-200'}`}
+        className={`w-20 h-20 rounded-full flex items-center justify-center shadow-lg ${
+          isCnp && !cybs?.review ? 'bg-emerald-500 shadow-emerald-200' : 'bg-amber-400 shadow-amber-200'
+        }`}
       >
-        {isCnp
+        {isCnp && !cybs?.review
           ? <CheckCircle2 size={40} className="text-white" strokeWidth={2} />
           : <Clock size={40} className="text-white" strokeWidth={2} />
         }
@@ -255,6 +258,25 @@ function DoneStep({ bidAmount, fundMethod, selectedCard, winner, orderId, isCnp,
             : isCnp ? 'processed instantly via STP' : `dispatched via ${fundMethod} · Card •••• ${selectedCard?.last4}`}
         </p>
       </motion.div>
+
+      {/* Decision Manager hold — the payment is captured but not finished */}
+      {cybs?.review && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.42 }}
+          className="w-full max-w-xs rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3.5"
+        >
+          <div className="flex items-start gap-2.5">
+            <AlertCircle size={16} className="text-amber-600 shrink-0 mt-0.5" />
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-amber-900 leading-snug">{t('review.pending')}</p>
+              <p className="text-[11px] text-amber-800/80 mt-1 leading-snug">{t('review.note')}</p>
+              <p className="text-[10px] font-mono text-amber-700/70 mt-1.5">
+                {cybs.reviewReason ?? 'DECISION_PROFILE_REVIEW'}
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Receipt summary */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
@@ -273,11 +295,16 @@ function DoneStep({ bidAmount, fundMethod, selectedCard, winner, orderId, isCnp,
             ...(cybs.approvalCode ? [{ label: 'Approval', value: cybs.approvalCode }] : []),
             ...(cybs.review ? [{ label: 'Review', value: cybs.reviewReason ?? 'Held' }] : []),
           ] : []),
-          ...(isCnp ? [{ label: 'Status', value: cybs?.review ? '✓ Captured · in review' : '✓ Executed' }] : []),
+          ...(isCnp ? [{ label: 'Status', value: cybs?.review ? `⏳ ${t('review.awaiting')}` : '✓ Executed' }] : []),
         ].map(({ label, value }) => (
           <div key={label} className="flex justify-between">
             <span className="text-slate-400 shrink-0">{label}</span>
-            <span className={`font-semibold font-mono ml-3 text-right break-all ${label === 'Status' ? 'text-emerald-600' : label === 'Approval' ? 'text-emerald-600' : 'text-slate-800'}`}>{value}</span>
+            <span className={`font-semibold font-mono ml-3 text-right break-all ${
+              label === 'Status' ? (cybs?.review ? 'text-amber-600' : 'text-emerald-600')
+              : label === 'Review' ? 'text-amber-600'
+              : label === 'Approval' ? 'text-emerald-600'
+              : 'text-slate-800'
+            }`}>{value}</span>
           </div>
         ))}
       </motion.div>

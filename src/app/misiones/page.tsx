@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useMemo, useState } from 'react';
+import { use, useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Plane, Plus, Filter, ChevronRight } from 'lucide-react';
@@ -13,6 +13,7 @@ import { MissionWizard } from '@/components/tci/MissionWizard';
 import { TciToaster } from '@/components/tci/TciToaster';
 import type { MissionStatus } from '@/lib/mock-data/types';
 import { useT } from '@/context/LanguageContext';
+import { useRouter } from 'next/navigation';
 
 const ALL_STATUSES: MissionStatus[] = [
   'borrador', 'pendiente_aprobacion', 'aprobada', 'activa', 'en_conciliacion', 'cerrada',
@@ -24,6 +25,7 @@ const INPUT_CLASS =
 export default function MisionesPage({ searchParams }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+  const router = useRouter();
   const t = useT();
   const { nueva } = use(searchParams);
   const { missions, entities, activeMissionCount, pendingReleaseGTQ } = useMissions();
@@ -45,6 +47,12 @@ export default function MisionesPage({ searchParams }: {
       .filter((m) => (to ? parseISODate(m.dates.start) <= parseISODate(to) : true))
       .sort((a, b) => parseISODate(b.dates.start).getTime() - parseISODate(a.dates.start).getTime());
   }, [missions, ministryFilter, statusFilter, from, to]);
+
+  // Module is parked behind features.missions — send stray links somewhere real
+  // rather than rendering an empty page.
+  useEffect(() => {
+    if (!features.missions) router.replace('/dashboard');
+  }, [router]);
 
   if (!features.missions) return null;
 
