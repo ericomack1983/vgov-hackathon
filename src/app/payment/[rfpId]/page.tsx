@@ -19,6 +19,7 @@ import { payWithCard, type CardPaymentSuccess } from '@/lib/cybs/payWithCard';
 import { enhancedFromCard, cardControlViolation } from '@/lib/cybs/enhancedFromCard';
 import type { EnhancedDataInput } from '@/lib/cybs/enhancedData';
 import { CyberSourceBadge } from '@/components/brand/CyberSourceBadge';
+import { CardBrandMark } from '@/components/brand/CardBrandMark';
 import type { PaymentMethod, PaymentCard } from '@/lib/mock-data/types';
 import { b2bService, vpaService } from '@/lib/visa-sdk';
 import { useT } from '@/context/LanguageContext';
@@ -82,7 +83,7 @@ function CardVisual({ card }: { card: SelectableCard }) {
         <div className="w-10 h-7 rounded-md bg-gradient-to-br from-yellow-300 to-yellow-500 grid grid-cols-2 gap-px p-1 shadow-inner">
           {[...Array(4)].map((_, i) => <div key={i} className="rounded-sm bg-yellow-600/40" />)}
         </div>
-        <span className="text-white font-black tracking-widest text-sm">{BRAND_LABEL[card.brand]}</span>
+        <CardBrandMark brand={card.brand} height={20} />
       </div>
       <p className="font-mono text-white text-xl tracking-[0.22em] relative z-10 mb-6">
         •••• •••• •••• {card.last4}

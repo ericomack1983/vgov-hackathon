@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, Loader2, Wifi, ChevronDown, ShieldCheck, ToggleLeft, ToggleRight, CreditCard, ShieldOff, Shield, FileText } from 'lucide-react';
 import { UNSPSC_FOR_MCC } from '@/lib/cybs/enhancedFromCard';
 import { UNIT_OF_MEASURE } from '@/lib/cybs/enhancedData';
+import { CardBrandMark } from '@/components/brand/CardBrandMark';
 import { InvoiceUploadPanel, type ExtractedInvoiceFields } from '@/components/cards/InvoiceUploadPanel';
 import { useProcurement } from '@/context/ProcurementContext';
 import { useMissions } from '@/context/MissionsContext';
@@ -161,9 +162,9 @@ function CardPreview({ holderName, brand, type, usageType, flipped, issuedLast4,
         <Wifi size={14} className="text-white/60 rotate-90" />
       </div>
 
-      {/* Brand label */}
+      {/* Network mark */}
       <div className="absolute top-5 right-5">
-        <span className="text-white font-black tracking-widest text-sm">{BRAND_LABEL[brand]}</span>
+        <CardBrandMark brand={brand} height={20} />
       </div>
 
       {/* Card number */}
