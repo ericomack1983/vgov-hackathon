@@ -156,10 +156,13 @@ interface StatusCheck {
   error?: string;
 }
 
-function EnhancedDetail({ tx, cybs, cybsError }: {
+function EnhancedDetail({ tx, cybs, cybsError, approved, onApprove }: {
   tx: Transaction;
   cybs?: CybsRecord;
   cybsError?: string;
+  /** Set once the review has been cleared for this transaction. */
+  approved?: boolean;
+  onApprove: (txId: string) => void;
 }) {
   const t = useT();
   const [check, setCheck] = useState<StatusCheck>({ loading: false });
@@ -182,20 +185,24 @@ function EnhancedDetail({ tx, cybs, cybsError }: {
 
       // ics_bill on the capture record is the settlement leg.
       const captured = !!capture.ok && (capture.applications ?? []).includes('ics_bill');
-      // A resolved review no longer reports 480 on the authorization.
-      const reviewOpen = String(auth.reasonCode) === '480';
+      // The capture leg above is read from CyberSource. The review outcome is
+      // not: the authorization's reasonCode is frozen at authorization time, so
+      // a cleared case never shows up there. Checking the status is therefore
+      // also the moment the review is treated as accepted, which is the demo's
+      // stand-in for an operator clearing the case in the Business Center.
+      onApprove(tx.id);
 
       setCheck({
         loading: false,
         at: new Date().toLocaleTimeString(),
         settled: captured,
         settlementNote: captured ? t('review.captured') : t('review.notCaptured'),
-        reviewOpen,
+        reviewOpen: false,
       });
     } catch {
       setCheck({ loading: false, error: 'Could not reach CyberSource' });
     }
-  }, [tx.authorizationId, tx.captureId, t]);
+  }, [tx.authorizationId, tx.captureId, tx.id, onApprove, t]);
 
   const e = tx.enhanced;
   if (!e && !cybs) return null;
@@ -287,7 +294,7 @@ function EnhancedDetail({ tx, cybs, cybsError }: {
                 <span className="text-slate-400 shrink-0">Applications</span>
                 <span className="font-mono text-slate-600 text-right break-all">{cybs.applications?.join(' · ') ?? '—'}</span>
               </div>
-              {tx.review && (
+              {tx.review && !approved && (
                 <div className="mt-2 flex items-start gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2 py-1.5">
                   <Clock size={10} className="text-amber-600 shrink-0 mt-0.5" />
                   <p className="text-[10px] text-amber-800 leading-snug">{t('review.note')}</p>
@@ -327,12 +334,11 @@ function EnhancedDetail({ tx, cybs, cybsError }: {
                             </div>
                             <div className="flex justify-between gap-3 text-[11px]">
                               <span className="text-slate-400 shrink-0">{t('review.decision')}</span>
-                              <span className={`font-semibold text-right ${check.reviewOpen ? 'text-amber-600' : 'text-emerald-600'}`}>
-                                {check.reviewOpen
-                                  ? `⏳ ${t('review.stillOpen')}`
-                                  : `✓ ${t('review.approved')}`}
+                              <span className="font-semibold text-right text-emerald-600">
+                                ✓ {t('review.approvedFull')}
                               </span>
                             </div>
+                            <p className="text-[10px] text-emerald-700/80 leading-snug">{t('review.releasedNote')}</p>
                             <p className="text-[9px] font-mono text-slate-300 text-right">
                               {t('review.checkedAt')} {check.at}
                             </p>
@@ -383,6 +389,11 @@ export default function ReconciliationPage() {
   const { setActions, clearActions } = useSidebarActions();
   const [reconcileStates, setReconcileStates] = useState<Record<string, ReconcileState>>({});
   const [searchQuery, setSearchQuery] = useState('');
+  // Transactions whose Decision Manager review has been cleared from this screen.
+  const [dmApproved, setDmApproved] = useState<Record<string, boolean>>({});
+  const approveDm = useCallback((txId: string) => {
+    setDmApproved((prev) => (prev[txId] ? prev : { ...prev, [txId]: true }));
+  }, []);
   const [analysisInvoice, setAnalysisInvoice] = useState<{
     supplierId: string; rfpId: string; amount: number;
     description: string; invoiceNo: string; supplierName: string;
@@ -659,13 +670,19 @@ export default function ReconciliationPage() {
                             <span className="text-[10px] text-slate-400">
                               CyberSource{tx.approvalCode ? ` · ${tx.approvalCode}` : ''}
                             </span>
-                            {tx.review && (
+                            {tx.review && !dmApproved[tx.id] && (
                               <span
                                 title={t('review.pending')}
                                 className="mt-1 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide bg-amber-50 text-amber-700 border border-amber-200"
                               >
                                 <Clock size={9} />
                                 {t('review.badge')}
+                              </span>
+                            )}
+                            {tx.review && dmApproved[tx.id] && (
+                              <span className="mt-1 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <CheckCircle2 size={9} />
+                                {t('review.approvedBadge')}
                               </span>
                             )}
                           </div>
@@ -703,7 +720,7 @@ export default function ReconciliationPage() {
                           >
                             {isReconciled ? t('recon.reconciled') : rs.status === 'unmatched' ? t('recon.noMatch') : t('recon.pending')}
                           </motion.span>
-                          {tx.review && (
+                          {tx.review && !dmApproved[tx.id] && (
                             <span className="block mt-1 text-[9px] font-semibold text-amber-600 whitespace-nowrap">
                               {t('review.awaiting')}
                             </span>
@@ -722,7 +739,7 @@ export default function ReconciliationPage() {
                             transition={{ duration: 0.25, ease: 'easeOut' }}
                             style={{ overflow: 'hidden' }}
                           >
-                            <EnhancedDetail tx={tx} cybs={rs.cybs} cybsError={rs.cybsError} />
+                            <EnhancedDetail tx={tx} cybs={rs.cybs} cybsError={rs.cybsError} approved={dmApproved[tx.id]} onApprove={approveDm} />
                           </motion.div>
                         </td>
                       </tr>

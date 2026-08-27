@@ -213,6 +213,9 @@ const en: Dictionary = {
   'review.notCaptured': 'Authorized only — no capture found',
   'review.approved': 'Approved',
   'review.stillOpen': 'Still under review',
+  'review.approvedBadge': 'DM Approved',
+  'review.approvedFull': 'Approved by Decision Manager',
+  'review.releasedNote': 'Review cleared — the capture proceeds to settlement.',
   'review.checkedAt': 'checked',
 
   // ── Common ──
@@ -408,6 +411,9 @@ const es: Dictionary = {
   'review.notCaptured': 'Solo autorizado — sin captura',
   'review.approved': 'Aprobado',
   'review.stillOpen': 'Sigue en revisión',
+  'review.approvedBadge': 'DM Aprobado',
+  'review.approvedFull': 'Aprobado por Decision Manager',
+  'review.releasedNote': 'Revisión resuelta — la captura avanza a liquidación.',
   'review.checkedAt': 'consultado',
 
   'common.settled': 'Liquidado',
@@ -602,6 +608,9 @@ const pt: Dictionary = {
   'review.notCaptured': 'Apenas autorizado — sem captura',
   'review.approved': 'Aprovado',
   'review.stillOpen': 'Ainda em revisão',
+  'review.approvedBadge': 'DM Aprovado',
+  'review.approvedFull': 'Aprovado pelo Decision Manager',
+  'review.releasedNote': 'Revisão resolvida — a captura segue para liquidação.',
   'review.checkedAt': 'consultado',
 
   'common.settled': 'Liquidado',
