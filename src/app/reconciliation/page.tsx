@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { usePayment } from '@/context/PaymentContext';
 import {
   FileCheck, Search, Filter, DollarSign, Wallet, FileText,
-  CheckCircle2, AlertCircle, Loader2, ShieldCheck, Activity, Clock,
+  CheckCircle2, AlertCircle, Loader2, ShieldCheck, Activity, Clock, RefreshCw,
 } from 'lucide-react';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { vpcService, type VPCReconciliationResult } from '@/lib/visa-sdk';
@@ -137,12 +137,66 @@ function VPCMatchCell({
  * very little. The Level II/III set is what lets a row be checked against the
  * invoice it belongs to — PO, cost centre, tax treatment, and the line item.
  */
+/**
+ * Ask CyberSource where the transaction actually stands right now.
+ *
+ * The row's data was captured at payment time; a Decision Manager review is
+ * resolved later by a human, and the capture settles in a batch after that. Both
+ * outcomes only exist at the processor, so this re-queries rather than trusting
+ * what the ledger recorded.
+ *
+ * reasonCode 480 is the review flag; 100 means the transaction is accepted.
+ */
+interface StatusCheck {
+  loading: boolean;
+  at?: string;
+  settled?: boolean;
+  settlementNote?: string;
+  reviewOpen?: boolean;
+  error?: string;
+}
+
 function EnhancedDetail({ tx, cybs, cybsError }: {
   tx: Transaction;
   cybs?: CybsRecord;
   cybsError?: string;
 }) {
   const t = useT();
+  const [check, setCheck] = useState<StatusCheck>({ loading: false });
+
+  const runCheck = useCallback(async () => {
+    if (!tx.authorizationId) return;
+    setCheck({ loading: true });
+    try {
+      const [auth, capture] = await Promise.all([
+        fetch(`/api/payments/card/${tx.authorizationId}`).then((r) => r.json()),
+        tx.captureId
+          ? fetch(`/api/payments/card/${tx.captureId}`).then((r) => r.json())
+          : Promise.resolve({ ok: false }),
+      ]);
+
+      if (!auth.ok) {
+        setCheck({ loading: false, error: auth.reason ?? 'Lookup failed' });
+        return;
+      }
+
+      // ics_bill on the capture record is the settlement leg.
+      const captured = !!capture.ok && (capture.applications ?? []).includes('ics_bill');
+      // A resolved review no longer reports 480 on the authorization.
+      const reviewOpen = String(auth.reasonCode) === '480';
+
+      setCheck({
+        loading: false,
+        at: new Date().toLocaleTimeString(),
+        settled: captured,
+        settlementNote: captured ? t('review.captured') : t('review.notCaptured'),
+        reviewOpen,
+      });
+    } catch {
+      setCheck({ loading: false, error: 'Could not reach CyberSource' });
+    }
+  }, [tx.authorizationId, tx.captureId, t]);
+
   const e = tx.enhanced;
   if (!e && !cybs) return null;
 
@@ -237,6 +291,56 @@ function EnhancedDetail({ tx, cybs, cybsError }: {
                 <div className="mt-2 flex items-start gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2 py-1.5">
                   <Clock size={10} className="text-amber-600 shrink-0 mt-0.5" />
                   <p className="text-[10px] text-amber-800 leading-snug">{t('review.note')}</p>
+                </div>
+              )}
+
+              {/* Live status — settlement and the risk decision both resolve later */}
+              {tx.authorizationId && (
+                <div className="mt-2.5">
+                  <button
+                    type="button"
+                    onClick={runCheck}
+                    disabled={check.loading}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold text-[#1434CB] bg-white border border-[#1434CB]/25 hover:bg-[#EEF1FD] hover:border-[#1434CB]/50 transition-colors disabled:opacity-60 shadow-sm"
+                  >
+                    {check.loading
+                      ? <Loader2 size={11} className="animate-spin" />
+                      : <RefreshCw size={11} />}
+                    {check.loading ? t('review.checking') : t('review.check')}
+                  </button>
+
+                  <AnimatePresence>
+                    {!check.loading && (check.settlementNote || check.error) && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                        className="mt-2 space-y-1"
+                      >
+                        {check.error ? (
+                          <p className="text-[10px] text-red-600">{check.error}</p>
+                        ) : (
+                          <>
+                            <div className="flex justify-between gap-3 text-[11px]">
+                              <span className="text-slate-400 shrink-0">{t('review.settlement')}</span>
+                              <span className={`font-semibold text-right ${check.settled ? 'text-emerald-600' : 'text-amber-600'}`}>
+                                {check.settlementNote}
+                              </span>
+                            </div>
+                            <div className="flex justify-between gap-3 text-[11px]">
+                              <span className="text-slate-400 shrink-0">{t('review.decision')}</span>
+                              <span className={`font-semibold text-right ${check.reviewOpen ? 'text-amber-600' : 'text-emerald-600'}`}>
+                                {check.reviewOpen
+                                  ? `⏳ ${t('review.stillOpen')}`
+                                  : `✓ ${t('review.approved')}`}
+                              </span>
+                            </div>
+                            <p className="text-[9px] font-mono text-slate-300 text-right">
+                              {t('review.checkedAt')} {check.at}
+                            </p>
+                          </>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               )}
               <div className={`mt-2 inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-bold ${
