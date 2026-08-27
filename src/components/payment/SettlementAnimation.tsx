@@ -6,6 +6,7 @@ import { SettlementState, getStepLabel } from '@/lib/settlement-engine';
 import { Building2, ShieldCheck, MonitorSmartphone, CheckCircle, Lock, CreditCard } from 'lucide-react';
 import createGlobe from 'cobe';
 import { CyberSourceBadge } from '@/components/brand/CyberSourceBadge';
+import { VisaPaymentRail } from './VisaPaymentRail';
 
 // ── Coordinates ────────────────────────────────────────────────────────────────
 const SAO_PAULO  = { lat: -23.55, lng: -46.63 };
@@ -276,9 +277,9 @@ function SecureChannelScene({ done }: { done: boolean }) {
 
 // ── Card-specific step cards ──────────────────────────────────────────────────
 const CARD_STEPS = [
-  { key: 'authorized', icon: <Building2 size={24} className="text-[#1434CB]" />, activeBg: 'bg-[#EEF1FD] border-[#A5B8F3]', title: 'Card Number Dispatched', sub: 'Encrypted card details sent to the winning supplier.' },
-  { key: 'processing', icon: <ShieldCheck size={24} className="text-emerald-600" />, activeBg: 'bg-emerald-50 border-emerald-200', title: 'Secure Channel Delivery', sub: null /* replaced by scene */ },
-  { key: 'settled', icon: <MonitorSmartphone size={24} className="text-violet-600" />, activeBg: 'bg-violet-50 border-violet-200', title: 'Card Entered at POS', sub: 'Supplier entered card into POS terminal — funds credited to account.' },
+  { key: 'authorized', icon: <Building2 size={24} className="text-[#1434CB]" />, activeBg: 'bg-[#EEF1FD] border-[#A5B8F3]', title: 'Authorization Requested', sub: 'Virtual card presented to CyberSource for authorization.' },
+  { key: 'processing', icon: <ShieldCheck size={24} className="text-emerald-600" />, activeBg: 'bg-emerald-50 border-emerald-200', title: 'Approved on VisaNet', sub: null /* replaced by scene */ },
+  { key: 'settled', icon: <MonitorSmartphone size={24} className="text-violet-600" />, activeBg: 'bg-violet-50 border-violet-200', title: 'Captured for Settlement', sub: 'Funds captured with Level II/III data — settles in the next batch.' },
 ];
 
 function CardSettlementAnimation({ state }: { state: SettlementState }) {
@@ -287,7 +288,9 @@ function CardSettlementAnimation({ state }: { state: SettlementState }) {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm font-semibold text-[#1434CB] text-center">{getStepLabel(state.currentStep)}</p>
+      <p className="text-sm font-semibold text-[#1434CB] text-center">
+        {getStepLabel(state.currentStep, state.paymentMode)}
+      </p>
       <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
         <motion.div className="h-full bg-[#1434CB] rounded-full" initial={{ width: 0 }} animate={{ width: `${state.progress}%` }} transition={{ duration: 0.8, ease: 'easeInOut' }} />
       </div>
@@ -366,7 +369,9 @@ export function SettlementAnimation({ state, method }: SettlementAnimationProps)
   return (
     <div className="flex flex-col items-center gap-3">
       {/* Status label */}
-      <p className="text-sm font-semibold text-[#1434CB] text-center">{getStepLabel(state.currentStep)}</p>
+      <p className="text-sm font-semibold text-[#1434CB] text-center">
+        {getStepLabel(state.currentStep, state.paymentMode)}
+      </p>
 
       {/* Progress bar */}
       <div className="w-full max-w-xs bg-slate-100 h-1 rounded-full overflow-hidden">
@@ -379,15 +384,22 @@ export function SettlementAnimation({ state, method }: SettlementAnimationProps)
         />
       </div>
 
-      {/* Globe */}
+      {/* Rail (card) / globe (on-chain) */}
       <div className="rounded-2xl overflow-hidden p-3"
         style={{
           background: 'linear-gradient(160deg, #07102e 0%, #0d1b3e 60%, #0a1628 100%)',
           boxShadow: '0 0 0 1px rgba(74,123,255,0.15), 0 12px 40px rgba(0,0,0,0.35)',
         }}
       >
-        <GlobePaymentArc progress={planeProgress} />
+        {method === 'USDC'
+          ? <GlobePaymentArc progress={planeProgress} />
+          : <VisaPaymentRail progress={planeProgress} settled={state.currentStep === 'settled'} />
+        }
       </div>
+
+      {method !== 'USDC' && (
+        <CyberSourceBadge tone="light" label="CyberSource · Payments API" />
+      )}
 
       {method === 'USDC' && state.txHash && (
         <p className="text-xs font-mono text-slate-400 text-center truncate max-w-xs">Tx: {state.txHash.slice(0, 20)}…</p>

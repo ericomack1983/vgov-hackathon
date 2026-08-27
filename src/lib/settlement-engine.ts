@@ -84,9 +84,9 @@ export const USD_NODES = [
 ] as const;
 
 export const CARD_NODES = [
-  { label: 'Gov Office', icon: 'Building' },
-  { label: 'Secure Channel', icon: 'Shield' },
-  { label: 'Supplier POS', icon: 'POS' },
+  { label: 'Virtual Card', icon: 'Building' },
+  { label: 'CyberSource', icon: 'Shield' },
+  { label: 'Visa Network', icon: 'POS' },
 ] as const;
 
 export const USDC_NODES = [
@@ -98,19 +98,28 @@ export const USDC_NODES = [
 export const USD_STEP_DELAY = 2000; // 2s per step, ~6s total
 export const USDC_STEP_DELAY = 1500; // 1.5s per step, ~3s total
 
+/**
+ * Step labels describe what the payment leg actually does.
+ *
+ * BIP runs a real CyberSource authorization and capture, so the old wording
+ * ("sending card number to supplier", "supplier receiving via secure channel")
+ * described a handoff that never happens — the money is being executed on the
+ * card rails while those lines were on screen.
+ */
 export function getStepLabel(step: string, paymentMode?: 'cnp' | 'card-present'): string {
   if (paymentMode === 'cnp') {
     switch (step) {
-      case 'authorized': return 'Initiating Straight-Through Processing…';
-      case 'processing': return 'Executing payment via Visa STP…';
-      case 'settled':    return 'Payment Executed — funds transferred instantly';
+      case 'authorized': return 'Authorizing on the Visa network…';
+      case 'processing': return 'Capturing funds · Level II/III attached…';
+      case 'settled':    return 'Payment executed — captured for settlement';
       default: break;
     }
   }
   switch (step) {
-    case 'authorized': return 'Sending card number to supplier…';
-    case 'processing': return 'Supplier receiving via secure channel…';
-    case 'settled':    return 'Supplier entered card at POS — funds credited';
+    // SIP: the supplier raises the invoice and the buyer approves it.
+    case 'authorized': return 'Submitting invoice to Visa B2B…';
+    case 'processing': return 'Buyer approving supplier invoice…';
+    case 'settled':    return 'Approved — supplier paid on the card rails';
     case 'submitted':  return 'Submitted to Visa Network';
     case 'confirmed':  return 'Confirmed on Chain';
     case 'idle':       return 'Ready';
